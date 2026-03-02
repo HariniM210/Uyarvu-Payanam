@@ -43,7 +43,7 @@ export default function LoginPage() {
   const fmtTimer = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
 
   /* ── Step 1 submit ── */
-  const handleStep1 = () => {
+  const handleStep1 = async () => {
     const e = {}
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email address'
     if (password.length < 8)  e.password = 'Password must be at least 8 characters'
@@ -51,7 +51,16 @@ export default function LoginPage() {
     if (Object.keys(e).length) { setErrors(e); return }
     setErrors({})
     setLoading(true)
-    setTimeout(() => { setLoading(false); setStep(2); setTimer(300) }, 1200)
+    
+    const result = await login(email, password)
+    setLoading(false)
+    
+    if (result.success) {
+      setStep(2)
+      setTimer(300)
+    } else {
+      setErrors({ email: result.message || 'Invalid credentials' })
+    }
   }
 
   /* ── OTP handlers ── */
@@ -83,7 +92,7 @@ export default function LoginPage() {
     setErrors({})
     setLoading(true)
     clearInterval(timerRef.current)
-    setTimeout(() => { setLoading(false); setStep(3); login(email); setTimeout(() => navigate('/admin'), 2500) }, 1200)
+    setTimeout(() => { setLoading(false); setStep(3); setTimeout(() => navigate('/admin'), 2500) }, 1200)
   }
 
   const resetOtp = () => {
