@@ -1,54 +1,271 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, ActionBtn, PrimaryBtn, Modal, FormGrid, FormGroup, FormInput, FormActions } from '../../components/UI'
+import { careerPathService } from '../../../services/careerPathService'
 
-const PATHS = [
-  { level:'After 5th',  age:'10-12 yrs', desc:'Foundation skills, Olympiads, basic career awareness', careers:'Science, Arts, Sports, Music', color:'#8b5cf6' },
-  { level:'After 8th',  age:'13-15 yrs', desc:'Stream selection guidance, scholarships, talent programs', careers:'PCM, PCB, Commerce, Humanities', color:'#f59e0b' },
-  { level:'After 10th', age:'15-17 yrs', desc:'Stream selection, polytechnic, ITI, junior college', careers:'Engineering, Medical, Commerce, Arts', color:'#2d9e5f' },
-  { level:'After 12th', age:'17-19 yrs', desc:'Entrance exams, college admissions, career path clarity', careers:'All Graduate Programs', color:'#ef4444' },
-]
+const LEVEL_COLORS = {
+  '5th': '#8b5cf6',
+  '8th': '#f59e0b',
+  '10th': '#2d9e5f',
+  '12th': '#ef4444'
+}
 
 export default function CareersPage() {
   const [showModal, setShowModal] = useState(false)
+  const [careerPaths, setCareerPaths] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [formData, setFormData] = useState({
+    title: '',
+    ageGroup: '',
+    level: '5th',
+    careerDirections: '',
+    description: ''
+  })
+  const [message, setMessage] = useState({ type: '', text: '' })
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchCareerPaths()
+  }, [])
+
+  const fetchCareerPaths = async () => {
+    try {
+      console.log('🔄 [Frontend] Fetching career paths from API...');
+      setLoading(true)
+      const result = await careerPathService.getAllCareerPaths()
+      console.log('📥 [Frontend] Career paths received:', result);
+      if (result.success) {
+        console.log('✅ [Frontend] Loaded', result.count, 'career paths');
+        setCareerPaths(result.data)
+      }
+    } catch (error) {
+      console.error('❌ [Frontend] Failed to fetch career paths:', error)
+      setMessage({ type: 'error', text: 'Failed to load career paths' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async () => {
+    console.log('🔵 [Frontend] handleSubmit called');
+    console.log('📋 Form Data:', formData);
+    
+    setSubmitting(true)
+    setMessage({ type: '', text: '' })
+
+    try {
+      const careerDirectionsArray = formData.careerDirections
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item !== '')
+
+      const payload = {
+        title: formData.title,
+        ageGroup: formData.ageGroup,
+        level: formData.level,
+        careerDirections: careerDirectionsArray,
+        description: formData.description
+      }
+
+      console.log('📦 Payload to send:', payload);
+      console.log('🚀 Sending POST request to backend...');
+      
+      const result = await careerPathService.createCareerPath(payload)
+
+      console.log('✅ [Frontend] Response received:', result);
+      
+      if (result.success) {
+        console.log('✨ Career path created successfully!');
+        setMessage({ type: 'success', text: 'Career path added successfully!' })
+        setFormData({
+          title: '',
+          ageGroup: '',
+          level: '5th',
+          careerDirections: '',
+          description: ''
+        })
+        console.log('🔄 Refetching career paths...');
+        fetchCareerPaths()
+        setTimeout(() => {
+          setShowModal(false)
+          setMessage({ type: '', text: '' })
+        }, 1500)
+      }
+    } catch (error) {
+      console.error('❌ [Frontend] Error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Failed to add career path' 
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this career path?')) {
+      return
+    }
+
+    try {
+      const result = await careerPathService.deleteCareerPath(id)
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Career path deleted successfully' })
+        fetchCareerPaths()
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to delete career path' })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: 40, color: 'var(--text2)' }}>
+        Loading career paths...
+      </div>
+    )
+  }
+
   return (
     <div style={{ animation:'fadeUp 0.4s ease both' }}>
+      {message.text && (
+        <div style={{ 
+          padding: 12, 
+          marginBottom: 16,
+          backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da',
+          color: message.type === 'success' ? '#155724' : '#721c24',
+          borderRadius: 8,
+          fontSize: 13.5,
+          fontWeight: 600
+        }}>
+          {message.text}
+        </div>
+      )}
+
       <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:20 }}>
         <PrimaryBtn onClick={() => setShowModal(true)}>+ Add Career Path</PrimaryBtn>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-        {PATHS.map(p => (
-          <Card key={p.level} style={{ borderTop:`4px solid ${p.color}` }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <span style={{ fontFamily:'Nunito', fontWeight:800, fontSize:17, color:'var(--text)' }}>{p.level}</span>
-              <span style={{ fontSize:11, color:'var(--text3)', background:'var(--surface2)',
-                padding:'4px 10px', borderRadius:20, fontWeight:600 }}>{p.age}</span>
-            </div>
-            <p style={{ fontSize:13.5, color:'var(--text2)', marginBottom:12, lineHeight:1.7 }}>{p.desc}</p>
-            <div style={{ fontSize:12, color:'var(--text3)', marginBottom:14 }}>
-              <span style={{ fontWeight:600 }}>Career Options: </span>
-              <span style={{ color:'var(--text2)' }}>{p.careers}</span>
-            </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <ActionBtn>✏️ Edit</ActionBtn>
-              <ActionBtn>📋 Add Notes</ActionBtn>
-            </div>
-          </Card>
-        ))}
-      </div>
+
+      {careerPaths.length === 0 ? (
+        <Card style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
+          <p style={{ color: 'var(--text2)', fontSize: 15, marginBottom: 8 }}>No career paths added yet</p>
+          <p style={{ color: 'var(--text3)', fontSize: 13 }}>Click "Add Career Path" to create your first entry</p>
+        </Card>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+          {careerPaths.map(path => (
+            <Card key={path._id} style={{ borderTop:`4px solid ${LEVEL_COLORS[path.level] || '#6366f1'}` }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <span style={{ fontFamily:'Nunito', fontWeight:800, fontSize:17, color:'var(--text)' }}>{path.title}</span>
+                <span style={{ fontSize:11, color:'var(--text3)', background:'var(--surface2)',
+                  padding:'4px 10px', borderRadius:20, fontWeight:600 }}>{path.ageGroup}</span>
+              </div>
+              <div style={{ fontSize:11, color:'var(--text3)', marginBottom:8, fontWeight:700 }}>
+                Level: {path.level}
+              </div>
+              <p style={{ fontSize:13.5, color:'var(--text2)', marginBottom:12, lineHeight:1.7 }}>{path.description}</p>
+              <div style={{ fontSize:12, color:'var(--text3)', marginBottom:14 }}>
+                <span style={{ fontWeight:600 }}>Career Options: </span>
+                <span style={{ color:'var(--text2)' }}>{path.careerDirections.join(', ')}</span>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <ActionBtn onClick={() => handleDelete(path._id)}>🗑️ Delete</ActionBtn>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {showModal && (
         <Modal title="Add Career Path" onClose={() => setShowModal(false)}>
+          {message.text && message.type === 'success' && (
+            <div style={{ 
+              padding: 12, 
+              marginBottom: 16,
+              backgroundColor: '#d4edda',
+              color: '#155724',
+              borderRadius: 8,
+              fontSize: 13
+            }}>
+              ✓ {message.text}
+            </div>
+          )}
+          {message.text && message.type === 'error' && (
+            <div style={{ 
+              padding: 12, 
+              marginBottom: 16,
+              backgroundColor: '#f8d7da',
+              color: '#721c24',
+              borderRadius: 8,
+              fontSize: 13
+            }}>
+              ⚠ {message.text}
+            </div>
+          )}
           <FormGrid>
-            <FormGroup label="Title" full><FormInput placeholder="e.g. After 5th" /></FormGroup>
-            <FormGroup label="Age Group"><FormInput placeholder="e.g. 10-12 yrs" /></FormGroup>
+            <FormGroup label="Title" full>
+              <FormInput 
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="e.g. After 5th" 
+              />
+            </FormGroup>
+            <FormGroup label="Age Group">
+              <FormInput 
+                name="ageGroup"
+                value={formData.ageGroup}
+                onChange={handleInputChange}
+                placeholder="e.g. 10-12 yrs" 
+              />
+            </FormGroup>
             <FormGroup label="Level">
-              <select style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit,sans-serif', outline:'none', width:'100%' }}>
-                <option>5th</option><option>8th</option><option>10th</option><option>12th</option>
+              <select 
+                name="level"
+                value={formData.level}
+                onChange={handleInputChange}
+                style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit,sans-serif', outline:'none', width:'100%' }}
+              >
+                <option value="5th">5th</option>
+                <option value="8th">8th</option>
+                <option value="10th">10th</option>
+                <option value="12th">12th</option>
               </select>
             </FormGroup>
-            <FormGroup label="Career Directions" full><FormInput as="textarea" placeholder="Possible career paths..." /></FormGroup>
-            <FormGroup label="Description" full><FormInput as="textarea" placeholder="Guidance text for students..." /></FormGroup>
+            <FormGroup label="Career Directions (comma-separated)" full>
+              <FormInput 
+                as="textarea" 
+                name="careerDirections"
+                value={formData.careerDirections}
+                onChange={handleInputChange}
+                placeholder="e.g. Engineering, Medicine, Arts" 
+              />
+            </FormGroup>
+            <FormGroup label="Description" full>
+              <FormInput 
+                as="textarea" 
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Guidance text for students..." 
+              />
+            </FormGroup>
           </FormGrid>
-          <FormActions onClose={() => setShowModal(false)} />
+          <FormActions 
+            onClose={() => setShowModal(false)} 
+            onSave={handleSubmit}
+            saveDisabled={submitting}
+            saveText={submitting ? 'Saving...' : 'Save Career Path'}
+          />
         </Modal>
       )}
     </div>

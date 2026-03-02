@@ -230,24 +230,37 @@ export function FormGroup({ label, full, children }) {
   )
 }
 
-export function FormInput({ type='text', placeholder, as='input' }) {
+export function FormInput({ type='text', placeholder, as='input', name, value, onChange }) {
   const base = { width:'100%', background:'var(--surface2)', border:'1.5px solid var(--border)',
     color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5,
     fontFamily:'Outfit,sans-serif', outline:'none', transition:'border-color 0.15s' }
   if (as === 'textarea') return (
-    <textarea placeholder={placeholder} style={{ ...base, resize:'vertical', minHeight:80 }}
+    <textarea 
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder} 
+      style={{ ...base, resize:'vertical', minHeight:80 }}
       onFocus={e => e.target.style.borderColor='var(--primary)'}
-      onBlur={e => e.target.style.borderColor='var(--border)'} />
+      onBlur={e => e.target.style.borderColor='var(--border)'} 
+    />
   )
   if (as === 'select') return null
   return (
-    <input type={type} placeholder={placeholder} style={base}
+    <input 
+      type={type} 
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder} 
+      style={base}
       onFocus={e => e.target.style.borderColor='var(--primary)'}
-      onBlur={e => e.target.style.borderColor='var(--border)'} />
+      onBlur={e => e.target.style.borderColor='var(--border)'} 
+    />
   )
 }
 
-export function FormActions({ onClose }) {
+export function FormActions({ onClose, onSave, saveDisabled, saveText }) {
   return (
     <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:24 }}>
       <button onClick={onClose}
@@ -256,11 +269,15 @@ export function FormActions({ onClose }) {
           fontFamily:'Outfit,sans-serif', fontWeight:600, fontSize:13.5, cursor:'pointer' }}>
         Cancel
       </button>
-      <button onClick={onClose}
-        style={{ padding:'9px 20px', borderRadius:10, background:'var(--primary)',
+      <button 
+        onClick={onSave}
+        disabled={saveDisabled}
+        style={{ padding:'9px 20px', borderRadius:10, 
+          background: saveDisabled ? 'var(--text3)' : 'var(--primary)',
           border:'none', color:'#fff', fontFamily:'Nunito,sans-serif', fontWeight:800,
-          fontSize:13.5, cursor:'pointer' }}>
-        Save Changes
+          fontSize:13.5, cursor: saveDisabled ? 'not-allowed' : 'pointer',
+          opacity: saveDisabled ? 0.6 : 1 }}>
+        {saveText || 'Save Changes'}
       </button>
     </div>
   )
