@@ -71,7 +71,7 @@ export default function UsersPage() {
   return (
     <div style={{ animation:'fadeUp 0.4s ease both' }}>
       <FiltersRow>
-        <SearchInput placeholder="\uD83D\uDD0D Search by name or email..." value={search} onChange={e=>setSearch(e.target.value)} />
+        <SearchInput placeholder="🔍 Search by name or email..." value={search} onChange={e=>setSearch(e.target.value)} />
         <FilterSelect value={status} onChange={e=>setStatus(e.target.value)}>
           <option value="all">All</option>
           <option value="active">Active</option>
@@ -106,11 +106,11 @@ export default function UsersPage() {
                 <TD><LevelBadge level={statusLabel(u.status)}/></TD>
                 <TD><div style={{ display:'flex', gap:6 }}>
                   {u.status === 'active'
-                    ? <ActionBtn onClick={()=>handleBlock(u._id)}>{"\uD83D\uDD12 Block"}</ActionBtn>
-                    : <ActionBtn onClick={()=>handleUnblock(u._id)}>{"\uD83D\uDD13 Unblock"}</ActionBtn>
+                    ? <ActionBtn onClick={()=>handleBlock(u._id)}>🔒 Block</ActionBtn>
+                    : <ActionBtn onClick={()=>handleUnblock(u._id)}>🔓 Unblock</ActionBtn>
                   }
-                  <ActionBtn onClick={()=>handleResetPassword(u._id, u.name)}>{"\uD83D\uDD11 Reset PW"}</ActionBtn>
-                  <ActionBtn danger onClick={()=>handleDelete(u._id, u.name)}>{"\uD83D\uDDD1 Delete"}</ActionBtn>
+                  <ActionBtn onClick={()=>handleResetPassword(u._id, u.name)}>🔑 Reset PW</ActionBtn>
+                  <ActionBtn danger onClick={()=>handleDelete(u._id, u.name)}>🗑 Delete</ActionBtn>
                 </div></TD>
               </TR>
             )}

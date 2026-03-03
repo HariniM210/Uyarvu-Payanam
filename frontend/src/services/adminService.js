@@ -35,4 +35,31 @@ export const adminService = {
     const response = await axiosInstance.delete(`/admin/users/${id}`)
     return response.data
   },
+
+  // ── College Management ──
+
+  getColleges: async (params = {}) => {
+    const response = await axiosInstance.get('/colleges', { params })
+    return response.data
+  },
+
+  getCollegeById: async (id) => {
+    const response = await axiosInstance.get(`/colleges/${id}`)
+    return response.data
+  },
+
+  createCollege: async (data) => {
+    const response = await axiosInstance.post('/colleges', data)
+    return response.data
+  },
+
+  updateCollege: async (id, data) => {
+    const response = await axiosInstance.put(`/colleges/${id}`, data)
+    return response.data
+  },
+
+  deleteCollege: async (id) => {
+    const response = await axiosInstance.delete(`/colleges/${id}`)
+    return response.data
+  },
 }
