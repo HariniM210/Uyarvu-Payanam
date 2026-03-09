@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './admin/context/ThemeContext'
 import { AuthProvider, useAuth } from './admin/context/AuthContext'
+import { NotificationProvider } from './admin/context/NotificationContext'
 import LoginPage from './admin/pages/LoginPage'
 import AdminLayout from './admin/pages/AdminLayout'
 
@@ -22,7 +23,9 @@ function AppRoutes() {
         path="/admin/*"
         element={
           <ProtectedRoute>
-            <AdminLayout />
+            <NotificationProvider>
+              <AdminLayout />
+            </NotificationProvider>
           </ProtectedRoute>
         }
       />

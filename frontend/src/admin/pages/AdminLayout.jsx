@@ -3,46 +3,47 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import styles from './AdminLayout.module.css'
+import NotificationBell from '../components/NotificationBell'
 
 // Pages
-import Dashboard    from './admin/Dashboard'
-import UsersPage    from './admin/UsersPage'
-import CareersPage  from './admin/CareersPage'
-import CoursesPage  from './admin/CoursesPage'
-import ExamsPage    from './admin/ExamsPage'
+import Dashboard from './admin/Dashboard'
+import UsersPage from './admin/UsersPage'
+import CareersPage from './admin/CareersPage'
+import CoursesPage from './admin/CoursesPage'
+import ExamsPage from './admin/ExamsPage'
 import CollegesPage from './admin/CollegesPage'
 import ScholarshipsPage from './admin/ScholarshipsPage'
-import CutoffPage   from './admin/CutoffPage'
+import CutoffPage from './admin/CutoffPage'
 import NotificationsPage from './admin/NotificationsPage'
-import ReportsPage  from './admin/ReportsPage'
+import ReportsPage from './admin/ReportsPage'
 import SettingsPage from './admin/SettingsPage'
 
 const NAV = [
-  { id: 'dashboard',     icon: '📊', label: 'Dashboard',           path: '' },
-  { id: 'users',         icon: '👥', label: 'User Management',      path: 'users',         badge: 7 },
-  { id: 'careers',       icon: '🎯', label: 'Career Paths',         path: 'careers' },
-  { id: 'courses',       icon: '📘', label: 'Course Management',    path: 'courses' },
-  { id: 'exams',         icon: '📝', label: 'Exam Management',      path: 'exams' },
-  { id: 'colleges',      icon: '🏫', label: 'College Management',   path: 'colleges' },
-  { id: 'scholarships',  icon: '🎓', label: 'Scholarships',         path: 'scholarships' },
-  { id: 'cutoff',        icon: '📈', label: 'Cutoff Management',    path: 'cutoff' },
-  { id: 'notifications', icon: '🔔', label: 'Notifications',        path: 'notifications' },
-  { id: 'reports',       icon: '📉', label: 'Reports & Analytics',  path: 'reports' },
-  { id: 'settings',      icon: '⚙️',  label: 'Settings',            path: 'settings' },
+  { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
+  { id: 'users', icon: '👥', label: 'User Management', path: 'users', badge: 7 },
+  { id: 'careers', icon: '🎯', label: 'Career Paths', path: 'careers' },
+  { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
+  { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
+  { id: 'colleges', icon: '🏫', label: 'College Management', path: 'colleges' },
+  { id: 'scholarships', icon: '🎓', label: 'Scholarships', path: 'scholarships' },
+  { id: 'cutoff', icon: '📈', label: 'Cutoff Management', path: 'cutoff' },
+  { id: 'notifications', icon: '🔔', label: 'Notifications', path: 'notifications' },
+  { id: 'reports', icon: '📉', label: 'Reports & Analytics', path: 'reports' },
+  { id: 'settings', icon: '⚙️', label: 'Settings', path: 'settings' },
 ]
 
 const PAGE_META = {
-  '':              { title: 'Dashboard',           sub: 'Overview & Analytics' },
-  'users':         { title: 'User Management',     sub: 'Manage student accounts' },
-  'careers':       { title: 'Career Paths',        sub: 'Level-wise guidance structure' },
-  'courses':       { title: 'Course Management',   sub: 'Academic & skill courses' },
-  'exams':         { title: 'Exam Management',     sub: 'Entrance exams & important dates' },
-  'colleges':      { title: 'College Management',  sub: 'College database' },
-  'scholarships':  { title: 'Scholarships',        sub: 'Scholarship listings & deadlines' },
-  'cutoff':        { title: 'Cutoff Management',   sub: 'Year-wise cutoff data' },
-  'notifications': { title: 'Notifications',       sub: 'Send alerts to students' },
-  'reports':       { title: 'Reports & Analytics', sub: 'Data export & trends' },
-  'settings':      { title: 'Settings',            sub: 'System configuration' },
+  '': { title: 'Dashboard', sub: 'Overview & Analytics' },
+  'users': { title: 'User Management', sub: 'Manage student accounts' },
+  'careers': { title: 'Career Paths', sub: 'Level-wise guidance structure' },
+  'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
+  'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
+  'colleges': { title: 'College Management', sub: 'College database' },
+  'scholarships': { title: 'Scholarships', sub: 'Scholarship listings & deadlines' },
+  'cutoff': { title: 'Cutoff Management', sub: 'Year-wise cutoff data' },
+  'notifications': { title: 'Notifications', sub: 'Send alerts to students' },
+  'reports': { title: 'Reports & Analytics', sub: 'Data export & trends' },
+  'settings': { title: 'Settings', sub: 'System configuration' },
 }
 
 export default function AdminLayout() {
@@ -126,7 +127,7 @@ export default function AdminLayout() {
             <button className={styles.topBtn} onClick={toggle}>
               {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
             </button>
-            <button className={styles.topBtn}>🔔 Alerts</button>
+            <NotificationBell />
             <button className={styles.topBtnPrimary}>📤 Export</button>
           </div>
         </header>
@@ -134,17 +135,17 @@ export default function AdminLayout() {
         {/* Page content */}
         <main className={styles.content}>
           <Routes>
-            <Route index        element={<Dashboard />} />
-            <Route path="users"         element={<UsersPage />} />
-            <Route path="careers"       element={<CareersPage />} />
-            <Route path="courses"       element={<CoursesPage />} />
-            <Route path="exams"         element={<ExamsPage />} />
-            <Route path="colleges"      element={<CollegesPage />} />
-            <Route path="scholarships"  element={<ScholarshipsPage />} />
-            <Route path="cutoff"        element={<CutoffPage />} />
+            <Route index element={<Dashboard />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="careers" element={<CareersPage />} />
+            <Route path="courses" element={<CoursesPage />} />
+            <Route path="exams" element={<ExamsPage />} />
+            <Route path="colleges" element={<CollegesPage />} />
+            <Route path="scholarships" element={<ScholarshipsPage />} />
+            <Route path="cutoff" element={<CutoffPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="reports"       element={<ReportsPage />} />
-            <Route path="settings"      element={<SettingsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Routes>
         </main>
 
