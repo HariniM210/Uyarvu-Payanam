@@ -8,10 +8,10 @@ exports.createCourse = async (req, res) => {
     console.log('🔵 [Backend] POST /api/courses - Request received');
     console.log('📦 Request Body:', req.body);
     
-    const { courseName, level, duration, eligibility, futureScope } = req.body;
+    const { courseName, category, level, duration, eligibility, futureScope } = req.body;
 
     // Validation
-    if (!courseName || !level || !duration || !eligibility || !futureScope) {
+    if (!courseName || !category || !level || !duration || !eligibility || !futureScope) {
       console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({ 
         success: false,
@@ -23,6 +23,7 @@ exports.createCourse = async (req, res) => {
     console.log('💾 Attempting to save to MongoDB...');
     const course = await Course.create({
       courseName,
+      category,
       level,
       duration,
       eligibility,
@@ -105,7 +106,7 @@ exports.updateCourse = async (req, res) => {
     console.log('🔵 [Backend] PUT /api/courses/:id - Update request');
     console.log('📦 Request Body:', req.body);
     
-    const { courseName, level, duration, eligibility, futureScope } = req.body;
+    const { courseName, category, level, duration, eligibility, futureScope } = req.body;
 
     // Find course
     let course = await Course.findById(req.params.id);
@@ -119,6 +120,7 @@ exports.updateCourse = async (req, res) => {
 
     // Update fields
     if (courseName) course.courseName = courseName;
+    if (category) course.category = category;
     if (level) course.level = level;
     if (duration) course.duration = duration;
     if (eligibility) course.eligibility = eligibility;
