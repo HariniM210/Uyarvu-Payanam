@@ -25,10 +25,11 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('adminToken')
-      window.location.href = '/admin/login'
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }
 )
 
 export default axiosInstance
+

@@ -394,6 +394,7 @@ exports.getNotificationStats = async (req, res) => {
         const broadcasts = await Notification.countDocuments({ isBroadcast: true });
         const targeted = await Notification.countDocuments({ isBroadcast: false });
         const unread = await Notification.countDocuments({ isRead: false });
+        const read = Math.max(0, totalSent - unread);
 
         // How many active students exist (for "students reached" estimation)
         const activeStudents = await User.countDocuments({
@@ -422,9 +423,11 @@ exports.getNotificationStats = async (req, res) => {
 
         res.json({
             totalSent,
+            total: totalSent,
             broadcasts,
             targeted,
             unread,
+            read,
             activeStudents,
             byType,
             recentActivity,

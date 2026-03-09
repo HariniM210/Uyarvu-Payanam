@@ -202,3 +202,124 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: "Failed to delete user" });
   }
 };
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "currentPassword and newPassword are required",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "New password must be at least 8 characters",
+      });
+    }
+
+    const admin = await Admin.findById(req.admin._id);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const matches = await bcrypt.compare(currentPassword, admin.password);
+    if (!matches) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    admin.password = await bcrypt.hash(newPassword, 10);
+    await admin.save();
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    return res.status(500).json({ message: "Failed to change password" });
+  }
+};
+
+exports.createSubAdmin = async (req, res) => {
+  try {
+    const { name, email, password, permissions = {} } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "email and password are required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
+    const existing = await Admin.findOne({ email: String(email).toLowerCase() });
+    if (existing) {
+      return res.status(409).json({ message: "Admin email already exists" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const subAdmin = await Admin.create({
+      name: name || "Sub Admin",
+      email: String(email).toLowerCase(),
+      password: hashed,
+      role: "sub_admin",
+      permissions: {
+        manageUsers: Boolean(permissions.manageUsers),
+        manageSettings: Boolean(permissions.manageSettings),
+        manageContent: Boolean(permissions.manageContent),
+        manageNotifications: Boolean(permissions.manageNotifications),
+        viewReports: Boolean(permissions.viewReports),
+      },
+      createdBy: req.admin._id,
+      isActive: true,
+    });
+
+    return res.status(201).json({
+      message: "Sub-admin created successfully",
+      subAdmin: {
+        id: subAdmin._id,
+        name: subAdmin.name,
+        email: subAdmin.email,
+        role: subAdmin.role,
+        permissions: subAdmin.permissions,
+        isActive: subAdmin.isActive,
+        createdAt: subAdmin.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create sub-admin error:", error);
+    return res.status(500).json({ message: "Failed to create sub-admin" });
+  }
+};
+
+exports.getSubAdmins = async (req, res) => {
+  try {
+    const subAdmins = await Admin.find({ role: "sub_admin" })
+      .select("name email role permissions isActive createdAt createdBy")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({ count: subAdmins.length, subAdmins });
+  } catch (error) {
+    console.error("Get sub-admins error:", error);
+    return res.status(500).json({ message: "Failed to fetch sub-admins" });
+  }
+};
+
+exports.deleteSubAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const subAdmin = await Admin.findOne({ _id: id, role: "sub_admin" });
+    if (!subAdmin) {
+      return res.status(404).json({ message: "Sub-admin not found" });
+    }
+
+    await Admin.deleteOne({ _id: id });
+
+    return res.json({ message: "Sub-admin deleted successfully" });
+  } catch (error) {
+    console.error("Delete sub-admin error:", error);
+    return res.status(500).json({ message: "Failed to delete sub-admin" });
+  }
+};

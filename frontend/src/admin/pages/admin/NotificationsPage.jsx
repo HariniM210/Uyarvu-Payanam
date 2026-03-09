@@ -206,6 +206,11 @@ export default function NotificationsPage() {
     return !q || n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q)
   })
 
+  const totalSent = Number(stats?.totalSent ?? stats?.total ?? 0) || 0
+  const broadcasts = Number(stats?.broadcasts ?? 0) || 0
+  const unread = Number(stats?.unread ?? 0) || 0
+  const read = Math.max(0, totalSent - unread)
+
   const selectStyle = {
     background: 'var(--surface2)',
     border: '1.5px solid var(--border)',
@@ -239,10 +244,10 @@ export default function NotificationsPage() {
 
       {/* ── Stat Cards ─────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 14, marginBottom: 22, flexWrap: 'wrap' }}>
-        <StatCard icon="🔔" label="Total Sent" value={stats?.total ?? '—'} color="#6c5ce7" />
-        <StatCard icon="📡" label="Broadcasts" value={stats?.broadcasts ?? '—'} color="#0984e3" />
-        <StatCard icon="📬" label="Unread" value={stats?.unread ?? '—'} color="#e17055" />
-        <StatCard icon="✅" label="Read" value={stats ? (stats.total - stats.unread) : '—'} color="#00b894" />
+        <StatCard icon="🔔" label="Total Sent" value={totalSent} color="#6c5ce7" />
+        <StatCard icon="📡" label="Broadcasts" value={broadcasts} color="#0984e3" />
+        <StatCard icon="📬" label="Unread" value={unread} color="#e17055" />
+        <StatCard icon="✅" label="Read" value={read} color="#00b894" />
       </div>
 
       {/* ── Filters Row ────────────────────────────────────────────── */}
@@ -571,3 +576,6 @@ export default function NotificationsPage() {
     </div>
   )
 }
+
+
+

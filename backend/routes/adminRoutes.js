@@ -9,6 +9,10 @@ const {
   unblockUser,
   resetPassword,
   deleteUser,
+  changePassword,
+  createSubAdmin,
+  getSubAdmins,
+  deleteSubAdmin,
 } = require("../controllers/adminController");
 const verifyAdmin = require("../middleware/verifyAdmin");
 
@@ -23,6 +27,12 @@ router.put("/users/:id/block", verifyAdmin, blockUser);
 router.put("/users/:id/unblock", verifyAdmin, unblockUser);
 router.put("/users/:id/reset-password", verifyAdmin, resetPassword);
 router.delete("/users/:id", verifyAdmin, deleteUser);
+
+// Admin features
+router.put("/change-password", verifyAdmin, changePassword);
+router.post("/create-subadmin", verifyAdmin, createSubAdmin);
+router.get("/subadmins", verifyAdmin, getSubAdmins);
+router.delete("/subadmin/:id", verifyAdmin, deleteSubAdmin);
 
 // TEMPORARY ROUTE TO CREATE ADMIN
 router.get("/create-admin", async (req, res) => {
