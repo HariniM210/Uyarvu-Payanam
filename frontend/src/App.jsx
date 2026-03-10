@@ -6,6 +6,9 @@ import { NotificationProvider } from './admin/context/NotificationContext'
 import LoginPage from './admin/pages/LoginPage'
 import AdminLayout from './admin/pages/AdminLayout'
 
+// ── Student Frontend ─────────────────────────────────────────────────────────
+import StudentRoutes from './student/StudentRoutes'
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
   return isAuthenticated ? children : <Navigate to="/login" replace />
@@ -15,10 +18,13 @@ function AppRoutes() {
   const { isAuthenticated } = useAuth()
   return (
     <Routes>
+      {/* ── Admin Auth ── */}
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />}
       />
+
+      {/* ── Admin Panel ── */}
       <Route
         path="/admin/*"
         element={
@@ -29,7 +35,13 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+
+      {/* ── Student Frontend ── */}
+      <Route path="/student/*" element={<StudentRoutes />} />
+
+      {/* ── Default: go to student landing ── */}
+      <Route path="/" element={<Navigate to="/student" replace />} />
+      <Route path="*" element={<Navigate to="/student" replace />} />
     </Routes>
   )
 }

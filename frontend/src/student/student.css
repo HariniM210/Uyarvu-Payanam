@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Teachers:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --s-bg:           #f4f9f6;
+  --s-bg2:          #e8f3ed;
+  --s-surface:      #ffffff;
+  --s-surface2:     #f0f7f3;
+  --s-border:       #c8dfd3;
+  --s-text:         #0f2218;
+  --s-text2:        #2e5440;
+  --s-text3:        #5a8070;
+  --s-primary:      #1a7a50;
+  --s-primary-l:    #d4eddf;
+  --s-primary-d:    #0f5236;
+  --s-accent:       #e07b1a;
+  --s-accent-l:     #fde9cc;
+  --s-gold:         #c48a1a;
+  --s-gold-l:       #fdf4e0;
+  --s-blue:         #1d5fba;
+  --s-blue-l:       #deeafb;
+  --s-purple:       #6d28d9;
+  --s-purple-l:     #ede9fe;
+  --s-radius:       14px;
+  --s-radius-sm:    8px;
+  --s-radius-lg:    22px;
+  --s-shadow:       0 1px 12px rgba(0,60,30,0.07);
+  --s-shadow-md:    0 4px 24px rgba(0,60,30,0.10);
+  --s-shadow-lg:    0 8px 44px rgba(0,60,30,0.14);
+  --s-font-display: 'Open Sans', sans-serif;
+  --s-font-body:    'Atkinson Hyperlegible', sans-serif;
+  --s-font-kids:    'Teachers', sans-serif;
+  --s-font-scale:   1;
+}
+
+.student-root,
+.student-root * {
+  box-sizing: border-box;
+}
+
+.student-root {
+  font-family: var(--s-font-body);
+  background: var(--s-bg);
+  color: var(--s-text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: calc(16px * var(--s-font-scale));
+  line-height: 1.65;
+}
+
+/* Accessibility toolbar */
+.s-a11y-bar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.s-a11y-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 50px;
+  border: 2px solid var(--s-primary);
+  background: #fff;
+  color: var(--s-primary);
+  font-family: var(--s-font-body);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(26,122,80,0.18);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.s-a11y-btn:hover,
+.s-a11y-btn.active {
+  background: var(--s-primary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26,122,80,0.28);
+}
+
+.s-a11y-panel {
+  background: #fff;
+  border: 2px solid var(--s-border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--s-shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.s-a11y-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--s-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+/* Animations */
+@keyframes s-fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s-slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s-spin { to { transform: rotate(360deg); } }
+@keyframes s-pulse-dot {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.7; }
+}
+@keyframes s-hero-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+.s-anim-up   { animation: s-fadeUp    0.42s ease both; }
+.s-anim-in   { animation: s-fadeIn    0.32s ease both; }
+.s-anim-down { animation: s-slideDown 0.22s ease both; }
+.s-d1 { animation-delay: 0.06s; }
+.s-d2 { animation-delay: 0.12s; }
+.s-d3 { animation-delay: 0.18s; }
+.s-d4 { animation-delay: 0.24s; }
+.s-d5 { animation-delay: 0.30s; }
+
+.student-root ::-webkit-scrollbar        { width: 5px; height: 5px; }
+.student-root ::-webkit-scrollbar-track  { background: transparent; }
+.student-root ::-webkit-scrollbar-thumb  { background: var(--s-border); border-radius: 99px; }
+
+@media (max-width: 768px) {
+  .s-nav-links        { display: none !important; }
+  .s-nav-toggle       { display: flex !important; }
+  .s-nav-desktop-auth { display: none !important; }
+  .s-nav-mobile       { display: block !important; }
+  .s-a11y-bar         { bottom: 16px; right: 12px; }
+}
+
+@media (min-width: 769px) {
+  .s-nav-mobile  { display: none !important; }
+  .s-nav-toggle  { display: none !important; }
+}
+
+@media (max-width: 600px) {
+  .s-grid-2col { grid-template-columns: 1fr !important; }
+  .s-hide-sm   { display: none !important; }
+}
