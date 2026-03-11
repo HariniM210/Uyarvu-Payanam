@@ -54,4 +54,15 @@ export const notificationService = {
         const response = await axiosInstance.delete('/notifications')
         return response.data
     },
+
+    // ── Admin Alerts (system-generated notifications for admin) ──────────
+    getAdminAlerts: async () => {
+        const response = await axiosInstance.get('/admin/notifications')
+        return response.data
+    },
+
+    markAdminAlertRead: async (id) => {
+        const response = await axiosInstance.put(`/admin/notifications/${id}/read`)
+        return response.data
+    },
 }

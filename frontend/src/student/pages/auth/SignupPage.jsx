@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import axios from 'axios'
 import { authService } from '../../services'
 import { SBtn, SInput, SSelect, SAlert, SCard, SDivider } from '../../components/ui'
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
@@ -41,13 +42,13 @@ export default function SignupPage() {
     setLoading(true)
     setApiError('')
     try {
-      const res = await authService.signup({
+      await axios.post('http://localhost:5000/api/students/register', {
         name: form.name, email: form.email,
         password: form.password, classLevel: form.classLevel,
         district: form.district,
       })
-      login(res.token, res.student || res.user)
-      navigate('/student/dashboard', { replace: true })
+      alert("Signup successful");
+      navigate('/student/login')
     } catch (err) {
       setApiError(err.response?.data?.message || 'Signup failed. Please try again.')
     } finally {

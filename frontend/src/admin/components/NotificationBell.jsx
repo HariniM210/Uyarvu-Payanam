@@ -29,6 +29,7 @@ const TYPE_META = {
     course: { icon: '📘', color: '#a29bfe' },
     system: { icon: '⚙️', color: '#74b9ff' },
     counselling: { icon: '🤝', color: '#fd79a8' },
+    student_registration: { icon: '🧑‍🎓', color: '#00b894' },
 }
 
 function timeAgo(dateStr) {
@@ -49,9 +50,14 @@ export default function NotificationBell() {
 
     const {
         notifications, // sent history
+        adminAlerts,
+        adminUnreadCount,
         stats,
         deleteNotification,
+        markAdminAlertRead,
     } = useNotifications()
+
+    const [activeTab, setActiveTab] = useState('alerts') // 'alerts' | 'sent'
 
     // ── Join the "admins" socket room on mount ────────────────────────────
     // This ensures admin gets multi-tab sync events but NEVER receives
@@ -77,24 +83,26 @@ export default function NotificationBell() {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
-    // Show today's sent count as the badge value
-    const todaySent = stats?.sentToday ?? 0
-    const recent = notifications.slice(0, 15)
+    // Show unread admin alerts as the badge value
+    const badgeCount = adminUnreadCount
+    const recent = activeTab === 'alerts'
+        ? (adminAlerts || []).slice(0, 15)
+        : notifications.slice(0, 15)
 
     return (
         <div className={styles.wrapper} ref={panelRef}>
             {/* ── Bell Button ── */}
             <button
                 id="notification-bell-btn"
-                className={`${styles.bell} ${todaySent > 0 ? styles.hasActivity : ''}`}
+                className={`${styles.bell} ${badgeCount > 0 ? styles.hasActivity : ''}`}
                 onClick={() => setOpen((o) => !o)}
-                title={`${stats?.totalSent ?? 0} notifications sent`}
-                aria-label="Notification sent history"
+                title={`${badgeCount} unread notification${badgeCount !== 1 ? 's' : ''}`}
+                aria-label="Admin notifications"
             >
-                <span className={styles.bellIcon}>📤</span>
-                {todaySent > 0 && (
-                    <span className={styles.badge} title={`${todaySent} sent today`}>
-                        {todaySent > 99 ? '99+' : todaySent}
+                <span className={styles.bellIcon}>🔔</span>
+                {badgeCount > 0 && (
+                    <span className={styles.badge} title={`${badgeCount} unread`}>
+                        {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                 )}
             </button>
@@ -107,24 +115,40 @@ export default function NotificationBell() {
                     role="dialog"
                     aria-label="Sent Notifications"
                 >
-                    {/* Header */}
+                    {/* Header with tabs */}
                     <div className={styles.panelHeader}>
                         <div className={styles.panelTitle}>
-                            <span>📤</span>
-                            <span>Sent Notifications</span>
-                            {stats?.totalSent > 0 && (
+                            <span>🔔</span>
+                            <span>Notifications</span>
+                            {badgeCount > 0 && (
                                 <span className={styles.titleBadge}>
-                                    {stats.totalSent} total
+                                    {badgeCount} unread
                                 </span>
                             )}
                         </div>
                         <div className={styles.statsRow}>
-                            <span className={styles.statChip} style={{ color: '#6c5ce7' }}>
-                                📡 {stats?.broadcasts ?? 0} broadcast
-                            </span>
-                            <span className={styles.statChip} style={{ color: '#0984e3' }}>
-                                👤 {stats?.targeted ?? 0} targeted
-                            </span>
+                            <button
+                                className={styles.statChip}
+                                style={{
+                                    color: activeTab === 'alerts' ? '#fff' : '#00b894',
+                                    background: activeTab === 'alerts' ? '#00b894' : 'var(--surface2)',
+                                    cursor: 'pointer', border: '1px solid var(--border)',
+                                }}
+                                onClick={() => setActiveTab('alerts')}
+                            >
+                                🧑‍🎓 Alerts {adminUnreadCount > 0 ? `(${adminUnreadCount})` : ''}
+                            </button>
+                            <button
+                                className={styles.statChip}
+                                style={{
+                                    color: activeTab === 'sent' ? '#fff' : '#6c5ce7',
+                                    background: activeTab === 'sent' ? '#6c5ce7' : 'var(--surface2)',
+                                    cursor: 'pointer', border: '1px solid var(--border)',
+                                }}
+                                onClick={() => setActiveTab('sent')}
+                            >
+                                📤 Sent ({stats?.totalSent ?? 0})
+                            </button>
                         </div>
                     </div>
 
@@ -141,11 +165,16 @@ export default function NotificationBell() {
                         ) : (
                             recent.map((n) => {
                                 const meta = TYPE_META[n.type] || TYPE_META.announcement
+                                const isAlert = activeTab === 'alerts'
                                 return (
                                     <div
                                         key={n._id}
-                                        className={styles.item}
+                                        className={`${styles.item} ${isAlert && !n.isRead ? styles.unread : ''}`}
                                         id={`notif-item-${n._id}`}
+                                        onClick={() => {
+                                            if (isAlert && !n.isRead) markAdminAlertRead(n._id)
+                                        }}
+                                        style={isAlert ? { cursor: 'pointer' } : {}}
                                     >
                                         {/* Accent bar */}
                                         <div
@@ -166,7 +195,19 @@ export default function NotificationBell() {
 
                                         {/* Content */}
                                         <div className={styles.content}>
-                                            <div className={styles.itemTitle}>{n.title}</div>
+                                            <div className={styles.itemTitle}>
+                                                {n.title}
+                                                {isAlert && !n.isRead && (
+                                                    <span style={{
+                                                        display: 'inline-block',
+                                                        width: 8, height: 8,
+                                                        borderRadius: '50%',
+                                                        background: '#e17055',
+                                                        marginLeft: 6,
+                                                        verticalAlign: 'middle',
+                                                    }} />
+                                                )}
+                                            </div>
                                             <div className={styles.itemMsg}>{n.message}</div>
                                             <div className={styles.itemMeta}>
                                                 <span
@@ -178,37 +219,34 @@ export default function NotificationBell() {
                                                 >
                                                     {n.type}
                                                 </span>
-                                                {n.isBroadcast ? (
+                                                {!isAlert && n.isBroadcast ? (
                                                     <span className={styles.broadcastPill}>
                                                         📡 All
                                                     </span>
-                                                ) : (
+                                                ) : !isAlert ? (
                                                     <span className={styles.levelPill}>
                                                         👤 Targeted
                                                     </span>
-                                                )}
-                                                {n.targetLevel && n.targetLevel !== 'All' && (
-                                                    <span className={styles.levelPill}>
-                                                        {n.targetLevel}
-                                                    </span>
-                                                )}
+                                                ) : null}
                                                 <span className={styles.time}>
                                                     {timeAgo(n.createdAt)}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        {/* Delete action */}
-                                        <div className={styles.actions}>
-                                            <button
-                                                className={styles.deleteBtn}
-                                                onClick={() => deleteNotification(n._id)}
-                                                title="Delete notification"
-                                                id={`delete-notif-${n._id}`}
-                                            >
-                                                🗑
-                                            </button>
-                                        </div>
+                                        {/* Delete action (only for sent tab) */}
+                                        {!isAlert && (
+                                            <div className={styles.actions}>
+                                                <button
+                                                    className={styles.deleteBtn}
+                                                    onClick={() => deleteNotification(n._id)}
+                                                    title="Delete notification"
+                                                    id={`delete-notif-${n._id}`}
+                                                >
+                                                    🗑
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })
@@ -217,9 +255,11 @@ export default function NotificationBell() {
 
                     {/* Footer hint */}
                     <div className={styles.panelFooter}>
-                        {notifications.length > 15
-                            ? `Showing 15 of ${notifications.length} — visit Notifications page for full list`
-                            : `📊 ${stats?.activeStudents ?? '?'} active students in system`}
+                        {activeTab === 'alerts'
+                            ? `${adminAlerts?.length ?? 0} alert${(adminAlerts?.length ?? 0) !== 1 ? 's' : ''} — click to mark as read`
+                            : notifications.length > 15
+                                ? `Showing 15 of ${notifications.length} — visit Notifications page for full list`
+                                : `📊 ${stats?.activeStudents ?? '?'} active students in system`}
                     </div>
                 </div>
             )}
