@@ -25,12 +25,14 @@ export default function LoginPage() {
   const otpRefs                 = useRef([])
 
   // floating icons positions (stable)
-  const floatingIcons = useRef(
-    ICONS.map((ic,i) => ({
-      ic, top: `${8 + (i * 7.5) % 85}%`, left: `${5 + (i * 8.3) % 90}%`,
-      delay: `${(i * 0.7) % 4}s`, dur: `${3 + (i % 3)}s`, size: 14 + (i % 3) * 4
-    }))
-  ).current
+  const floatingIcons = ICONS.map((ic,i) => ({
+  ic,
+  top: `${8 + (i * 7.5) % 85}%`,
+  left: `${5 + (i * 8.3) % 90}%`,
+  delay: `${(i * 0.7) % 4}s`,
+  dur: `${3 + (i % 3)}s`,
+  size: 14 + (i % 3) * 4
+}))
 
   /* timer */
   useEffect(() => {
