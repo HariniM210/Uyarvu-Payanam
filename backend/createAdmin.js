@@ -11,20 +11,15 @@ const createAdmin = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected");
 
-    // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email: "uyarvupayanam@gmail.com" });
-    
-    if (existingAdmin) {
-      console.log("❌ Admin already exists!");
-      console.log("Email:", existingAdmin.email);
-      process.exit(0);
-    }
+    // Force delete existing admin (plain text password one)
+    const deleted = await Admin.deleteMany({ email: "uyarvupayanam@gmail.com" });
+    console.log(`🗑️  Deleted ${deleted.deletedCount} existing admin(s)`);
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash("Admin@123", salt);
 
-    // Create admin
+    // Create fresh admin
     const admin = new Admin({
       email: "uyarvupayanam@gmail.com",
       password: hashedPassword
