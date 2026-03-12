@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import axios from 'axios'
 import { authService } from '../../services'
 import { SBtn, SInput, SAlert, SCard, SDivider } from '../../components/ui'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
@@ -32,9 +33,10 @@ export default function LoginPage() {
     setLoading(true)
     setApiError('')
     try {
-      const res = await authService.login(form)
-      login(res.token, res.student || res.user)
-      navigate(from, { replace: true })
+      const res = await axios.post('http://localhost:5000/api/students/login', form)
+      localStorage.setItem('studentToken', res.data.token)
+      login(res.data.token, res.data.student)
+      navigate('/student/dashboard', { replace: true })
     } catch (err) {
       setApiError(err.response?.data?.message || 'Login failed. Check your credentials.')
     } finally {

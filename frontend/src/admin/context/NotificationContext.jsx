@@ -38,7 +38,10 @@ const SOCKET_URL = 'http://localhost:5000'
 export function NotificationProvider({ children }) {
     // ── Sent-history list (what admin has dispatched) ─────────────────────
     const [notifications, setNotifications] = useState([])
-    // ── Stats from the backend ────────────────────────────────────────────
+    // ── Admin alerts (system-generated, e.g. student registration) ─────
+    const [adminAlerts, setAdminAlerts] = useState([])
+    const [adminUnreadCount, setAdminUnreadCount] = useState(0)
+    // ── Stats from the backend ──────────────────────────────────────────
     const [stats, setStats] = useState({
         totalSent: 0,
         broadcasts: 0,
@@ -51,6 +54,17 @@ export function NotificationProvider({ children }) {
     })
     const [loading, setLoading] = useState(false)
     const socketRef = useRef(null)
+
+    // ── Fetch admin alerts (system-generated) ─────────────────────────────
+    const fetchAdminAlerts = useCallback(async () => {
+        try {
+            const res = await notificationService.getAdminAlerts()
+            setAdminAlerts(res.notifications || [])
+            setAdminUnreadCount(res.unreadCount || 0)
+        } catch (e) {
+            console.warn('Could not fetch admin alerts:', e.message)
+        }
+    }, [])
 
     // ── Fetch sent notifications + fresh stats ────────────────────────────
     const fetchNotifications = useCallback(async () => {
@@ -74,6 +88,7 @@ export function NotificationProvider({ children }) {
     // We only sync state when another admin session creates/deletes entries.
     useEffect(() => {
         fetchNotifications()
+        fetchAdminAlerts()
 
         const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] })
         socketRef.current = socket
@@ -120,6 +135,12 @@ export function NotificationProvider({ children }) {
             setStats((s) => ({ ...s, totalSent: 0, broadcasts: 0, targeted: 0, sentToday: 0 }))
         })
 
+        // Real-time admin alerts (e.g. new student registered)
+        socket.on('new_admin_notification', (alert) => {
+            setAdminAlerts((prev) => [alert, ...prev])
+            setAdminUnreadCount((c) => c + 1)
+        })
+
         socket.on('disconnect', () => {
             console.log('🔔 [Admin] Notification socket disconnected')
         })
@@ -127,7 +148,7 @@ export function NotificationProvider({ children }) {
         return () => {
             socket.disconnect()
         }
-    }, [fetchNotifications])
+    }, [fetchNotifications, fetchAdminAlerts])
 
     // ── Context actions (admin-side CRUD) ─────────────────────────────────
     /**
@@ -160,6 +181,21 @@ export function NotificationProvider({ children }) {
     }, [])
 
     /**
+     * markAdminAlertRead: Mark a system-generated admin alert as read.
+     */
+    const markAdminAlertRead = useCallback(async (id) => {
+        try {
+            await notificationService.markAdminAlertRead(id)
+            setAdminAlerts((prev) =>
+                prev.map((a) => (a._id === id ? { ...a, isRead: true } : a))
+            )
+            setAdminUnreadCount((c) => Math.max(0, c - 1))
+        } catch (e) {
+            console.warn('Mark admin alert read failed:', e.message)
+        }
+    }, [])
+
+    /**
      * refreshStats: Force-fetch fresh stats from backend.
      */
     const refreshStats = useCallback(async () => {
@@ -176,14 +212,19 @@ export function NotificationProvider({ children }) {
             value={{
                 // Sent-history list
                 notifications,
-                // Stats (no "unreadCount" for admin — admin has no inbox)
+                // Admin alerts (system-generated)
+                adminAlerts,
+                adminUnreadCount,
+                // Stats
                 stats,
                 loading,
                 // Actions
                 fetchNotifications,
+                fetchAdminAlerts,
                 refreshStats,
                 deleteNotification,
                 addNotification,
+                markAdminAlertRead,
             }}
         >
             {children}
