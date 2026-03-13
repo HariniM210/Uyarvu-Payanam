@@ -17,12 +17,12 @@ export const adminService = {
   },
 
   blockUser: async (id) => {
-    const response = await axiosInstance.put(`/admin/users/${id}/block`)
+    const response = await axiosInstance.patch(`/admin/users/${id}/block`)
     return response.data
   },
 
   unblockUser: async (id) => {
-    const response = await axiosInstance.put(`/admin/users/${id}/unblock`)
+    const response = await axiosInstance.patch(`/admin/users/${id}/unblock`)
     return response.data
   },
 

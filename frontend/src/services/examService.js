@@ -7,9 +7,21 @@ export const examService = {
     return response.data
   },
 
+  // Upload exams CSV
+  uploadCSV: async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await axiosInstance.post('/exams/upload-csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  },
+
   // Get all exams
-  getAllExams: async () => {
-    const response = await axiosInstance.get('/exams')
+  getAllExams: async (params = {}) => {
+    const response = await axiosInstance.get('/exams', { params })
     return response.data
   },
 

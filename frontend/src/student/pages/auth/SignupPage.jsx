@@ -42,7 +42,7 @@ export default function SignupPage() {
     setLoading(true)
     setApiError('')
     try {
-      await axios.post('http://localhost:5000/api/students/register', {
+      await axios.post('http://localhost:5000/api/auth/register', {
         name: form.name, email: form.email,
         password: form.password, classLevel: form.classLevel,
         district: form.district,

@@ -23,8 +23,8 @@ router.get("/dashboard", verifyAdmin, dashboardStats);
 
 // User management
 router.get("/users", verifyAdmin, getUsers);
-router.put("/users/:id/block", verifyAdmin, blockUser);
-router.put("/users/:id/unblock", verifyAdmin, unblockUser);
+router.patch("/users/:id/block", verifyAdmin, blockUser);
+router.patch("/users/:id/unblock", verifyAdmin, unblockUser);
 router.put("/users/:id/reset-password", verifyAdmin, resetPassword);
 router.delete("/users/:id", verifyAdmin, deleteUser);
 

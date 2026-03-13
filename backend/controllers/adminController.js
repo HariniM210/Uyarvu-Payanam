@@ -113,18 +113,30 @@ exports.dashboardStats = async (req, res) => {
 exports.getUsers = async (req, res) => {
   try {
     const { search, status } = req.query;
-    const filter = { role: "student" };
+    
+    // Allow users that either have role "student" explicitly or don't have a role set yet
+    const roleCondition = { $or: [{ role: "student" }, { role: { $exists: false } }] };
+    const conditions = [roleCondition];
 
     if (status && status !== "all") {
-      filter.status = status;
+      if (status === "active") {
+        // Active status includes both explicit "active" or missing status
+        conditions.push({ $or: [{ status: "active" }, { status: { $exists: false } }] });
+      } else {
+        conditions.push({ status: status });
+      }
     }
 
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
+      conditions.push({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ]
+      });
     }
+
+    const filter = conditions.length > 0 ? { $and: conditions } : {};
 
     const users = await User.find(filter)
       .select("-password")

@@ -5,9 +5,16 @@ const {
   getExamById,
   updateExam,
   deleteExam,
+  uploadCSV,
 } = require("../controllers/examController");
 
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
 const router = express.Router();
+
+// POST - Upload CSV
+router.post("/upload-csv", upload.single("file"), uploadCSV);
 
 // POST - Create new exam
 router.post("/", createExam);
