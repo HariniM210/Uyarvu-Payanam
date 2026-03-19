@@ -1,6 +1,9 @@
 const path = require("path");
 const xlsx = require("xlsx");
+const fs = require("fs");
+const csvParser = require("csv-parser");
 const Scholarship = require("../models/Scholarship");
+const ScholarshipApplication = require("../models/ScholarshipApplication");
 
 const normalizeString = (v) => (v === null || v === undefined ? "" : String(v).trim());
 
@@ -34,69 +37,50 @@ const parseDocuments = (v) => {
 };
 
 // @desc    Create scholarship manually
-// @route   POST /api/scholarships
-exports.createScholarship = async (req, res) => {
+// @route   POST /api/scholarships/add-scholarship
+exports.addScholarship = async (req, res) => {
   try {
-    console.log("🔵 [Backend] POST /api/scholarships - Request received");
-    console.log("📦 Request Body:", req.body);
+    let { scholarshipName, provider, amount, eligibility, applicationLink } = req.body;
 
-    const {
-      scholarshipName,
-      level,
-      incomeLimit,
-      deadline,
-      requiredDocuments,
-      applicationLink,
-      description,
-      status,
-    } = req.body;
-
-    if (!scholarshipName || !level) {
-      return res.status(400).json({
-        success: false,
-        message: "scholarshipName and level are required",
-      });
+    if (!scholarshipName) {
+      return res.status(400).json({ message: "Scholarship name is required" });
     }
 
-    const docs = Array.isArray(requiredDocuments)
-      ? requiredDocuments.map((d) => normalizeString(d)).filter(Boolean)
-      : parseDocuments(requiredDocuments);
+    // Normalize text (trim spaces and lowercase)
+    const normalizedName = scholarshipName.trim().toLowerCase();
+    const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
 
-    // duplicate check (basic)
-    const existing = await Scholarship.findOne({
-      scholarshipName: scholarshipName.trim(),
-      level: normalizeLevel(level),
-    });
+    // Check for duplicates
+    const existingScholarship = await Scholarship.findOne({ scholarshipName: normalizedName });
 
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "Scholarship already exists for this level",
-      });
+    if (existingScholarship) {
+      return res.status(409).json({ message: "Scholarship already exists" });
     }
 
-    const saved = await Scholarship.create({
-      scholarshipName: scholarshipName.trim(),
-      level: normalizeLevel(level),
-      incomeLimit: normalizeString(incomeLimit),
-      deadline: deadline ? new Date(deadline) : null,
-      requiredDocuments: docs,
-      applicationLink: normalizeString(applicationLink),
-      description: normalizeString(description),
-      status: status ? normalizeString(status) : "Active",
+    // Insert new scholarship
+    const newScholarship = new Scholarship({
+      scholarshipName: normalizedName,
+      provider: normalizedProvider,
+      amount: amount ? amount.trim() : "",
+      eligibility: eligibility ? eligibility.trim() : "",
+      applicationLink: applicationLink ? applicationLink.trim() : ""
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "Scholarship created successfully",
-      data: saved,
+    await newScholarship.save();
+
+    return res.status(201).json({ 
+      message: "Scholarship added successfully",
+      data: newScholarship
     });
   } catch (error) {
-    console.error("❌ [Backend] Error creating scholarship:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create scholarship",
-      error: error.message,
+    // Handle duplicate key error (race-condition safe)
+    if (error && (error.code === 11000 || error.code === 11001)) {
+      return res.status(409).json({ message: "Scholarship already exists" });
+    }
+    console.error("❌ [Backend] Error adding scholarship:", error);
+    return res.status(500).json({ 
+      message: "Server error while adding scholarship", 
+      error: error.message 
     });
   }
 };
@@ -200,86 +184,157 @@ exports.deleteScholarship = async (req, res) => {
   }
 };
 
-// @desc    Upload Excel and import scholarships
+// @desc    Upload CSV/Excel and import scholarships
 // @route   POST /api/scholarships/upload
-exports.uploadScholarshipsExcel = async (req, res) => {
+exports.uploadScholarshipsCSV = async (req, res) => {
   try {
-    console.log("🔵 [Backend] POST /api/scholarships/upload - Upload received");
-
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
+    const results = [];
     const filePath = req.file.path;
-    console.log("📄 Uploaded file:", filePath);
+    const fileExt = req.file.originalname.split('.').pop().toLowerCase();
 
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-
-    // Convert to JSON rows
-    const rows = xlsx.utils.sheet_to_json(sheet, { defval: "" });
-
-    console.log("📊 Rows found:", rows.length);
+    // Read the file
+    if (fileExt === 'csv') {
+      await new Promise((resolve, reject) => {
+        const stream = fs.createReadStream(filePath);
+        stream
+          .pipe(csvParser({ mapHeaders: ({ header }) => header.trim().replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "") }))
+          .on('data', (data) => results.push(data))
+          .on('end', () => {
+            stream.destroy();
+            resolve();
+          })
+          .on('error', (err) => {
+            stream.destroy();
+            reject(err);
+          });
+      });
+    } else if (fileExt === 'xlsx' || fileExt === 'xls') {
+      const workbook = xlsx.readFile(filePath);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = xlsx.utils.sheet_to_json(sheet, { defval: "" });
+      results.push(...rows);
+    } else {
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch(err){}
+      }
+      return res.status(400).json({ message: "Invalid file format. Only .csv or .xlsx allowed." });
+    }
 
     let inserted = 0;
     let skipped = 0;
-    let errors = 0;
 
-    for (const row of rows) {
+    const findVal = (row, keys) => {
+      const rowKeys = Object.keys(row);
+      for (let k of rowKeys) {
+        const lowerK = k.toLowerCase().trim();
+        if (keys.some(searchK => lowerK.includes(searchK))) {
+          return row[k];
+        }
+      }
+      return "";
+    };
+
+    for (const row of results) {
       try {
-        // Flexible column mapping (handles different Excel headings)
-        const scholarshipName = normalizeString(row.scholarshipName || row.ScholarshipName || row["Scholarship Name"] || row.Name || row["Scholarship"]);
-        const level = normalizeLevel(row.level || row.Level || row.Standard || row.Class);
-        const incomeLimit = normalizeString(row.incomeLimit || row["Income Limit"] || row.Income || row["Income"]);
-        const deadline = normalizeString(row.deadline || row.Deadline || row["Last Date"] || row["Important Date"]);
-        const requiredDocuments = parseDocuments(row.requiredDocuments || row["Required Documents"] || row.Documents);
-        const applicationLink = normalizeString(row.applicationLink || row["Application Link"] || row.ApplyLink || row["Apply Link"]);
-        const description = normalizeString(row.description || row.Description || row.Remarks);
-        const status = normalizeString(row.status || row.Status) || "Active";
+        console.log("Row:", row); // DEBUGGING: Log each raw row
 
-        // minimum required
-        if (!scholarshipName || !level) {
+        const name = normalizeString(findVal(row, ["name", "scholarship"]));
+        const provider = normalizeString(findVal(row, ["provider"]));
+        const amount = normalizeString(findVal(row, ["amount"]));
+        const eligibility = normalizeString(findVal(row, ["eligibility", "level", "class"]));
+        const link = normalizeString(findVal(row, ["link", "url", "apply"]));
+
+        // If any important field is missing -> skip row
+        if (!name || name.trim() === "") {
+          console.log("Skipping row: Missing Name");
           skipped++;
-          continue;
+          continue; 
         }
 
-        const existing = await Scholarship.findOne({ scholarshipName, level });
-        if (existing) {
-          skipped++;
-          continue;
-        }
+        // Format for uniqueness
+        const normalizedName = name.trim().toLowerCase();
+        const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
 
-        await Scholarship.create({
-          scholarshipName,
-          level,
-          incomeLimit,
-          deadline,
-          requiredDocuments,
-          applicationLink,
-          description,
-          status: status === "Expired" ? "Expired" : "Active",
+        // Check Duplicate
+        const existing = await Scholarship.findOne({
+          scholarshipName: normalizedName,
+          provider: normalizedProvider
         });
 
-        inserted++;
-      } catch (e) {
-        errors++;
+        if (existing) {
+          console.log("Skipping row: Duplicate found ->", name);
+          skipped++;
+        } else {
+          // Insert new record
+          await Scholarship.create({
+            scholarshipName: normalizedName,
+            provider: normalizedProvider,
+            amount: amount,
+            eligibility: eligibility,
+            applicationLink: link,
+          });
+          inserted++;
+          console.log("Inserted row:", name);
+        }
+      } catch (rowError) {
+        console.error("Error inserting row:", row, "->", rowError.message);
+        skipped++; // Skip if validation fails (e.g. length limits)
+      }
+    }
+
+    // Clean up temp file safely
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn("Could not delete temp file:", err.message);
       }
     }
 
     return res.status(201).json({
-      success: true,
-      message: "Excel import completed",
       inserted,
       skipped,
-      errors,
+      duplicates: skipped // (Keeping variable to support existing frontend structure)
     });
+
   } catch (error) {
     console.error("❌ [Backend] Upload import failed:", error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
     return res.status(500).json({
-      success: false,
       message: "Failed to import scholarships",
       error: error.message,
     });
+  }
+};
+
+// @desc    Apply for scholarship
+// @route   POST /api/scholarships/apply
+exports.applyForScholarship = async (req, res) => {
+  try {
+    const { studentId, studentName, studentEmail, scholarshipName, scholarshipProvider } = req.body;
+    if (!studentName || !studentEmail || !scholarshipName) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    const application = await ScholarshipApplication.create({
+      studentId: studentId || null,
+      studentName,
+      studentEmail,
+      scholarshipName,
+      scholarshipProvider: scholarshipProvider || "Unknown Provider",
+      status: "Pending"
+    });
+
+    return res.status(201).json({ success: true, message: "Applied successfully", application });
+  } catch (error) {
+    console.error("❌ Array creating ScholarshipApplication:", error);
+    return res.status(500).json({ success: false, message: "Failed to apply for scholarship", error: error.message });
   }
 };

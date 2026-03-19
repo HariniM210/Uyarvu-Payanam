@@ -19,7 +19,6 @@ const examSchema = new mongoose.Schema(
     },
     importantDate: {
       type: String,
-      required: [true, "Important date is required"],
       trim: true,
     },
     applicationLink: {

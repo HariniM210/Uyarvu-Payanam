@@ -13,6 +13,9 @@ const {
   createSubAdmin,
   getSubAdmins,
   deleteSubAdmin,
+  getRegistrationReport,
+  getPopularCoursesReport,
+  getScholarshipsReport,
 } = require("../controllers/adminController");
 const verifyAdmin = require("../middleware/verifyAdmin");
 
@@ -22,6 +25,9 @@ router.post("/login", loginAdmin);
 router.get("/dashboard", verifyAdmin, dashboardStats);
 
 // User management
+router.get("/reports/registrations", verifyAdmin, getRegistrationReport);
+router.get("/reports/popular-courses", verifyAdmin, getPopularCoursesReport);
+router.get("/reports/scholarships", verifyAdmin, getScholarshipsReport);
 router.get("/users", verifyAdmin, getUsers);
 router.patch("/users/:id/block", verifyAdmin, blockUser);
 router.patch("/users/:id/unblock", verifyAdmin, unblockUser);

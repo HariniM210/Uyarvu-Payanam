@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, ActionBtn, PrimaryBtn, Modal, FormGrid, FormGroup, FormInput, FormActions } from '../../components/UI'
 import { careerPathService } from '../../../services/careerPathService'
 
@@ -10,6 +11,7 @@ const LEVEL_COLORS = {
 }
 
 export default function CareersPage() {
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false)
   const [careerPaths, setCareerPaths] = useState([])
   const [loading, setLoading] = useState(true)
@@ -162,7 +164,14 @@ export default function CareersPage() {
         </Card>
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          {careerPaths.map(path => (
+          {[...careerPaths]
+            .sort((a, b) => {
+              const order = { '5th': 1, '8th': 2, '10th': 3, '12th': 4 };
+              const levelA = a.level ? a.level.toLowerCase() : '';
+              const levelB = b.level ? b.level.toLowerCase() : '';
+              return (order[levelA] || 99) - (order[levelB] || 99);
+            })
+            .map(path => (
             <Card key={path._id} style={{ borderTop:`4px solid ${LEVEL_COLORS[path.level] || '#6366f1'}` }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <span style={{ fontFamily:'Nunito', fontWeight:800, fontSize:17, color:'var(--text)' }}>{path.title}</span>
@@ -177,7 +186,10 @@ export default function CareersPage() {
                 <span style={{ fontWeight:600 }}>Career Options: </span>
                 <span style={{ color:'var(--text2)' }}>{path.careerDirections.join(', ')}</span>
               </div>
-              <div style={{ display:'flex', gap:8 }}>
+              <div style={{ display:'flex', gap:8, marginTop: 'auto' }}>
+                <PrimaryBtn onClick={() => navigate(`/admin/career/${path.level.toLowerCase()}`)} style={{ flex: 1, padding: '6px 14px', fontSize: 13, background: `var(--surface2)`, color: 'var(--text)', border: '1px solid var(--border)' }}>
+                  View Full Details
+                </PrimaryBtn>
                 <ActionBtn onClick={() => handleDelete(path._id)}>🗑️ Delete</ActionBtn>
               </div>
             </Card>

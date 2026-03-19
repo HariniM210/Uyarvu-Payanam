@@ -11,6 +11,21 @@ export const adminService = {
     return response.data
   },
 
+  getRegistrationReport: async () => {
+    const response = await axiosInstance.get('/admin/reports/registrations')
+    return response.data
+  },
+
+  getPopularCoursesReport: async () => {
+    const response = await axiosInstance.get('/admin/reports/popular-courses')
+    return response.data
+  },
+
+  getScholarshipsReport: async () => {
+    const response = await axiosInstance.get('/admin/reports/scholarships')
+    return response.data
+  },
+
   getUsers: async (params = {}) => {
     const response = await axiosInstance.get('/admin/users', { params })
     return response.data

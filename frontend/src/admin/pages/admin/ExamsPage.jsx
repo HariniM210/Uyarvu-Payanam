@@ -19,12 +19,12 @@ export default function ExamsPage() {
   const [formData, setFormData] = useState({
     examName: '',
     conductingBody: '',
-    level: '8th',
+    level: 'Undergraduate',
     importantDate: '',
     applicationLink: '',
     officialWebsite: '',
     description: '',
-    stream: ''
+    stream: 'Engineering'
   })
   const [editingExam, setEditingExam] = useState(null)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -83,6 +83,11 @@ export default function ExamsPage() {
   const handleSubmit = async () => {
     console.log('🔵 [Frontend] handleSubmit called');
     console.log('📋 Form Data:', formData);
+
+    if (!formData.examName || !formData.conductingBody || !formData.level) {
+      setMessage({ type: 'error', text: 'Exam Name, Conducting Body, and Level are required' })
+      return
+    }
     
     setSubmitting(true)
     setMessage({ type: '', text: '' })
@@ -111,12 +116,12 @@ export default function ExamsPage() {
         setFormData({
           examName: '',
           conductingBody: '',
-          level: '8th',
+          level: 'Undergraduate',
           importantDate: '',
           applicationLink: '',
           officialWebsite: '',
           description: '',
-          stream: ''
+          stream: 'Engineering'
         })
         console.log('🔄 Refetching exams...');
         fetchExams()
@@ -395,10 +400,8 @@ export default function ExamsPage() {
                 onChange={handleInputChange}
                 style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
               >
-                <option value="8th">8th</option>
-                <option value="10th">10th</option>
-                <option value="12th">12th</option>
-                <option value="Graduate">Graduate</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="Postgraduate">Postgraduate</option>
               </select>
             </FormGroup>
             <FormGroup label="Important Date">
@@ -410,12 +413,19 @@ export default function ExamsPage() {
               />
             </FormGroup>
             <FormGroup label="Stream">
-              <FormInput 
+              <select 
                 name="stream"
                 value={formData.stream}
                 onChange={handleInputChange}
-                placeholder="e.g. Engineering"
-              />
+                style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
+              >
+                <option value="Engineering">Engineering</option>
+                <option value="Medical">Medical</option>
+                <option value="Science">Science</option>
+                <option value="Management">Management</option>
+                <option value="Law">Law</option>
+                <option value="Arts">Arts</option>
+              </select>
             </FormGroup>
             <FormGroup label="Application Link" full>
               <FormInput 
@@ -489,10 +499,8 @@ export default function ExamsPage() {
                 onChange={handleInputChange}
                 style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
               >
-                <option value="8th">8th</option>
-                <option value="10th">10th</option>
-                <option value="12th">12th</option>
-                <option value="Graduate">Graduate</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="Postgraduate">Postgraduate</option>
               </select>
             </FormGroup>
             <FormGroup label="Important Date">
@@ -504,12 +512,19 @@ export default function ExamsPage() {
               />
             </FormGroup>
             <FormGroup label="Stream">
-              <FormInput 
+              <select 
                 name="stream"
                 value={formData.stream}
                 onChange={handleInputChange}
-                placeholder="e.g. Engineering"
-              />
+                style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
+              >
+                <option value="Engineering">Engineering</option>
+                <option value="Medical">Medical</option>
+                <option value="Science">Science</option>
+                <option value="Management">Management</option>
+                <option value="Law">Law</option>
+                <option value="Arts">Arts</option>
+              </select>
             </FormGroup>
             <FormGroup label="Application Link" full>
               <FormInput 

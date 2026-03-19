@@ -13,11 +13,11 @@ exports.createExam = async (req, res) => {
     const { examName, conductingBody, level, importantDate, applicationLink, officialWebsite, description, stream } = req.body;
 
     // Validation
-    if (!examName || !conductingBody || !level || !importantDate) {
+    if (!examName || !conductingBody || !level) {
       console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({ 
         success: false,
-        message: "examName, conductingBody, level, and importantDate are required" 
+        message: "Exam Name, Conducting Body, and Level are required" 
       });
     }
 

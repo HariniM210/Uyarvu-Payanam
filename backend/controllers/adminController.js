@@ -335,3 +335,142 @@ exports.deleteSubAdmin = async (req, res) => {
     return res.status(500).json({ message: "Failed to delete sub-admin" });
   }
 };
+
+exports.getRegistrationReport = async (req, res) => {
+  try {
+    const totalRegistrations = await User.countDocuments({ role: "student" });
+
+    const monthNames = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+    let monthlyObj = {};
+    
+    // Create the last 6 months keys ordered.
+    for(let i=5; i>=0; i--) {
+        let d = new Date();
+        d.setMonth(d.getMonth() - i);
+        monthlyObj[monthNames[d.getMonth()]] = 0;
+    }
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+
+    const monthlyData = await User.aggregate([
+      { $match: { role: "student", createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+
+    monthlyData.forEach(item => {
+      let mName = monthNames[item._id.month - 1];
+      if (monthlyObj[mName] !== undefined) {
+         monthlyObj[mName] = item.count;
+      }
+    });
+
+    const courseInterestStatsAgg = await User.aggregate([
+      { $match: { role: "student", selectedCareer: { $exists: true, $ne: null } } },
+      { $group: { _id: "$selectedCareer", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    const courseInterestStats = courseInterestStatsAgg.map(item => ({ course: item._id, count: item.count }));
+
+    const stateStatsAgg = await User.aggregate([
+      { $match: { role: "student", district: { $exists: true, $ne: null } } },
+      { $group: { _id: "$district", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    const stateStats = stateStatsAgg.map(item => ({ state: item._id, count: item.count }));
+
+    const students = await User.find({ role: "student" }).select("name email selectedCareer district createdAt").sort({ createdAt: -1 });
+    const formattedStudents = students.map(s => ({
+      name: s.name,
+      email: s.email,
+      courseInterest: s.selectedCareer || "N/A",
+      state: s.district || "N/A",
+      createdAt: s.createdAt ? s.createdAt.toISOString().split('T')[0] : "N/A"
+    }));
+
+    res.json({
+      totalRegistrations,
+      monthlyRegistrations: monthlyObj,
+      courseInterestStats,
+      stateStats,
+      students: formattedStudents
+    });
+
+  } catch (error) {
+    console.error("Report generation error:", error);
+    res.status(500).json({ message: "Failed to generate report" });
+  }
+};
+
+exports.getPopularCoursesReport = async (req, res) => {
+  try {
+    const popularCoursesAgg = await User.aggregate([
+      { $match: { role: "student", selectedCareer: { $exists: true, $ne: null, $ne: "" } } },
+      { $group: { _id: "$selectedCareer", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    // Formatting to map _id to course, and count to students
+    const popularCourses = popularCoursesAgg.map(item => ({
+      course: item._id,
+      students: item.count
+    }));
+
+    res.json({ popularCourses });
+  } catch (error) {
+    console.error("Failed to generate popular courses report:", error);
+    res.status(500).json({ message: "Failed to generate report" });
+  }
+};
+
+exports.getScholarshipsReport = async (req, res) => {
+  try {
+    const ScholarshipApplication = require("../models/ScholarshipApplication");
+
+    const totalApplications = await ScholarshipApplication.countDocuments();
+
+    const scholarshipsAgg = await ScholarshipApplication.aggregate([
+      { $group: { _id: "$scholarshipName", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+
+    const scholarships = scholarshipsAgg.map(item => ({
+      scholarship: item._id,
+      applications: item.count
+    }));
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyApplicationsAgg = await ScholarshipApplication.aggregate([
+      {
+        $group: {
+          _id: { month: { $month: "$appliedDate" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.month": 1 } }
+    ]);
+
+    const monthlyApplications = monthlyApplicationsAgg.map(item => ({
+      month: monthNames[item._id.month - 1] || "Unknown",
+      count: item.count
+    }));
+
+    res.json({
+      totalApplications,
+      scholarships,
+      monthlyApplications
+    });
+  } catch (error) {
+    console.error("Failed to generate scholarships report:", error);
+    res.status(500).json({ message: "Failed to generate report" });
+  }
+};
+
+

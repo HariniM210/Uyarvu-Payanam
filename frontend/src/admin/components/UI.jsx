@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /* ── Level Badge ── */
 export function LevelBadge({ level }) {
@@ -193,25 +194,74 @@ export function PrimaryBtn({ children, onClick, style }) {
 
 /* ── Modal ── */
 export function Modal({ title, onClose, children }) {
-  return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)',
-      backdropFilter:'blur(4px)', zIndex:200, display:'flex',
-      alignItems:'center', justifyContent:'center', animation:'fadeIn 0.15s ease' }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background:'var(--surface)', border:'1.5px solid var(--border)',
-        borderRadius:20, padding:32, width:560, maxWidth:'95vw', maxHeight:'85vh',
-        overflowY:'auto', animation:'scaleIn 0.2s ease',
-        boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [])
+
+  const overlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(0,0,0,0.45)',
+    zIndex: 9999,
+    padding: '24px 16px',
+    boxSizing: 'border-box',
+  }
+
+  const boxStyle = {
+    width: 650,
+    maxWidth: '90%',
+    maxHeight: '85vh',
+    overflowY: 'auto',
+    borderRadius: 12,
+    padding: 24,
+    background: 'var(--surface)',
+    border: '1.5px solid var(--border)',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+  }
+
+  const modalNode = (
+    <div
+      style={overlayStyle}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div style={boxStyle}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
           <h3 style={{ fontFamily:'Nunito', fontSize:20, fontWeight:800, color:'var(--text)' }}>{title}</h3>
-          <button onClick={onClose} style={{ background:'none', border:'none',
-            fontSize:20, cursor:'pointer', color:'var(--text3)', padding:4,
-            borderRadius:8, lineHeight:1 }}>✕</button>
+          <button
+            onClick={onClose}
+            type="button"
+            style={{
+              background:'none',
+              border:'none',
+              fontSize:20,
+              cursor:'pointer',
+              color:'var(--text3)',
+              padding:4,
+              borderRadius:8,
+              lineHeight:1
+            }}
+          >
+            ✕
+          </button>
         </div>
         {children}
       </div>
     </div>
   )
+
+  return createPortal(modalNode, document.body)
 }
 
 /* ── Modal Form Grid ── */
