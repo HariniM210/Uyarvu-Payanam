@@ -37,7 +37,6 @@ export const adminService = {
   },
 
   // ── College Management ──
-
   getColleges: async (params = {}) => {
     const response = await axiosInstance.get('/colleges', { params })
     return response.data
@@ -62,4 +61,26 @@ export const adminService = {
     const response = await axiosInstance.delete(`/colleges/${id}`)
     return response.data
   },
+
+  // ── Cutoff Management ── (NEW)
+  getCutoffs: async (params = {}) => {
+    const response = await axiosInstance.get('/cutoff', { 
+      params: { 
+        ...params, 
+        largeLimit: 'true', 
+        limit: 10000 
+      } 
+    })
+    return response.data
+  },
+
+  importCutoffs: async (year) => {
+    const response = await axiosInstance.post('/cutoff/import', {
+      year,
+      force: true
+    }, {
+      timeout: 120000
+    })
+    return response.data
+  }
 }

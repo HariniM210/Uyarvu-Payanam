@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const cheerio = require("cheerio");
+const fs = require("fs");
+const path = require("path");
+const XLSX = require("xlsx");
+const csvParser = require("csv-parser");
 let puppeteer = null;
 try {
     puppeteer = require("puppeteer");
@@ -9,6 +13,13 @@ try {
     console.warn("puppeteer not found; dynamic site scraping fallback disabled. Install puppeteer for full capability.");
 }
 const Cutoff = require("../models/Cutoff");
+const CutoffFileRow = require("../models/CutoffFileRow");
+const CutoffRecord = require("../models/CutoffRecord");
+const {
+    listUploadFiles,
+    parseCsvFile,
+    removeDuplicateRows,
+} = require("../services/cutoffFileImportService");
 
 // robust scraper: cheerio fallback then puppeteer for JS-rendered data
 async function scrapeTneaOnline(year) {
@@ -147,6 +158,30 @@ async function scrapeTneaOnline(year) {
 // GET /api/cutoff - paginate, search, filter by department and year
 router.get("/", async (req, res) => {
     try {
+        // New normalized cutoff API:
+        // GET /api/cutoff?type=Engineering&year=2024
+        if (req.query?.type && req.query?.year) {
+            const type = String(req.query.type);
+            const year = Number(req.query.year);
+            const data = await CutoffRecord.find({ type, year }).lean();
+            return res.json(data);
+        }
+
+        // Filter imported cutoff rows by category/year (used by Admin page button)
+        if (req.query?.category && req.query?.year) {
+            const category = String(req.query.category);
+            const year = Number(req.query.year);
+            const data = await CutoffFileRow.find({ category, year }).lean();
+            return res.json(data);
+        }
+
+        // If no query params are provided, return ALL imported cutoff rows (raw rows stored "as-is")
+        // so frontend can do: setCutoffs(res.data)
+        if (!req.query || Object.keys(req.query).length === 0) {
+            const all = await CutoffFileRow.find({}).lean();
+            return res.json(all);
+        }
+
 const { year, q = "", department = "", page = 1, limit = 20, largeLimit } = req.query;
 
         const pageNum = Number(page);
@@ -176,6 +211,183 @@ const { year, q = "", department = "", page = 1, limit = 20, largeLimit } = req.
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/cutoff/import-file
+// Reads the first CSV file from backend/uploads, converts to JSON using csv-parser,
+// adds: category="Engineering", year=2024
+// removes duplicate rows (full-row match), then inserts using insertMany().
+router.get("/import-file", async (req, res) => {
+    try {
+        const uploads = listUploadFiles().filter((p) => path.extname(p).toLowerCase() === ".csv");
+        if (!uploads.length) {
+            return res.status(404).json({
+                error: "No CSV file found in backend/uploads",
+            });
+        }
+
+        const filePath = uploads[0];
+        const rows = await parseCsvFile(filePath);
+
+        const enriched = rows.map((r) => ({
+            ...r,
+            category: "Engineering",
+            year: 2024,
+        }));
+
+        const total = enriched.length;
+        const { unique, duplicates } = removeDuplicateRows(enriched);
+
+        if (!unique.length) {
+            return res.json({
+                total,
+                inserted: 0,
+                duplicates,
+            });
+        }
+
+        const insertedDocs = await CutoffFileRow.insertMany(unique, { ordered: false });
+
+        return res.json({
+            total,
+            inserted: insertedDocs.length,
+            duplicates,
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+function normalizeHeaderKey(k) {
+    return (k ?? "")
+        .toString()
+        .replace(/\uFEFF/g, "")
+        .replace(/↑↓/g, "")
+        .replace(/\s+/g, " ")
+        .replace(/\r?\n/g, " ")
+        .trim()
+        .toLowerCase();
+}
+
+function parseCutoffNumber(v) {
+    if (v === undefined || v === null) return null;
+    const s = String(v).trim();
+    if (!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : s;
+}
+
+async function parseCsvAsObjects(filePath) {
+    return new Promise((resolve, reject) => {
+        const rows = [];
+        fs.createReadStream(filePath)
+            .pipe(
+                csvParser({
+                    mapHeaders: ({ header }) => (header ?? "").replace(/^\uFEFF/, ""),
+                    mapValues: ({ value }) => value,
+                    strict: false,
+                })
+            )
+            .on("data", (data) => rows.push(data))
+            .on("end", () => resolve(rows))
+            .on("error", (err) => reject(err));
+    });
+}
+
+// GET /api/cutoff/import-csv
+// Reads backend/uploads/TNEA 2025 _ engineering.csv and inserts normalized records:
+// { collegeCode, collegeName, branch, category, cutoff, year:2024, type:"Engineering" }
+router.get("/import-csv", async (req, res) => {
+    try {
+        const filePath = path.join(__dirname, "..", "uploads", "TNEA 2025 _ engineering.csv");
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({
+                error: "CSV file not found in backend/uploads",
+                expectedFile: "backend/uploads/TNEA 2025 _ engineering.csv",
+            });
+        }
+
+        const rawRows = await parseCsvAsObjects(filePath);
+
+        // Normalize keys once per row so we can handle multi-line/arrow headers
+        const normalized = rawRows
+            .map((row) => {
+                const out = {};
+                for (const key of Object.keys(row || {})) {
+                    out[normalizeHeaderKey(key)] = row[key];
+                }
+                return out;
+            })
+            // skip fully empty rows
+            .filter((r) => Object.values(r).some((v) => String(v ?? "").trim() !== ""));
+
+        const total = normalized.length;
+
+        const year = 2024;
+        const type = "Engineering";
+
+        // Map fields from CSV
+        const expanded = [];
+        for (const r of normalized) {
+            const collegeCode =
+                (r["councelling code"] ?? r["counselling code"] ?? r["collegecode"] ?? r["college code"] ?? "").toString().trim();
+            const collegeName = (r["college name"] ?? r["collegename"] ?? "").toString().trim();
+            const branch = (r["department"] ?? r["branch"] ?? "").toString().replace(/\s*\r?\n\s*/g, " ").trim();
+
+            if (!collegeName || !branch) continue;
+
+            const oc = parseCutoffNumber(r["oc cutoff"] ?? r["oc"] ?? r["general"] ?? "");
+            const bc = parseCutoffNumber(r["bc cutoff"] ?? r["bc"] ?? r["obc"] ?? "");
+            const mbc = parseCutoffNumber(r["mbc cutoff"] ?? r["mbc"] ?? "");
+            const sc = parseCutoffNumber(r["sc cutoff"] ?? r["sc"] ?? "");
+            const st = parseCutoffNumber(r["st cutoff"] ?? r["st"] ?? "");
+
+            const categories = [
+                ["OC", oc],
+                ["BC", bc],
+                ["MBC", mbc],
+                ["SC", sc],
+                ["ST", st],
+            ];
+
+            for (const [category, cutoff] of categories) {
+                // allow empty values: store null cutoff if missing
+                expanded.push({
+                    collegeCode,
+                    collegeName,
+                    branch,
+                    category,
+                    cutoff,
+                    year,
+                    type,
+                });
+            }
+        }
+
+        // Remove duplicates based on same collegeName + branch + category + year + type
+        const seen = new Set();
+        const unique = [];
+        let duplicates = 0;
+        for (const doc of expanded) {
+            const key = `${doc.collegeName}||${doc.branch}||${doc.category}||${doc.year}||${doc.type}`;
+            if (seen.has(key)) {
+                duplicates += 1;
+                continue;
+            }
+            seen.add(key);
+            unique.push(doc);
+        }
+
+        const insertedDocs = unique.length ? await CutoffRecord.insertMany(unique, { ordered: false }) : [];
+
+        return res.json({
+            total,
+            inserted: insertedDocs.length,
+            duplicates,
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
     }
 });
 

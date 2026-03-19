@@ -12,9 +12,20 @@ const app = express();
 const server = http.createServer(app);
 
 // â”€â”€ Socket.io setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5175",
+];
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy: Origin not allowed"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
@@ -62,7 +73,13 @@ io.on("connection", (socket) => {
 // â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy: Origin not allowed"));
+      }
+    },
     credentials: true,
   })
 );
@@ -72,6 +89,8 @@ app.use(express.json());
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/career-paths", require("./routes/careerPathRoutes"));
+app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
+app.use("/api/cutoff", require("./routes/cutoffRoutes"));
 app.use("/api/courses", require("./routes/courseRoutes"));
 app.use("/api/exams", require("./routes/examRoutes"));
 app.use("/api/colleges", require("./routes/collegeRoutes"));
