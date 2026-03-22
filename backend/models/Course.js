@@ -10,24 +10,11 @@ const courseSchema = new mongoose.Schema(
     level: {
       type: String,
       required: [true, "Level is required"],
-      enum: {
-        values: ["10th", "12th", "Diploma", "Undergraduate"],
-        message: "Level must be one of: 10th, 12th, Diploma, Undergraduate"
-      },
       trim: true,
     },
     category: {
       type: String,
       required: [true, "Category is required"],
-      enum: {
-        values: [
-          "Medical", "Engineering", "Science", "Commerce", "Arts", 
-          "Architecture", "Polytechnic", "ITI", "Design", "IT & Computer", 
-          "Paramedical", "Agriculture", "Hotel Management", "Media & Journalism", 
-          "Law", "Education", "Aviation"
-        ],
-        message: "Invalid category selected"
-      },
       trim: true,
     },
     duration: {

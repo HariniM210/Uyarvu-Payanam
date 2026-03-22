@@ -25,11 +25,11 @@ export function SBtn({ children, variant = 'primary', size = 'md', style = {}, d
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         gap: 7, cursor: disabled ? 'not-allowed' : 'pointer',
-        fontFamily: 'var(--s-font-display)', fontWeight: 700,
-        transition: 'all 0.18s', textDecoration: 'none',
+        fontFamily: 'var(--s-font-display)', fontWeight: 600,
+        transition: 'all 0.2s ease', textDecoration: 'none',
         opacity: disabled ? 0.6 : 1,
         transform: hov && !disabled ? 'translateY(-1px)' : 'none',
-        boxShadow: hov && !disabled ? '0 4px 14px rgba(0,0,0,0.12)' : 'none',
+        boxShadow: hov && !disabled ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
         ...BTN_SIZES[size],
         ...BTN_VARIANTS[variant],
         ...style,
@@ -50,12 +50,12 @@ export function SCard({ children, hover = false, style = {}, ...props }) {
       onMouseLeave={() => setHov(false)}
       style={{
         background: 'var(--s-surface)',
-        border: '1.5px solid var(--s-border)',
+        border: '1px solid var(--s-border)',
         borderRadius: 'var(--s-radius)',
         padding: 20,
         boxShadow: hov && hover ? 'var(--s-shadow-lg)' : 'var(--s-shadow)',
         transform: hov && hover ? 'translateY(-3px)' : 'none',
-        transition: 'all 0.22s',
+        transition: 'all 0.22s ease',
         ...style,
       }}
       {...props}
@@ -67,12 +67,12 @@ export function SCard({ children, hover = false, style = {}, ...props }) {
 
 /* ── Badge ───────────────────────────────────────────────── */
 const BADGE_COLORS = {
-  green:  { bg: 'var(--s-primary-l)', text: 'var(--s-primary)' },
-  orange: { bg: 'var(--s-accent-l)',  text: 'var(--s-accent)'  },
-  gold:   { bg: 'var(--s-gold-l)',    text: 'var(--s-gold)'    },
-  blue:   { bg: 'var(--s-blue-l)',    text: 'var(--s-blue)'    },
-  purple: { bg: 'var(--s-purple-l)',  text: 'var(--s-purple)'  },
-  gray:   { bg: 'var(--s-bg2)',       text: 'var(--s-text3)'   },
+  green:  { bg: 'var(--s-green-l)',  text: 'var(--s-green)'  },
+  orange: { bg: 'var(--s-accent-l)', text: 'var(--s-accent)' },
+  gold:   { bg: 'var(--s-gold-l)',   text: 'var(--s-gold)'   },
+  blue:   { bg: 'var(--s-blue-l)',   text: 'var(--s-blue)'   },
+  purple: { bg: 'var(--s-purple-l)', text: 'var(--s-purple)' },
+  gray:   { bg: 'var(--s-bg2)',      text: 'var(--s-text3)'  },
 }
 
 export function SBadge({ children, color = 'green', dot = false, style = {} }) {
@@ -81,8 +81,8 @@ export function SBadge({ children, color = 'green', dot = false, style = {} }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       background: c.bg, color: c.text,
-      padding: '3px 9px', borderRadius: 99,
-      fontSize: 11.5, fontWeight: 700,
+      padding: '3px 10px', borderRadius: 99,
+      fontSize: 12, fontWeight: 600,
       fontFamily: 'var(--s-font-display)', letterSpacing: '0.01em',
       whiteSpace: 'nowrap', ...style,
     }}>
@@ -104,7 +104,7 @@ export function SNotifBadge({ count }) {
   return (
     <span style={{
       position: 'absolute', top: -5, right: -5,
-      background: 'var(--s-accent)', color: '#fff',
+      background: '#ef4444', color: '#fff',
       fontSize: 10, fontWeight: 800,
       fontFamily: 'var(--s-font-display)',
       minWidth: 18, height: 18, borderRadius: 99,
@@ -131,16 +131,18 @@ export function SLoader({ size = 34, color = 'var(--s-primary)', style = {} }) {
 }
 
 /* ── Empty state ─────────────────────────────────────────── */
-export function SEmpty({ icon = '📭', title = 'Nothing here', desc = '' }) {
+export function SEmpty({ icon, title = 'Nothing here', desc = '' }) {
   return (
     <div style={{ textAlign: 'center', padding: '56px 20px' }}>
-      <div style={{ fontSize: 54, marginBottom: 14 }}>{icon}</div>
+      <div style={{ fontSize: 48, marginBottom: 14, color: 'var(--s-text3)' }}>
+        {typeof icon === 'string' ? icon : icon}
+      </div>
       <p style={{
         fontFamily: 'var(--s-font-display)', fontWeight: 700,
         fontSize: 17, color: 'var(--s-text)', marginBottom: 7,
       }}>{title}</p>
       {desc && (
-        <p style={{ fontSize: 13.5, color: 'var(--s-text3)', maxWidth: 280, margin: '0 auto', lineHeight: 1.65 }}>
+        <p style={{ fontSize: 14, color: 'var(--s-text3)', maxWidth: 320, margin: '0 auto', lineHeight: 1.65 }}>
           {desc}
         </p>
       )}
@@ -155,14 +157,14 @@ export function SInput({ label, error, icon, style = {}, ...props }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       {label && (
         <label style={{
-          fontSize: 12.5, fontWeight: 600, color: 'var(--s-text2)',
+          fontSize: 13, fontWeight: 600, color: 'var(--s-text2)',
           fontFamily: 'var(--s-font-display)',
         }}>{label}</label>
       )}
       <div style={{ position: 'relative' }}>
         {icon && (
           <span style={{
-            position: 'absolute', left: 11, top: '50%',
+            position: 'absolute', left: 12, top: '50%',
             transform: 'translateY(-50%)', fontSize: 15,
             color: focused ? 'var(--s-primary)' : 'var(--s-text3)',
             pointerEvents: 'none', transition: 'color 0.15s',
@@ -176,9 +178,9 @@ export function SInput({ label, error, icon, style = {}, ...props }) {
             background: 'var(--s-surface)',
             border: `1.5px solid ${focused ? 'var(--s-primary)' : error ? '#dc2626' : 'var(--s-border)'}`,
             borderRadius: 10,
-            padding: icon ? '10px 12px 10px 36px' : '10px 12px',
+            padding: icon ? '11px 14px 11px 38px' : '11px 14px',
             fontSize: 14, color: 'var(--s-text)', outline: 'none',
-            transition: 'border-color 0.15s', ...style,
+            transition: 'border-color 0.2s ease', ...style,
           }}
           {...props}
         />
@@ -194,7 +196,7 @@ export function SSelect({ label, children, style = {}, ...props }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       {label && (
         <label style={{
-          fontSize: 12.5, fontWeight: 600, color: 'var(--s-text2)',
+          fontSize: 13, fontWeight: 600, color: 'var(--s-text2)',
           fontFamily: 'var(--s-font-display)',
         }}>{label}</label>
       )}
@@ -202,8 +204,10 @@ export function SSelect({ label, children, style = {}, ...props }) {
         width: '100%', fontFamily: 'var(--s-font-body)',
         background: 'var(--s-surface)',
         border: '1.5px solid var(--s-border)',
-        borderRadius: 10, padding: '10px 12px',
-        fontSize: 14, color: 'var(--s-text)', outline: 'none', ...style,
+        borderRadius: 10, padding: '11px 14px',
+        fontSize: 14, color: 'var(--s-text)', outline: 'none',
+        transition: 'border-color 0.2s ease',
+        ...style,
       }} {...props}>{children}</select>
     </div>
   )
@@ -222,8 +226,8 @@ export function SAlert({ type = 'info', children, onClose }) {
   return (
     <div style={{
       background: s.bg, border: `1px solid ${s.border}`, color: s.text,
-      borderRadius: 10, padding: '11px 14px',
-      fontSize: 13.5, fontWeight: 500,
+      borderRadius: 10, padding: '12px 16px',
+      fontSize: 14, fontWeight: 500,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
     }}>
       <span>{children}</span>

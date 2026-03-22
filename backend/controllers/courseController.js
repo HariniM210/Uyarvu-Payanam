@@ -51,8 +51,14 @@ exports.createCourse = async (req, res) => {
 // @access  Public
 exports.getAllCourses = async (req, res) => {
   try {
-    console.log('🔵 [Backend] GET /api/courses - Fetching all courses');
-    const courses = await Course.find().sort({ createdAt: -1 });
+    console.log('🔵 [Backend] GET /api/courses - Fetching courses');
+    const { level, category } = req.query;
+    const filter = {};
+
+    if (level) filter.level = level;
+    if (category) filter.category = category;
+
+    const courses = await Course.find(filter).sort({ createdAt: -1 });
 
     console.log('✅ Retrieved', courses.length, 'courses');
     res.status(200).json({

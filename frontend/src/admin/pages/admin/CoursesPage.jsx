@@ -169,14 +169,19 @@ export default function CoursesPage() {
         <FilterSelect value={selectedLevel} onChange={e=>setSelectedLevel(e.target.value)}>
           <option value="All">All Levels</option>
           {[
-            "10th", "12th", "Diploma", "Undergraduate"
-          ].map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
+            { v: "5", l: "Class 5" },
+            { v: "8", l: "Class 8" },
+            { v: "10", l: "Class 10" },
+            { v: "12", l: "Class 12" },
+            { v: "Diploma", l: "Diploma" },
+            { v: "Undergraduate", l: "Undergraduate" }
+          ].map(lvl => <option key={lvl.v} value={lvl.v}>{lvl.l}</option>)}
         </FilterSelect>
         <FilterSelect value={selectedCategory} onChange={e=>setSelectedCategory(e.target.value)}>
           <option value="All">All Categories</option>
           {[
-            "Medical", "Engineering", "Science", "Commerce", "Arts", 
-            "Design", "Agriculture", "Polytechnic", "ITI"
+            "Engineering", "Medical", "Law", "Arts", "Commerce",
+            "Science", "Design", "Architecture", "Education", "Aviation"
           ].map(cat => <option key={cat} value={cat}>{cat}</option>)}
         </FilterSelect>
         <PrimaryBtn style={{ marginLeft:'auto' }} onClick={()=>setShowAddCourseModal(true)}>+ Add Course</PrimaryBtn>
@@ -193,7 +198,7 @@ export default function CoursesPage() {
             <TR key={c._id}>
               <TD style={{ fontWeight:600, color:'var(--text)' }}>{c.courseName}</TD>
               <TD style={{ color:'var(--text2)' }}>{c.category}</TD>
-              <TD><LevelBadge level={c.level}/></TD>
+              <TD><LevelBadge level={`Class ${c.level}`}/></TD>
               <TD style={{ color:'var(--text3)' }}>{c.duration}</TD>
               <TD style={{ color:'var(--text3)' }}>{c.eligibility}</TD>
               <TD style={{ color:'var(--text3)' }}>{c.futureScope}</TD>
@@ -246,8 +251,8 @@ export default function CoursesPage() {
                 style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
               >
                 {[
-                  "Medical", "Engineering", "Science", "Commerce", "Arts", 
-                  "Design", "Agriculture", "Polytechnic", "ITI"
+                  "Engineering", "Medical", "Law", "Arts", "Commerce",
+                  "Science", "Design", "Architecture", "Education", "Aviation"
                 ].map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -260,8 +265,10 @@ export default function CoursesPage() {
                 onChange={handleInputChange}
                 style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
               >
-                <option value="10th">10th</option>
-                <option value="12th">12th</option>
+                <option value="5">Class 5</option>
+                <option value="8">Class 8</option>
+                <option value="10">Class 10</option>
+                <option value="12">Class 12</option>
                 <option value="Diploma">Diploma</option>
                 <option value="Undergraduate">Undergraduate</option>
               </select>

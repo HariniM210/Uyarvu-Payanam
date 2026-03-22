@@ -1,49 +1,80 @@
 const CareerPath = require("../models/CareerPath");
 
-// @desc    Create new career path
-// @route   POST /api/career-paths
-// @access  Admin
+function normalizeList(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function buildCareerPathPayload(body = {}, existing = null) {
+  const roadmap = normalizeList(body.roadmap || body.steps);
+  const relatedCourses = normalizeList(body.relatedCourses);
+  const futureOpportunities = normalizeList(body.futureOpportunities || body.careerDirections);
+  const legacyDirections = normalizeList(body.careerDirections || body.futureOpportunities);
+
+  return {
+    title: body.title?.trim() || existing?.title || "",
+    level: body.level?.trim() || existing?.level || "",
+    description: body.description?.trim() || existing?.description || "",
+    sections: body.sections || existing?.sections || [],
+    roadmap: roadmap.length > 0 ? roadmap : existing?.roadmap || [],
+    relatedCourses: relatedCourses.length > 0 ? relatedCourses : existing?.relatedCourses || [],
+    futureOpportunities: futureOpportunities.length > 0 ? futureOpportunities : existing?.futureOpportunities || [],
+    interestArea: body.interestArea?.trim() || existing?.interestArea || "General",
+    isRecommended:
+      typeof body.isRecommended === "boolean"
+        ? body.isRecommended
+        : typeof body.isRecommended === "string"
+          ? body.isRecommended === "true"
+          : existing?.isRecommended || false,
+    ageGroup: body.ageGroup?.trim() || existing?.ageGroup || "",
+    careerDirections: legacyDirections.length > 0 ? legacyDirections : existing?.careerDirections || [],
+  };
+}
+
+function validateCareerPathPayload(payload) {
+  if (!payload.title || !payload.level || !payload.description) {
+    return "Title, class level, and description are required";
+  }
+
+  // Allow empty roadmap for Class 5 if sections are provided
+  if (payload.level !== '5' && (!Array.isArray(payload.roadmap) || payload.roadmap.length === 0)) {
+    return "At least one roadmap step is required";
+  }
+
+  return null;
+}
+
 exports.createCareerPath = async (req, res) => {
   try {
-    console.log('🔵 [Backend] POST /api/career-paths - Request received');
-    console.log('📦 Request Body:', req.body);
-    
-    const { title, ageGroup, level, careerDirections, description } = req.body;
+    const payload = buildCareerPathPayload(req.body);
+    const validationError = validateCareerPathPayload(payload);
 
-    // Validation
-    if (!title || !ageGroup || !level || !careerDirections || !description) {
-      console.log('❌ Validation failed: Missing required fields');
-      return res.status(400).json({ 
+    if (validationError) {
+      return res.status(400).json({
         success: false,
-        message: "All fields are required" 
+        message: validationError,
       });
     }
 
-    if (!Array.isArray(careerDirections) || careerDirections.length === 0) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Career directions must be a non-empty array" 
-      });
-    }
+    const careerPath = await CareerPath.create(payload);
 
-    // Create career path
-    console.log('💾 Attempting to save to MongoDB...');
-    const careerPath = await CareerPath.create({
-      title,
-      ageGroup,
-      level,
-      careerDirections,
-      description,
-    });
-
-    console.log('✅ Career path saved successfully:', careerPath._id);
     res.status(201).json({
       success: true,
       message: "Career path created successfully",
       data: careerPath,
     });
   } catch (error) {
-    console.error('❌ [Backend] Error creating career path:', error);
+    console.error("Error creating career path:", error);
     res.status(500).json({
       success: false,
       message: "Failed to create career path",
@@ -52,12 +83,16 @@ exports.createCareerPath = async (req, res) => {
   }
 };
 
-// @desc    Get all career paths
-// @route   GET /api/career-paths
-// @access  Public
 exports.getAllCareerPaths = async (req, res) => {
   try {
-    const careerPaths = await CareerPath.find().sort({ createdAt: -1 });
+    const { level, interestArea, recommended } = req.query;
+    const filter = {};
+
+    if (level) filter.level = level;
+    if (interestArea) filter.interestArea = interestArea;
+    if (recommended === "true") filter.isRecommended = true;
+
+    const careerPaths = await CareerPath.find(filter).sort({ isRecommended: -1, createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -74,9 +109,6 @@ exports.getAllCareerPaths = async (req, res) => {
   }
 };
 
-// @desc    Get single career path by ID
-// @route   GET /api/career-paths/:id
-// @access  Public
 exports.getCareerPathById = async (req, res) => {
   try {
     const careerPath = await CareerPath.findById(req.params.id);
@@ -102,36 +134,34 @@ exports.getCareerPathById = async (req, res) => {
   }
 };
 
-// @desc    Update career path
-// @route   PUT /api/career-paths/:id
-// @access  Admin
 exports.updateCareerPath = async (req, res) => {
   try {
-    const { title, ageGroup, level, careerDirections, description } = req.body;
+    const existing = await CareerPath.findById(req.params.id);
 
-    // Find career path
-    let careerPath = await CareerPath.findById(req.params.id);
-
-    if (!careerPath) {
+    if (!existing) {
       return res.status(404).json({
         success: false,
         message: "Career path not found",
       });
     }
 
-    // Update fields
-    if (title) careerPath.title = title;
-    if (ageGroup) careerPath.ageGroup = ageGroup;
-    if (level) careerPath.level = level;
-    if (careerDirections) careerPath.careerDirections = careerDirections;
-    if (description) careerPath.description = description;
+    const payload = buildCareerPathPayload(req.body, existing);
+    const validationError = validateCareerPathPayload(payload);
 
-    await careerPath.save();
+    if (validationError) {
+      return res.status(400).json({
+        success: false,
+        message: validationError,
+      });
+    }
+
+    Object.assign(existing, payload);
+    await existing.save();
 
     res.status(200).json({
       success: true,
       message: "Career path updated successfully",
-      data: careerPath,
+      data: existing,
     });
   } catch (error) {
     console.error("Error updating career path:", error);
@@ -143,9 +173,6 @@ exports.updateCareerPath = async (req, res) => {
   }
 };
 
-// @desc    Delete career path
-// @route   DELETE /api/career-paths/:id
-// @access  Admin
 exports.deleteCareerPath = async (req, res) => {
   try {
     const careerPath = await CareerPath.findById(req.params.id);

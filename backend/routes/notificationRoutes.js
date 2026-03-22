@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyAdmin = require("../middleware/verifyAdmin");
+const verifyStudent = require("../middleware/verifyStudent");
 
 const {
     createNotification,
@@ -30,19 +31,19 @@ router.delete("/", verifyAdmin, deleteAllNotifications);
 
 // ── Public / user-facing routes ─────────────────────────────────────────
 // GET    /api/notifications/:id               → single notification
-router.get("/:id", getNotificationById);
+router.get("/:id", verifyStudent, getNotificationById);
 
 // GET    /api/notifications/user/:userId      → all notifications for a user
-router.get("/user/:userId", getUserNotifications);
+router.get("/user/:userId", verifyStudent, getUserNotifications);
 
 // PUT    /api/notifications/:id               → edit title/message/type/isRead
 router.put("/:id", verifyAdmin, updateNotification);
 
 // PUT    /api/notifications/:id/read          → mark single as read
-router.put("/:id/read", markAsRead);
+router.put("/:id/read", verifyStudent, markAsRead);
 
 // PUT    /api/notifications/user/:userId/read-all → mark all as read for user
-router.put("/user/:userId/read-all", markAllAsRead);
+router.put("/user/:userId/read-all", verifyStudent, markAllAsRead);
 
 // DELETE /api/notifications/:id              → delete one
 router.delete("/:id", verifyAdmin, deleteNotification);

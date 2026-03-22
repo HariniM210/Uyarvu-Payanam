@@ -1,25 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { useStudentAuth } from '../../context/StudentAuthContext'
 import { collegeService } from '../../services'
-import { SCard, SBadge, SLoader, SEmpty, SInput, SSelect } from '../../components/ui'
+import { SCard, SBadge, SLoader, SEmpty, SInput, SSelect, SBtn } from '../../components/ui'
 import { FiMapPin, FiSearch, FiStar } from 'react-icons/fi'
 
-const STREAMS   = ['All','Engineering','Medical','Arts & Science','Law','Polytechnic','Agriculture','Others']
-const DISTRICTS = ['All','Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Erode','Tirunelveli','Vellore','Thanjavur','Dindigul','Kanchipuram','Namakkal','Dharmapuri','Krishnagiri','Karur','Thoothukudi','Tiruppur','Tiruvannamalai','Cuddalore','Nagapattinam','Others']
+const STREAMS = ['All', 'Engineering', 'Medical', 'Arts & Science', 'Law', 'Polytechnic', 'Agriculture', 'Others']
+const DISTRICTS = ['All', 'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Erode', 'Tirunelveli', 'Vellore', 'Thanjavur', 'Dindigul', 'Kanchipuram', 'Namakkal', 'Dharmapuri', 'Krishnagiri', 'Karur', 'Thoothukudi', 'Tiruppur', 'Tiruvannamalai', 'Cuddalore', 'Nagapattinam', 'Others']
 
 const STREAM_STYLE = {
-  Engineering:      { color: '#1d5fba', bg: '#eaf0fb' },
-  Medical:          { color: '#16a34a', bg: '#f0fdf4' },
+  Engineering: { color: '#1d5fba', bg: '#eaf0fb' },
+  Medical: { color: '#16a34a', bg: '#f0fdf4' },
   'Arts & Science': { color: '#7c3aed', bg: '#f3effe' },
-  Law:              { color: '#c48a1a', bg: '#fdf4e0' },
-  Polytechnic:      { color: '#e05e24', bg: '#fdeee6' },
-  Agriculture:      { color: '#15803d', bg: '#dcfce7' },
-  Others:           { color: '#64748b', bg: '#f1f5f9' },
+  Law: { color: '#c48a1a', bg: '#fdf4e0' },
+  Polytechnic: { color: '#e05e24', bg: '#fdeee6' },
+  Agriculture: { color: '#15803d', bg: '#dcfce7' },
+  Others: { color: '#64748b', bg: '#f1f5f9' },
 }
 
 function formatFees(n) {
   if (!n) return '—'
   if (n >= 100000) return `${(n / 100000).toFixed(1)}L/yr`
-  if (n >= 1000)   return `${(n / 1000).toFixed(0)}K/yr`
+  if (n >= 1000) return `${(n / 1000).toFixed(0)}K/yr`
   return `${n}/yr`
 }
 
@@ -43,9 +45,9 @@ function CollegeCard({ college }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 7, marginBottom: 12 }}>
         {[
-          { l: 'Fees',      v: formatFees(college.feesPerYear),                                    c: '#16a34a'         },
-          { l: 'Placement', v: college.placementPercentage ? `${college.placementPercentage}%` : '—', c: '#1d5fba'     },
-          { l: 'Rank',      v: college.rank || '—',                                                c: 'var(--s-primary)' },
+          { l: 'Fees', v: formatFees(college.feesPerYear), c: '#16a34a' },
+          { l: 'Placement', v: college.placementPercentage ? `${college.placementPercentage}%` : '—', c: '#1d5fba' },
+          { l: 'Rank', v: college.rank || '—', c: 'var(--s-primary)' },
         ].map((s, i) => (
           <div key={i} style={{ background: 'var(--s-bg2)', borderRadius: 8, padding: '8px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 14, color: s.c }}>{s.v}</div>
@@ -75,19 +77,22 @@ function CollegeCard({ college }) {
 }
 
 export default function CollegesPage() {
-  const [colleges,  setColleges]  = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [stream,    setStream]    = useState('All')
-  const [district,  setDistrict]  = useState('All')
-  const [search,    setSearch]    = useState('')
+  const { isAuthenticated } = useStudentAuth()
+  const location = useLocation()
+
+  const [colleges, setColleges] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [stream, setStream] = useState('All')
+  const [district, setDistrict] = useState('All')
+  const [search, setSearch] = useState('')
 
   const fetchColleges = useCallback(async () => {
     try {
       setLoading(true)
       const params = {}
-      if (stream  !== 'All')  params.stream   = stream
+      if (stream !== 'All') params.stream = stream
       if (district !== 'All') params.district = district
-      if (search.trim())      params.search   = search.trim()
+      if (search.trim()) params.search = search.trim()
       const res = await collegeService.getAll(params)
       setColleges(res.data || res || [])
     } catch {
@@ -151,6 +156,28 @@ export default function CollegesPage() {
           {colleges.map(c => <CollegeCard key={c._id} college={c} />)}
         </div>
       )}
+
+      {!isAuthenticated && (
+        <div className="s-anim-up" style={{
+          background: 'var(--s-surface2)',
+          border: '1.5px solid var(--s-border)',
+          borderRadius: 20,
+          padding: '32px 24px',
+          textAlign: 'center',
+          marginTop: 48
+        }}>
+          <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 20, color: 'var(--s-text)', marginBottom: 8 }}>
+            Get Personalized Guidance
+          </h3>
+          <p style={{ fontSize: 14.5, color: 'var(--s-text3)', marginBottom: 20, maxWidth: 500, margin: '0 auto 20px' }}>
+            Login to unlock personalized career recommendations tailored to your exact skills, streams, and aspirations.
+          </p>
+          <Link to="/student/login" state={{ from: location.pathname }} style={{ textDecoration: 'none' }}>
+            <SBtn variant="primary">Login / Sign Up To Continue</SBtn>
+          </Link>
+        </div>
+      )}
+
     </div>
   )
 }
