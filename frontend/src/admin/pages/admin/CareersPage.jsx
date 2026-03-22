@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, ActionBtn, PrimaryBtn, Modal, FormGrid, FormGroup, FormInput, FormActions } from '../../components/UI'
 import { careerPathService } from '../../../services/careerPathService'
 import { FiPlus, FiTrash2, FiVideo, FiImage, FiChevronDown, FiChevronUp } from 'react-icons/fi'
@@ -11,6 +12,7 @@ const LEVEL_COLORS = {
 }
 
 export default function CareersPage() {
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false)
   const [careerPaths, setCareerPaths] = useState([])
   const [loading, setLoading] = useState(true)
@@ -126,24 +128,46 @@ export default function CareersPage() {
         <PrimaryBtn onClick={() => setShowModal(true)}>+ Add New Career Milestone</PrimaryBtn>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-        {careerPaths.map(path => (
-          <Card key={path._id} style={{ borderTop:`5px solid ${LEVEL_COLORS[path.level] || '#6366f1'}` }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <span style={{ fontWeight:800, fontSize:18, color:'var(--text)' }}>{path.title}</span>
-              <span style={{ fontSize:11, color:'var(--text3)', background:'var(--surface2)', padding:'4px 10px', borderRadius:20 }}>Class {path.level}</span>
-            </div>
-            <p style={{ fontSize:13.5, color:'var(--text2)', marginBottom:12, lineHeight:1.6 }}>{path.description}</p>
-            <div style={{ display:'flex', gap:10, fontSize:11, background:'#f8fafc', padding:10, borderRadius:8 }}>
-               <span style={{ fontWeight:700 }}>Sections: {path.sections?.length || 0}</span>
-               <span style={{ fontWeight:700 }}>Options: {path.careerDirections?.length || 0}</span>
-            </div>
-            <div style={{ display:'flex', gap:8, marginTop:16 }}>
-              <ActionBtn danger onClick={() => handleDelete(path._id)}>🗑️ Delete</ActionBtn>
-            </div>
-          </Card>
-        ))}
-      </div>
+      {careerPaths.length === 0 ? (
+        <Card style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
+          <p style={{ color: 'var(--text2)', fontSize: 15, marginBottom: 8 }}>No career paths added yet</p>
+          <p style={{ color: 'var(--text3)', fontSize: 13 }}>Click "Add Career Path" to create your first entry</p>
+        </Card>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+          {[...careerPaths]
+            .sort((a, b) => {
+              const order = { '5th': 1, '8th': 2, '10th': 3, '12th': 4 };
+              const levelA = a.level ? a.level.toLowerCase() : '';
+              const levelB = b.level ? b.level.toLowerCase() : '';
+              return (order[levelA] || 99) - (order[levelB] || 99);
+            })
+            .map(path => (
+            <Card key={path._id} style={{ borderTop:`4px solid ${LEVEL_COLORS[path.level] || '#6366f1'}` }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <span style={{ fontFamily:'Nunito', fontWeight:800, fontSize:17, color:'var(--text)' }}>{path.title}</span>
+                <span style={{ fontSize:11, color:'var(--text3)', background:'var(--surface2)',
+                  padding:'4px 10px', borderRadius:20, fontWeight:600 }}>{path.ageGroup}</span>
+              </div>
+              <div style={{ fontSize:11, color:'var(--text3)', marginBottom:8, fontWeight:700 }}>
+                Level: {path.level}
+              </div>
+              <p style={{ fontSize:13.5, color:'var(--text2)', marginBottom:12, lineHeight:1.7 }}>{path.description}</p>
+              <div style={{ fontSize:12, color:'var(--text3)', marginBottom:14 }}>
+                <span style={{ fontWeight:600 }}>Career Options: </span>
+                <span style={{ color:'var(--text2)' }}>{path.careerDirections.join(', ')}</span>
+              </div>
+              <div style={{ display:'flex', gap:8, marginTop: 'auto' }}>
+                <PrimaryBtn onClick={() => navigate(`/admin/career/${path.level.toLowerCase()}`)} style={{ flex: 1, padding: '6px 14px', fontSize: 13, background: `var(--surface2)`, color: 'var(--text)', border: '1px solid var(--border)' }}>
+                  View Full Details
+                </PrimaryBtn>
+                <ActionBtn onClick={() => handleDelete(path._id)}>🗑️ Delete</ActionBtn>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {showModal && (
         <Modal title="Build Interactive Career Milestone" onClose={() => setShowModal(false)} width="850px">

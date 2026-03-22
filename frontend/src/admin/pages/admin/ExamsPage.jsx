@@ -7,30 +7,59 @@ export default function ExamsPage() {
   const [editModal, setEditModal] = useState(false)
   const [exams, setExams] = useState([])
   const [loading, setLoading] = useState(true)
-  const [level, setLevel] = useState('All Levels')
-  const [searchQuery, setSearchQuery] = useState('')
+  const queryParams = new URLSearchParams(window.location.search)
+  const initialSearch = queryParams.get('search') || ''
+  const initialLevel = queryParams.get('level') || 'All Levels'
+  const initialStream = queryParams.get('stream') || 'All Streams'
+
+  const [searchTerm, setSearchTerm] = useState(initialSearch)
+  const [selectedLevel, setSelectedLevel] = useState(initialLevel)
+  const [selectedStream, setSelectedStream] = useState(initialStream)
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch)
   const [formData, setFormData] = useState({
     examName: '',
     conductingBody: '',
-    level: '8th',
+    level: 'Undergraduate',
     importantDate: '',
     applicationLink: '',
     officialWebsite: '',
-    description: ''
+    description: '',
+    stream: 'Engineering'
   })
   const [editingExam, setEditingExam] = useState(null)
   const [message, setMessage] = useState({ type: '', text: '' })
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    fetchExams()
-  }, [])
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 500)
+    return () => clearTimeout(handler)
+  }, [searchTerm])
 
-  const fetchExams = async () => {
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (debouncedSearch) params.set('search', debouncedSearch)
+    if (selectedLevel !== 'All Levels') params.set('level', selectedLevel)
+    if (selectedStream !== 'All Streams') params.set('stream', selectedStream)
+    
+    window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`)
+
+    fetchExams({
+      search: debouncedSearch,
+      level: selectedLevel,
+      stream: selectedStream
+    })
+  }, [debouncedSearch, selectedLevel, selectedStream])
+
+  const fetchExams = async (paramsOverride) => {
     try {
       console.log('🔄 [Frontend] Fetching exams from API...');
       setLoading(true)
-      const result = await examService.getAllExams()
+      const fetchParams = paramsOverride || {
+        search: debouncedSearch,
+        level: selectedLevel,
+        stream: selectedStream
+      }
+      const result = await examService.getAllExams(fetchParams)
       console.log('📥 [Frontend] Exams received:', result);
       if (result.success) {
         console.log('✅ [Frontend] Loaded', result.count, 'exams');
@@ -54,6 +83,11 @@ export default function ExamsPage() {
   const handleSubmit = async () => {
     console.log('🔵 [Frontend] handleSubmit called');
     console.log('📋 Form Data:', formData);
+
+    if (!formData.examName || !formData.conductingBody || !formData.level) {
+      setMessage({ type: 'error', text: 'Exam Name, Conducting Body, and Level are required' })
+      return
+    }
     
     setSubmitting(true)
     setMessage({ type: '', text: '' })
@@ -66,7 +100,8 @@ export default function ExamsPage() {
         importantDate: formData.importantDate,
         applicationLink: formData.applicationLink,
         officialWebsite: formData.officialWebsite,
-        description: formData.description
+        description: formData.description,
+        stream: formData.stream
       }
 
       console.log('📦 Payload to send:', payload);
@@ -81,11 +116,12 @@ export default function ExamsPage() {
         setFormData({
           examName: '',
           conductingBody: '',
-          level: '8th',
+          level: 'Undergraduate',
           importantDate: '',
           applicationLink: '',
           officialWebsite: '',
-          description: ''
+          description: '',
+          stream: 'Engineering'
         })
         console.log('🔄 Refetching exams...');
         fetchExams()
@@ -116,7 +152,8 @@ export default function ExamsPage() {
       importantDate: exam.importantDate,
       applicationLink: exam.applicationLink || '',
       officialWebsite: exam.officialWebsite || '',
-      description: exam.description || ''
+      description: exam.description || '',
+      stream: exam.stream || ''
     })
     setEditModal(true)
   }
@@ -134,7 +171,8 @@ export default function ExamsPage() {
         importantDate: formData.importantDate,
         applicationLink: formData.applicationLink,
         officialWebsite: formData.officialWebsite,
-        description: formData.description
+        description: formData.description,
+        stream: formData.stream
       }
 
       console.log('📦 Update payload:', payload);
@@ -182,11 +220,37 @@ export default function ExamsPage() {
   }
 
   // Filter exams
-  const filtered = exams.filter(e => {
-    const matchesLevel = level === 'All Levels' || e.level === level
-    const matchesSearch = e.examName.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesLevel && matchesSearch
-  })
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setLoading(true)
+    setMessage({ type: '', text: '' })
+
+    try {
+      const result = await examService.uploadCSV(file)
+      if (result.success) {
+        setMessage({ type: 'success', text: result.message || 'CSV uploaded successfully!' })
+        fetchExams() // Refresh list
+      }
+    } catch (error) {
+      console.error('❌ [Frontend] CSV Upload error:', error)
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Failed to upload CSV' 
+      })
+    } finally {
+      setLoading(false)
+      e.target.value = null // reset input
+    }
+  }
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setDebouncedSearch('')
+    setSelectedLevel('All Levels')
+    setSelectedStream('All Streams')
+  }
 
   if (loading) {
     return (
@@ -215,31 +279,69 @@ export default function ExamsPage() {
       <FiltersRow>
         <SearchInput 
           placeholder="🔍 Search exams..." 
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
         />
-        <FilterSelect value={level} onChange={e => setLevel(e.target.value)}>
+        <FilterSelect value={selectedLevel} onChange={e => setSelectedLevel(e.target.value)}>
           <option>All Levels</option>
+          <option>Undergraduate</option>
+          <option>Postgraduate</option>
           <option>8th</option>
           <option>10th</option>
           <option>12th</option>
           <option>Graduate</option>
         </FilterSelect>
-        <PrimaryBtn style={{ marginLeft:'auto' }} onClick={()=>setModal(true)}>+ Add Exam</PrimaryBtn>
+        <FilterSelect value={selectedStream} onChange={e => setSelectedStream(e.target.value)}>
+          <option>All Streams</option>
+          <option>Engineering</option>
+          <option>Medical</option>
+          <option>Management</option>
+          <option>Science</option>
+          <option>Law</option>
+          <option>Arts</option>
+        </FilterSelect>
+        {(searchTerm || selectedLevel !== 'All Levels' || selectedStream !== 'All Streams') && (
+          <button 
+            onClick={clearFilters}
+            style={{ 
+              background: 'transparent', border: 'none', color: 'var(--text3)',
+              cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: '0 8px'
+            }}
+          >
+            Clear
+          </button>
+        )}
+        <div style={{ marginLeft:'auto', display: 'flex', gap: '10px' }}>
+          <input 
+            type="file" 
+            id="csv-upload" 
+            accept=".csv" 
+            style={{ display: 'none' }} 
+            onChange={handleFileUpload} 
+          />
+          <PrimaryBtn 
+            onClick={() => document.getElementById('csv-upload').click()}
+            style={{ backgroundColor: '#10b981' }}
+          >
+            📤 Upload CSV
+          </PrimaryBtn>
+          <PrimaryBtn onClick={()=>setModal(true)}>+ Add Exam</PrimaryBtn>
+        </div>
       </FiltersRow>
 
       <Card>
-        {filtered.length === 0 ? (
+        {exams.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40, color: 'var(--text2)' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
-            <p>No exams found</p>
+            <p>No exams match the selected filters</p>
           </div>
         ) : (
-          <DataTable columns={['Exam Name','Conducting Body','Level','Important Date','Website','Actions']} data={filtered} renderRow={(e)=>(
+          <DataTable columns={['Exam Name','Conducting Body','Level','Stream','Important Date','Website','Actions']} data={exams} renderRow={(e)=>(
             <TR key={e._id}>
               <TD style={{ fontWeight:600, color:'var(--text)' }}>{e.examName}</TD>
               <TD style={{ color:'var(--text3)' }}>{e.conductingBody}</TD>
               <TD><LevelBadge level={e.level}/></TD>
+              <TD style={{ color:'var(--text3)' }}>{e.stream || '-'}</TD>
               <TD><span style={{ color:'#f59e0b', fontWeight:600, fontSize:12 }}>📅 {e.importantDate}</span></TD>
               <TD>
                 {e.officialWebsite ? (
@@ -298,10 +400,8 @@ export default function ExamsPage() {
                 onChange={handleInputChange}
                 style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
               >
-                <option value="8th">8th</option>
-                <option value="10th">10th</option>
-                <option value="12th">12th</option>
-                <option value="Graduate">Graduate</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="Postgraduate">Postgraduate</option>
               </select>
             </FormGroup>
             <FormGroup label="Important Date">
@@ -311,6 +411,21 @@ export default function ExamsPage() {
                 onChange={handleInputChange}
                 placeholder="e.g. Jan 30, 2025"
               />
+            </FormGroup>
+            <FormGroup label="Stream">
+              <select 
+                name="stream"
+                value={formData.stream}
+                onChange={handleInputChange}
+                style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
+              >
+                <option value="Engineering">Engineering</option>
+                <option value="Medical">Medical</option>
+                <option value="Science">Science</option>
+                <option value="Management">Management</option>
+                <option value="Law">Law</option>
+                <option value="Arts">Arts</option>
+              </select>
             </FormGroup>
             <FormGroup label="Application Link" full>
               <FormInput 
@@ -384,10 +499,8 @@ export default function ExamsPage() {
                 onChange={handleInputChange}
                 style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
               >
-                <option value="8th">8th</option>
-                <option value="10th">10th</option>
-                <option value="12th">12th</option>
-                <option value="Graduate">Graduate</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="Postgraduate">Postgraduate</option>
               </select>
             </FormGroup>
             <FormGroup label="Important Date">
@@ -397,6 +510,21 @@ export default function ExamsPage() {
                 onChange={handleInputChange}
                 placeholder="e.g. Jan 30, 2025"
               />
+            </FormGroup>
+            <FormGroup label="Stream">
+              <select 
+                name="stream"
+                value={formData.stream}
+                onChange={handleInputChange}
+                style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
+              >
+                <option value="Engineering">Engineering</option>
+                <option value="Medical">Medical</option>
+                <option value="Science">Science</option>
+                <option value="Management">Management</option>
+                <option value="Law">Law</option>
+                <option value="Arts">Arts</option>
+              </select>
             </FormGroup>
             <FormGroup label="Application Link" full>
               <FormInput 

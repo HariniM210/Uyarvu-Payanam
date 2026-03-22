@@ -6,6 +6,7 @@ export default function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
 
   useEffect(() => {
     fetchScholarships();
@@ -22,11 +23,51 @@ export default function ScholarshipsPage() {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setLoading(true);
+      setUploadMessage("Uploading...");
+      const res = await axios.post("http://localhost:5000/api/scholarships/upload", formData);
+      setUploadMessage(`${res.data.inserted} added, ${res.data.duplicates} duplicates skipped`);
+      fetchScholarships(); // Refresh list after upload
+    } catch (err) {
+      console.error("Upload error", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setUploadMessage("Error: " + err.response.data.message);
+      } else {
+        setUploadMessage("Error uploading file");
+      }
+      setLoading(false);
+    } finally {
+      e.target.value = ""; // Clear file input
+      setTimeout(() => setUploadMessage(""), 5000); // Clear message after 5s
+    }
+  };
+
   return (
     <div style={{ animation: 'fadeUp 0.4s ease both' }}>
       <FiltersRow>
         <SearchInput placeholder="🔍 Search scholarships..." />
-        <PrimaryBtn style={{ marginLeft: 'auto' }} onClick={() => setModal(true)}>+ Add Scholarship</PrimaryBtn>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {uploadMessage && <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '14px' }}>{uploadMessage}</span>}
+          <input 
+            type="file" 
+            accept=".csv, .xlsx" 
+            id="csv-upload" 
+            style={{ display: 'none' }} 
+            onChange={handleFileUpload} 
+          />
+          <PrimaryBtn onClick={() => document.getElementById('csv-upload').click()}>
+            Upload CSV/Excel
+          </PrimaryBtn>
+          <PrimaryBtn onClick={() => setModal(true)}>+ Add Scholarship</PrimaryBtn>
+        </div>
       </FiltersRow>
 
       <Card>
