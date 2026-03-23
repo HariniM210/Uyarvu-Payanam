@@ -8,9 +8,10 @@ export const authService = {
 }
 
 export const notificationService = {
-  getAll:      ()   => studentApi.get('/notifications').then(r => r.data),
-  markRead:    (id) => studentApi.put(`/notifications/${id}/read`).then(r => r.data),
-  markAllRead: ()   => studentApi.put('/notifications/read-all').then(r => r.data),
+  getAll:                ()   => studentApi.get('/notifications').then(r => r.data),
+  getUserNotifications:  (userId) => studentApi.get(`/notifications/user/${userId}`).then(r => r.data),
+  markRead:              (id) => studentApi.put(`/notifications/${id}/read`).then(r => r.data),
+  markAllRead:           ()   => studentApi.put('/notifications/read-all').then(r => r.data),
 }
 
 export const collegeService = {
@@ -19,13 +20,15 @@ export const collegeService = {
 }
 
 export const careerService = {
-  getAll:     ()      => studentApi.get('/career-paths').then(r => r.data),
+  getAll:     (params) => studentApi.get('/career-paths', { params }).then(r => r.data),
   getByLevel: (level) => studentApi.get('/career-paths', { params: { level } }).then(r => r.data),
+  getById:    (id) => studentApi.get(`/career-paths/${id}`).then(r => r.data),
 }
 
 export const courseService = {
   getAll:        (params) => studentApi.get('/courses', { params }).then(r => r.data),
   getByCategory: (cat)    => studentApi.get('/courses', { params: { category: cat } }).then(r => r.data),
+  getByLevel:    (level)  => studentApi.get('/courses', { params: { level } }).then(r => r.data),
 }
 
 export const examService = {

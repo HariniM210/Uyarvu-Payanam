@@ -86,8 +86,8 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
             style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
           >
             {[
-              "Medical", "Engineering", "Science", "Commerce", "Arts", 
-              "Design", "Agriculture", "Polytechnic", "ITI"
+              "Engineering", "Medical", "Law", "Arts", "Commerce",
+              "Science", "Design", "Architecture", "Education", "Aviation"
             ].map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
@@ -100,8 +100,10 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
             onChange={handleInputChange}
             style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
           >
-            <option value="10th">10th</option>
-            <option value="12th">12th</option>
+            <option value="5">Class 5</option>
+            <option value="8">Class 8</option>
+            <option value="10">Class 10</option>
+            <option value="12">Class 12</option>
             <option value="Diploma">Diploma</option>
             <option value="Undergraduate">Undergraduate</option>
           </select>

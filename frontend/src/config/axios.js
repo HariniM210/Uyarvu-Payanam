@@ -9,10 +9,20 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('adminToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // Determine if request is admin-related (you may adjust this logic as needed)
+    const isAdminRoute = config.url.startsWith('/admin')
+    const adminToken = localStorage.getItem('adminToken')
+    const studentToken = localStorage.getItem('studentToken')
+
+    // Choose token contextually. Admin token takes precedence for admin routes
+    if (isAdminRoute && adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`
+    } else if (studentToken) {
+      config.headers.Authorization = `Bearer ${studentToken}`
+    } else if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`
     }
+
     return config
   },
   (error) => {
@@ -24,8 +34,14 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('adminToken')
-      window.location.href = '/login'
+      // Determine context and redirect properly
+      if (window.location.pathname.startsWith('/admin')) {
+        localStorage.removeItem('adminToken')
+        window.location.href = '/login'
+      } else {
+        localStorage.removeItem('studentToken')
+        window.location.href = '/student/login'
+      }
     }
     return Promise.reject(error)
   }

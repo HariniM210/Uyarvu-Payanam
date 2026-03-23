@@ -15,15 +15,10 @@ const examSchema = new mongoose.Schema(
     level: {
       type: String,
       required: [true, "Level is required"],
-      enum: {
-        values: ["8th", "10th", "12th", "Graduate"],
-        message: "Level must be one of: 8th, 10th, 12th, Graduate"
-      },
       trim: true,
     },
     importantDate: {
       type: String,
-      required: [true, "Important date is required"],
       trim: true,
     },
     applicationLink: {
@@ -35,6 +30,10 @@ const examSchema = new mongoose.Schema(
       trim: true,
     },
     description: {
+      type: String,
+      trim: true,
+    },
+    stream: {
       type: String,
       trim: true,
     },

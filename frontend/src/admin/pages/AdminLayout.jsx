@@ -17,6 +17,7 @@ import CutoffPage from './admin/CutoffPage'
 import NotificationsPage from './admin/NotificationsPage'
 import ReportsPage from './admin/ReportsPage'
 import SettingsPage from './admin/SettingsPage'
+import CareerDetailsPage from './admin/CareerDetailsPage'
 
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
@@ -138,6 +139,7 @@ export default function AdminLayout() {
             <Route index element={<Dashboard />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="careers" element={<CareersPage />} />
+            <Route path="career/:level" element={<CareerDetailsPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="exams" element={<ExamsPage />} />
             <Route path="colleges" element={<CollegesPage />} />

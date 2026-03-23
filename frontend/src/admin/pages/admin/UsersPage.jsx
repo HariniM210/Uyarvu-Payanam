@@ -88,7 +88,7 @@ export default function UsersPage() {
           <div style={{ padding:40, textAlign:'center', color:'var(--text3)' }}>No users found</div>
         ) : (
           <DataTable
-            columns={['Name','Email','Level','Career Interest','Status','Actions']}
+            columns={['Name','Email','Class Level','District','Status','Actions']}
             data={users}
             renderRow={(u) => (
               <TR key={u._id}>
@@ -102,14 +102,13 @@ export default function UsersPage() {
                 </div></TD>
                 <TD style={{ color:'var(--text3)' }}>{u.email}</TD>
                 <TD><LevelBadge level={u.classLevel || '—'}/></TD>
-                <TD style={{ color:'var(--text2)' }}>{u.selectedCareer || '—'}</TD>
+                <TD style={{ color:'var(--text2)' }}>{u.district || '—'}</TD>
                 <TD><LevelBadge level={statusLabel(u.status)}/></TD>
                 <TD><div style={{ display:'flex', gap:6 }}>
                   {u.status === 'active'
                     ? <ActionBtn onClick={()=>handleBlock(u._id)}>🔒 Block</ActionBtn>
                     : <ActionBtn onClick={()=>handleUnblock(u._id)}>🔓 Unblock</ActionBtn>
                   }
-                  <ActionBtn onClick={()=>handleResetPassword(u._id, u.name)}>🔑 Reset PW</ActionBtn>
                   <ActionBtn danger onClick={()=>handleDelete(u._id, u.name)}>🗑 Delete</ActionBtn>
                 </div></TD>
               </TR>
