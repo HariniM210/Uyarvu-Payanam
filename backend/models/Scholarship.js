@@ -29,6 +29,23 @@ const scholarshipSchema = new mongoose.Schema(
       trim: true,
       maxlength: [1000, "Application link must be at most 1000 characters"]
     },
+    targetClass: {
+      type: [String], // ["5", "8", "10", "12"]
+      default: ["10"]
+    },
+    category: {
+      type: String,
+      default: "Government"
+    },
+    description: {
+      type: String,
+      default: ""
+    },
+    status: {
+      type: String,
+      enum: ["published", "draft"],
+      default: "published"
+    }
   },
   { collection: "scholarships", timestamps: true }
 );

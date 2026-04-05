@@ -4,7 +4,14 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const Scholarship = require('../models/Scholarship');
 
-const { applyForScholarship, addScholarship, uploadScholarshipsCSV } = require('../controllers/scholarshipController');
+const { 
+  applyForScholarship, 
+  addScholarship, 
+  uploadScholarshipsCSV, 
+  updateScholarship, 
+  deleteScholarship 
+} = require('../controllers/scholarshipController');
+const verifyAdmin = require('../middleware/verifyAdmin');
 
 // GET /api/scholarships
 router.get('/', async (req, res) => {
@@ -17,8 +24,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/add-scholarship', addScholarship);
+router.post('/add-scholarship', verifyAdmin, addScholarship);
 router.post('/apply', applyForScholarship);
-router.post('/upload', upload.single('file'), uploadScholarshipsCSV);
+router.post('/upload', verifyAdmin, upload.single('file'), uploadScholarshipsCSV);
+router.put('/:id', verifyAdmin, updateScholarship);
+router.delete('/:id', verifyAdmin, deleteScholarship);
 
 module.exports = router;

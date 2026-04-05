@@ -16,6 +16,9 @@ import CourseCategoryPage from './pages/courses/CourseCategoryPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 import ProfilePage from './pages/profile/ProfilePage'
 import ClassLandingPage from './pages/careers/ClassLandingPage'
+import ClassLevelPage from './pages/careers/ClassLevelPage'
+import ContentDetailPage from './pages/careers/ContentDetailPage'
+import CourseDetailPage from './pages/courses/CourseDetailPage'
 import './student.css'
 
 export default function StudentRoutes() {
@@ -23,10 +26,10 @@ export default function StudentRoutes() {
 
   // Helper to determine what to show at the index path based on parent route
   const getIndexElement = () => {
-    if (pathname.includes('/class5')) return <ClassLandingPage classKey="class-5" />
-    if (pathname.includes('/class8')) return <ClassLandingPage classKey="class-8" />
-    if (pathname.includes('/class10')) return <ClassLandingPage classKey="class-10" />
-    if (pathname.includes('/class12')) return <ClassLandingPage classKey="class-12" />
+    if (pathname.includes('/class5')) return <ClassLevelPage level="5" />
+    if (pathname.includes('/class8')) return <ClassLevelPage level="8" />
+    if (pathname.includes('/class10')) return <ClassLevelPage level="10" />
+    if (pathname.includes('/class12')) return <ClassLevelPage level="12" />
     return <LandingPage />
   }
 
@@ -39,11 +42,15 @@ export default function StudentRoutes() {
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
 
-          {/* Legacy/Explicit paths (/student/class5 etc) still work */}
-          <Route path="class5" element={<ClassLandingPage classKey="class-5" />} />
-          <Route path="class8" element={<ClassLandingPage classKey="class-8" />} />
-          <Route path="class10" element={<ClassLandingPage classKey="class-10" />} />
-          <Route path="class12" element={<ClassLandingPage classKey="class-12" />} />
+          {/* Explicit class routes */}
+          <Route path="class5" element={<ClassLevelPage level="5" />} />
+          <Route path="class5/content/:slug" element={<ContentDetailPage />} />
+          <Route path="class8" element={<ClassLevelPage level="8" />} />
+          <Route path="class8/content/:slug" element={<ContentDetailPage />} />
+          <Route path="class10" element={<ClassLevelPage level="10" />} />
+          <Route path="class10/content/:slug" element={<ContentDetailPage />} />
+          <Route path="class12" element={<ClassLevelPage level="12" />} />
+          <Route path="class12/content/:slug" element={<ContentDetailPage />} />
 
           {/* Career routes */}
           <Route path="careers" element={<CareersPage />} />
@@ -52,8 +59,8 @@ export default function StudentRoutes() {
 
           <Route path="colleges" element={<CollegesPage />} />
           <Route path="courses" element={<CoursesPage />} />
-          {/* Handles both level-based (after-10th) and general search */}
           <Route path="courses/:categoryKey" element={<CourseCategoryPage />} />
+          <Route path="course/:slug" element={<CourseDetailPage />} />
           
           <Route
             path="dashboard"

@@ -80,6 +80,9 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/admin/notifications", require("./routes/adminNotificationRoutes"));
 app.use("/api/students", require("./routes/studentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/class-content", require("./routes/classContentRoutes"));
+app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
+app.use("/api/user-actions", require("./routes/userActionRoutes"));
 
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;

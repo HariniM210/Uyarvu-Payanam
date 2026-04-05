@@ -37,15 +37,7 @@ function AppRoutes() {
       />
 
       {/* ── Student Frontend ── */}
-      <Route path="/student/*" element={<StudentRoutes />} />
-      <Route path="/class5/*" element={<StudentRoutes />} />
-      <Route path="/class8/*" element={<StudentRoutes />} />
-      <Route path="/class10/*" element={<StudentRoutes />} />
-      <Route path="/class12/*" element={<StudentRoutes />} />
-
-      {/* ── Default: go to student landing ── */}
-      <Route path="/" element={<Navigate to="/student" replace />} />
-      <Route path="*" element={<Navigate to="/student" replace />} />
+      <Route path="/*" element={<StudentRoutes />} />
     </Routes>
   )
 }

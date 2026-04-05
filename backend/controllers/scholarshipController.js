@@ -40,18 +40,18 @@ const parseDocuments = (v) => {
 // @route   POST /api/scholarships/add-scholarship
 exports.addScholarship = async (req, res) => {
   try {
-    let { scholarshipName, provider, amount, eligibility, applicationLink } = req.body;
+    let { scholarshipName, provider, amount, eligibility, applicationLink, targetClass, category, description } = req.body;
 
     if (!scholarshipName) {
       return res.status(400).json({ message: "Scholarship name is required" });
     }
 
-    // Normalize text (trim spaces and lowercase)
+    // Normalize text
     const normalizedName = scholarshipName.trim().toLowerCase();
     const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
 
     // Check for duplicates
-    const existingScholarship = await Scholarship.findOne({ scholarshipName: normalizedName });
+    const existingScholarship = await Scholarship.findOne({ scholarshipName: normalizedName, provider: normalizedProvider });
 
     if (existingScholarship) {
       return res.status(409).json({ message: "Scholarship already exists" });
@@ -63,7 +63,10 @@ exports.addScholarship = async (req, res) => {
       provider: normalizedProvider,
       amount: amount ? amount.trim() : "",
       eligibility: eligibility ? eligibility.trim() : "",
-      applicationLink: applicationLink ? applicationLink.trim() : ""
+      applicationLink: applicationLink ? applicationLink.trim() : "",
+      targetClass: Array.isArray(targetClass) ? targetClass : (targetClass ? [targetClass] : ["10"]),
+      category: category || "Government",
+      description: description || ""
     });
 
     await newScholarship.save();
@@ -130,25 +133,25 @@ exports.updateScholarship = async (req, res) => {
 
     const {
       scholarshipName,
-      level,
-      incomeLimit,
-      deadline,
-      requiredDocuments,
+      provider,
+      amount,
+      eligibility,
       applicationLink,
+      targetClass,
+      category,
       description,
       status,
     } = req.body;
 
     if (scholarshipName !== undefined) scholarship.scholarshipName = normalizeString(scholarshipName);
-    if (level !== undefined) scholarship.level = normalizeLevel(level);
-    if (incomeLimit !== undefined) scholarship.incomeLimit = normalizeString(incomeLimit);
-    if (deadline !== undefined) scholarship.deadline = deadline ? new Date(deadline) : null;
-    if (requiredDocuments !== undefined) {
-      scholarship.requiredDocuments = Array.isArray(requiredDocuments)
-        ? requiredDocuments.map((d) => normalizeString(d)).filter(Boolean)
-        : parseDocuments(requiredDocuments);
-    }
+    if (provider !== undefined) scholarship.provider = normalizeString(provider);
+    if (amount !== undefined) scholarship.amount = normalizeString(amount);
+    if (eligibility !== undefined) scholarship.eligibility = normalizeString(eligibility);
     if (applicationLink !== undefined) scholarship.applicationLink = normalizeString(applicationLink);
+    if (targetClass !== undefined) {
+      scholarship.targetClass = Array.isArray(targetClass) ? targetClass : [targetClass];
+    }
+    if (category !== undefined) scholarship.category = normalizeString(category);
     if (description !== undefined) scholarship.description = normalizeString(description);
     if (status !== undefined) scholarship.status = normalizeString(status);
 
