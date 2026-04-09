@@ -17,6 +17,13 @@ const {
   getPopularCoursesReport,
   getScholarshipsReport,
 } = require("../controllers/adminController");
+const {
+  createCareerPath,
+  getAllCareerPaths,
+  getCareerPathById,
+  updateCareerPath,
+  deleteCareerPath,
+} = require("../controllers/careerPathController");
 const verifyAdmin = require("../middleware/verifyAdmin");
 
 const router = express.Router();
@@ -39,6 +46,13 @@ router.put("/change-password", verifyAdmin, changePassword);
 router.post("/create-subadmin", verifyAdmin, createSubAdmin);
 router.get("/subadmins", verifyAdmin, getSubAdmins);
 router.delete("/subadmin/:id", verifyAdmin, deleteSubAdmin);
+
+// Career Paths Management (Admin API)
+router.post("/career-paths", verifyAdmin, createCareerPath);
+router.get("/career-paths", verifyAdmin, getAllCareerPaths);
+router.get("/career-paths/:id", verifyAdmin, getCareerPathById);
+router.put("/career-paths/:id", verifyAdmin, updateCareerPath);
+router.delete("/career-paths/:id", verifyAdmin, deleteCareerPath);
 
 // TEMPORARY ROUTE TO CREATE ADMIN
 router.get("/create-admin", async (req, res) => {

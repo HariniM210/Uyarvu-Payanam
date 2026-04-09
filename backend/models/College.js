@@ -6,6 +6,12 @@ const collegeSchema = new mongoose.Schema(
       type: String,
       required: [true, "College name is required"],
       trim: true,
+      unique: true,
+    },
+    collegeCode: {
+      type: String,
+      trim: true,
+      index: true,
     },
     stream: {
       type: String,
@@ -60,10 +66,17 @@ const collegeSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
-    coursesOffered: {
-      type: [String],
-      default: [],
-    },
+    coursesOffered: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+      }
+    ],
+    website: {
+      type: String,
+      trim: true,
+      default: "",
+    }
   },
   {
     timestamps: true,

@@ -9,6 +9,8 @@ import NotificationBell from '../components/NotificationBell'
 import Dashboard from './admin/Dashboard'
 import UsersPage from './admin/UsersPage'
 import CareersPage from './admin/CareersPage'
+import ClassDashboardPage from './admin/ClassDashboardPage'
+import ClassFormPage from './admin/ClassFormPage'
 import CoursesPage from './admin/CoursesPage'
 import ExamsPage from './admin/ExamsPage'
 import CollegesPage from './admin/CollegesPage'
@@ -18,6 +20,7 @@ import NotificationsPage from './admin/NotificationsPage'
 import ReportsPage from './admin/ReportsPage'
 import SettingsPage from './admin/SettingsPage'
 import CareerDetailsPage from './admin/CareerDetailsPage'
+import CourseDetailsEditPage from './admin/CourseDetailsEditPage'
 
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
@@ -36,7 +39,7 @@ const NAV = [
 const PAGE_META = {
   '': { title: 'Dashboard', sub: 'Overview & Analytics' },
   'users': { title: 'User Management', sub: 'Manage student accounts' },
-  'careers': { title: 'Career Paths', sub: 'Level-wise guidance structure' },
+  'careers': { title: 'Career Paths', sub: 'Hub for academic roadmaps' },
   'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
   'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
   'colleges': { title: 'College Management', sub: 'College database' },
@@ -81,7 +84,7 @@ export default function AdminLayout() {
         <nav className={styles.nav}>
           <div className={styles.navLabel}>{sidebarOpen && 'MAIN MENU'}</div>
           {NAV.map(n => {
-            const isActive = currentPath === n.path
+            const isActive = currentPath === n.path || (n.id === 'careers' && currentPath.includes('career-paths'))
             return (
               <button key={n.id}
                 className={`${styles.navItem} ${isActive ? styles.navActive : ''}`}
@@ -121,8 +124,8 @@ export default function AdminLayout() {
             ☰
           </button>
           <div>
-            <h2 className={styles.topTitle}>{meta.title}</h2>
-            <p className={styles.topSub}>CareerMap / {meta.sub}</p>
+            <h2 className={styles.topTitle}>{meta.title || 'Career Guidance'}</h2>
+            <p className={styles.topSub}>CareerMap / {meta.sub || 'Level Management'}</p>
           </div>
           <div className={styles.topRight}>
             <button className={styles.topBtn} onClick={toggle}>
@@ -138,9 +141,16 @@ export default function AdminLayout() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="users" element={<UsersPage />} />
+            
+            {/* Career Path Module */}
             <Route path="careers" element={<CareersPage />} />
+            <Route path="career-paths/:level" element={<ClassDashboardPage />} />
+            <Route path="career-paths/:level/new" element={<ClassFormPage />} />
+            <Route path="career-paths/:level/edit/:id" element={<ClassFormPage />} />
+            
             <Route path="career/:level" element={<CareerDetailsPage />} />
             <Route path="courses" element={<CoursesPage />} />
+            <Route path="courses/edit/:id" element={<CourseDetailsEditPage />} />
             <Route path="exams" element={<ExamsPage />} />
             <Route path="colleges" element={<CollegesPage />} />
             <Route path="scholarships" element={<ScholarshipsPage />} />

@@ -1,66 +1,110 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-/* ── Level Badge ── */
-export function LevelBadge({ level }) {
+/* ── SBadge ── */
+export function SBadge({ color, children, style }) {
   const map = {
-    '5th':      { bg:'rgba(139,92,246,0.12)',  color:'#7c3aed' },
-    '8th':      { bg:'rgba(245,158,11,0.12)',  color:'#d97706' },
-    '10th':     { bg:'rgba(45,158,95,0.12)',   color:'#2d9e5f' },
-    '12th':     { bg:'rgba(239,68,68,0.12)',   color:'#dc2626' },
-    'Graduate': { bg:'rgba(59,130,246,0.12)',  color:'#2563eb' },
-    'All':      { bg:'rgba(45,158,95,0.12)',   color:'#2d9e5f' },
-    'Active':   { bg:'rgba(34,197,94,0.12)',   color:'#16a34a' },
-    'Expired':  { bg:'rgba(239,68,68,0.12)',   color:'#dc2626' },
-    'Blocked':  { bg:'rgba(239,68,68,0.12)',   color:'#dc2626' },
+    purple: { bg: 'rgba(139,92,246,0.12)', color: '#7c3aed' },
+    gold:   { bg: 'rgba(245,158,11,0.12)',  color: '#d97706' },
+    green:  { bg: 'rgba(34,197,94,0.12)',   color: '#16a34a' },
+    blue:   { bg: 'rgba(59,130,246,0.12)',  color: '#2563eb' },
+    red:    { bg: 'rgba(239,68,68,0.12)',   color: '#dc2626' },
+    gray:   { bg: 'rgba(100,116,139,0.12)', color: '#64748b' },
   }
-  const s = map[level] || { bg:'rgba(45,158,95,0.1)', color:'#2d9e5f' }
+  const s = map[color] || map.gray
   return (
-    <span style={{ display:'inline-block', padding:'3px 10px', borderRadius:20,
-      fontSize:11, fontWeight:700, background:s.bg, color:s.color, whiteSpace:'nowrap' }}>
-      {level}
+    <span style={{ 
+      display: 'inline-block', padding: '4px 12px', borderRadius: '10px',
+      fontSize: 12, fontWeight: 700, background: s.bg, color: s.color, whiteSpace: 'nowrap',
+      fontFamily: 'Outfit, sans-serif', ...style 
+    }}>
+      {children}
     </span>
   )
 }
 
-/* ── Card ── */
-export function Card({ children, style }) {
+/* ── SLoader ── */
+export function SLoader({ size = 40 }) {
   return (
-    <div style={{ background:'var(--surface)', border:'1.5px solid var(--border)',
-      borderRadius:16, padding:20, ...style }}>
+    <div style={{ display:'grid', placeItems:'center', padding:'40px 0', width:'100%' }}>
+      <div style={{ width:size, height:size, border:'4px solid rgba(0,0,0,0.05)', borderTopColor:'var(--primary)',
+        borderRadius:'50%', animation:'spin 1s linear infinite' }} />
+      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+}
+
+/* ── SCard ── */
+export function SCard({ children, style, hover }) {
+  const [isHov, setHov] = useState(false)
+  return (
+    <div 
+      style={{ 
+        background: 'var(--surface)', border: '1.5px solid var(--border)', 
+        borderRadius: 24, padding: 24, transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: hover && isHov ? 'translateY(-6px)' : 'none',
+        boxShadow: hover && isHov ? '0 12px 30px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.02)',
+        ...style 
+      }}
+      onMouseEnter={() => hover && setHov(true)}
+      onMouseLeave={() => hover && setHov(false)}
+    >
       {children}
     </div>
   )
 }
 
-/* ── Card Header ── */
-export function CardHeader({ title, action, actionLabel = 'View All' }) {
+/* ── SBtn ── */
+export function SBtn({ children, onClick, fullWidth, variant="primary", style, disabled, type="button" }) {
+  const [hov, setHov] = useState(false)
+  const isPrimary = variant === 'primary'
+  
+  const baseStyle = {
+    background: isPrimary ? (hov ? 'var(--primary-d)' : 'var(--primary)') : (hov ? 'rgba(0,0,0,0.05)' : 'transparent'),
+    color: isPrimary ? '#fff' : 'var(--text)',
+    border: isPrimary ? 'none' : '1.5px solid var(--border)',
+    borderRadius: 12, padding: '10px 20px', width: fullWidth ? '100%' : 'auto',
+    cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: 'Outfit, sans-serif', fontWeight: 800,
+    fontSize: 14, transition: 'all 0.15s', opacity: disabled ? 0.6 : 1,
+    transform: hov && !disabled ? 'scale(1.02)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, ...style
+  }
+
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-      <h3 style={{ fontFamily:'Nunito', fontSize:15, fontWeight:800, color:'var(--text)' }}>{title}</h3>
-      {action && <span onClick={action} style={{ fontSize:12, color:'var(--primary)', cursor:'pointer', fontWeight:600 }}>{actionLabel}</span>}
+    <button 
+      type={type} onClick={onClick} disabled={disabled}
+      style={baseStyle}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      {children}
+    </button>
+  )
+}
+
+/* ── SEmpty ── */
+export function SEmpty({ title, desc, icon }) {
+  return (
+    <div style={{ textAlign:'center', padding:60, background:'var(--surface2)', borderRadius:24, border:'1.5px dashed var(--border)' }}>
+      <div style={{ fontSize:48, marginBottom:16, opacity:0.4 }}>{icon || '🔍'}</div>
+      <h3 style={{ margin:'0 0 8px', color:'var(--text)' }}>{title || 'No data found'}</h3>
+      <p style={{ margin:0, color:'var(--text3)', fontSize:14 }}>{desc || 'Try adjusting your filters or adding new content.'}</p>
     </div>
   )
 }
 
-/* ── Stats Card ── */
-export function StatCard({ icon, value, label, delta, deltaUp, color }) {
+/* ── Level Badge ── */
+export function LevelBadge({ level }) {
+  return <SBadge color={level === '5th' ? 'purple' : 'green'}>{level}</SBadge>
+}
+
+/* ── Legacy Mappings ── */
+export function Card(props) { return <SCard {...props} /> }
+export function PrimaryBtn(props) { return <SBtn {...props} /> }
+
+/* ── Card Header ── */
+export function CardHeader({ title, action, actionLabel = 'View All' }) {
   return (
-    <div style={{ background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:16,
-      padding:20, position:'relative', overflow:'hidden', transition:'transform 0.2s' }}
-      onMouseEnter={e => e.currentTarget.style.transform='translateY(-3px)'}
-      onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
-      <div style={{ position:'absolute', right:-16, bottom:-16, width:72, height:72,
-        borderRadius:'50%', background:color, opacity:0.07 }} />
-      <div style={{ fontSize:24, marginBottom:10 }}>{icon}</div>
-      <div style={{ fontFamily:'Nunito', fontSize:28, fontWeight:900, color }}>{value}</div>
-      <div style={{ fontSize:12, color:'var(--text3)', marginTop:3 }}>{label}</div>
-      {delta && (
-        <span style={{ position:'absolute', top:14, right:14, fontSize:11, fontWeight:700,
-          padding:'3px 8px', borderRadius:20,
-          background: deltaUp ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-          color: deltaUp ? '#16a34a' : '#dc2626' }}>{delta}</span>
-      )}
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+      <h3 style={{ fontFamily:'Nunito', fontSize:16, fontWeight:900, color:'var(--text)' }}>{title}</h3>
+      {action && <SBtn variant="ghost" onClick={action} style={{ padding:'4px 8px', fontSize:12 }}>{actionLabel}</SBtn>}
     </div>
   )
 }
@@ -69,31 +113,84 @@ export function StatCard({ icon, value, label, delta, deltaUp, color }) {
 export function ProgressBar({ label, value, max, color, pct }) {
   const percent = pct !== undefined ? pct : Math.round((value / max) * 100)
   return (
-    <div style={{ marginBottom:14 }}>
-      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, fontSize:13 }}>
-        <span style={{ color:'var(--text2)' }}>{label}</span>
-        <span style={{ fontWeight:700, color }}>{pct !== undefined ? `${pct}%` : value}</span>
+    <div style={{ marginBottom:16 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:13 }}>
+        <span style={{ fontWeight:700, color:'var(--text2)' }}>{label}</span>
+        <span style={{ fontWeight:800, color }}>{pct !== undefined ? `${pct}%` : value}</span>
       </div>
-      <div style={{ height:7, background:'var(--surface2)', borderRadius:10, overflow:'hidden', border:'1px solid var(--border)' }}>
-        <div style={{ height:'100%', width:`${percent}%`, background:color, borderRadius:10, transition:'width 1s ease' }} />
+      <div style={{ height:8, background:'var(--surface2)', borderRadius:20, overflow:'hidden', border:'1px solid var(--border)' }}>
+        <div style={{ height:'100%', width:`${percent}%`, background:color, borderRadius:20, transition:'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
       </div>
     </div>
   )
 }
 
-/* ── Table Wrapper ── */
+/* ── Form Components ── */
+export function FormGrid({ children }) { return <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>{children}</div> }
+export function FormGroup({ label, full, children }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:6, gridColumn: full ? '1/-1' : undefined }}>
+      <label style={{ fontSize:11, fontWeight:700, color:'var(--text3)', letterSpacing:'0.5px', textTransform:'uppercase' }}>{label}</label>
+      {children}
+    </div>
+  )
+}
+export function FormInput({ type='text', placeholder, as='input', name, value, onChange, disabled }) {
+  const base = { width:'100%', background:'var(--surface2)', border:'1.5px solid var(--border)',
+    color:'var(--text)', borderRadius:12, padding:'11px 16px', fontSize:14,
+    fontFamily:'Outfit,sans-serif', outline:'none', transition:'border-color 0.15s' }
+  if (as === 'textarea') return (
+    <textarea name={name} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
+      style={{ ...base, resize:'vertical', minHeight:100 }} onFocus={e => e.target.style.borderColor='var(--primary)'}
+      onBlur={e => e.target.style.borderColor='var(--border)'} />
+  )
+  if (as === 'select') return (
+    <select name={name} value={value} onChange={onChange} disabled={disabled} style={base}>
+       {placeholder && <option value="">{placeholder}</option>}
+       {arguments[0].children}
+    </select>
+  )
+  return (
+    <input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
+      style={base} onFocus={e => e.target.style.borderColor='var(--primary)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
+  )
+}
+export function FormActions({ onClose, onSave, saveDisabled, saveText }) {
+  return (
+    <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:32 }}>
+      <SBtn variant="outline" onClick={onClose}>Cancel</SBtn>
+      <SBtn onClick={onSave} disabled={saveDisabled}>{saveText || 'Save Changes'}</SBtn>
+    </div>
+  )
+}
+
+/* ── Modal ── */
+export function Modal({ title, onClose, children, maxWidth = 650 }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow; document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+  return createPortal(
+    <div style={{ position:'fixed', top:0, left:0, width:'100vw', height:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.6)', zIndex:9999, padding:20 }}>
+      <div style={{ width:maxWidth, maxWidth:'100%', maxHeight:'90vh', overflowY:'auto', borderRadius:24, padding:32, background:'var(--surface)', border:'1.5px solid var(--border)', boxShadow:'0 20px 60px rgba(0,0,0,0.3)', animation:'fadeUp 0.3s' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+          <h3 style={{ fontFamily:'Nunito', fontSize:22, fontWeight:900, color:'var(--text)' }}>{title}</h3>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:24, cursor:'pointer', color:'var(--text3)' }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>, document.body
+  )
+}
+
+/* ── Data Display ── */
 export function DataTable({ columns, data, renderRow }) {
   return (
     <div style={{ overflowX:'auto' }}>
       <table style={{ width:'100%', borderCollapse:'collapse' }}>
         <thead>
           <tr style={{ borderBottom:'1.5px solid var(--border)' }}>
-            {columns.map(c => (
-              <th key={c} style={{ padding:'10px 14px', textAlign:'left', fontSize:10.5,
-                fontWeight:700, color:'var(--text3)', letterSpacing:'0.8px', textTransform:'uppercase' }}>
-                {c}
-              </th>
-            ))}
+            {columns.map(c => <th key={c} style={{ padding:'12px 16px', textAlign:'left', fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'1px' }}>{c}</th>)}
           </tr>
         </thead>
         <tbody>{data.map((row, i) => renderRow(row, i))}</tbody>
@@ -101,253 +198,36 @@ export function DataTable({ columns, data, renderRow }) {
     </div>
   )
 }
+export function TR({ children, style }) { return <tr style={{ borderBottom:'1px solid var(--border)', transition:'background 0.2s', ...style }}>{children}</tr> }
+export function TD({ children, style }) { return <td style={{ padding:'16px', fontSize:14, ...style }}>{children}</td> }
 
-/* ── Table Row ── */
-export function TR({ children, style }) {
-  const [hov, setHov] = useState(false)
-  return (
-    <tr style={{ borderBottom:'1px solid rgba(212,235,215,0.4)', background: hov ? 'var(--surface2)' : 'transparent',
-      transition:'background 0.15s', ...style }}
-      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}>
-      {children}
-    </tr>
-  )
-}
-
-export function TD({ children, style }) {
-  return <td style={{ padding:'12px 14px', fontSize:13.5, verticalAlign:'middle', ...style }}>{children}</td>
-}
-
-
-/* ── Action Button ── */
-export function ActionBtn({ children, danger, onClick, style }) {
-  const [hov, setHov] = useState(false)
-
-  const btnStyle = {
-    border: `1.5px solid ${hov ? (danger ? '#dc2626' : 'var(--primary)') : 'var(--border)'}`,
-    borderRadius: 8,
-    padding: '5px 11px',
-    fontSize: 12,
-    cursor: 'pointer',
-    fontFamily: 'Outfit, sans-serif',
-    fontWeight: 600,
-    transition: 'all 0.15s',
-    color: hov ? (danger ? '#dc2626' : 'var(--primary)') : 'var(--text3)',
-    background: hov ? (danger ? 'rgba(239,68,68,0.06)' : 'var(--primary-l)') : 'transparent',
-    ...style,
-  }
-
-  return (
-    <button
-      onClick={onClick}
-      style={btnStyle}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-    >
-      {children}
-    </button>
-  )
-}
-/* ── Filters Row ── */
-export function FiltersRow({ children }) {
-  return <div style={{ display:'flex', gap:10, marginBottom:20, alignItems:'center', flexWrap:'wrap' }}>{children}</div>
-}
-
-export function SearchInput({ placeholder, value, onChange }) {
-  return (
-    <input placeholder={placeholder || '🔍 Search...'}
-      value={value} onChange={onChange}
-      style={{ background:'var(--surface)', border:'1.5px solid var(--border)', color:'var(--text)',
-        borderRadius:10, padding:'9px 14px', fontSize:13, fontFamily:'Outfit,sans-serif',
-        outline:'none', width:240, transition:'border-color 0.15s' }}
-      onFocus={e => e.target.style.borderColor='var(--primary)'}
-      onBlur={e => e.target.style.borderColor='var(--border)'} />
-  )
-}
-
-export function FilterSelect({ children, value, onChange }) {
-  return (
-    <select value={value} onChange={onChange}
-      style={{ background:'var(--surface)', border:'1.5px solid var(--border)', color:'var(--text2)',
-        borderRadius:10, padding:'9px 14px', fontSize:13, fontFamily:'Outfit,sans-serif',
-        outline:'none', cursor:'pointer' }}>
-      {children}
-    </select>
-  )
-}
-
-export function PrimaryBtn({ children, onClick, style }) {
-  const [hov, setHov] = useState(false)
-  return (
-    <button onClick={onClick}
-      style={{ background: hov ? 'var(--primary-d)' : 'var(--primary)',
-        border:'none', borderRadius:10, padding:'9px 18px', color:'#fff',
-        fontFamily:'Nunito,sans-serif', fontWeight:800, fontSize:13.5,
-        cursor:'pointer', display:'flex', alignItems:'center', gap:6,
-        boxShadow: hov ? '0 6px 20px var(--primary-glow)' : '0 2px 8px var(--primary-glow)',
-        transform: hov ? 'translateY(-1px)' : 'none', transition:'all 0.15s', ...style }}
-      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}>
-      {children}
-    </button>
-  )
-}
-
-/* ── Modal ── */
-export function Modal({ title, onClose, children }) {
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prevOverflow
-    }
-  }, [])
-
-  const overlayStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'rgba(0,0,0,0.45)',
-    zIndex: 9999,
-    padding: '24px 16px',
-    boxSizing: 'border-box',
-  }
-
-  const boxStyle = {
-    width: 650,
-    maxWidth: '90%',
-    maxHeight: '85vh',
-    overflowY: 'auto',
-    borderRadius: 12,
-    padding: 24,
-    background: 'var(--surface)',
-    border: '1.5px solid var(--border)',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-  }
-
-  const modalNode = (
-    <div
-      style={overlayStyle}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div style={boxStyle}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
-          <h3 style={{ fontFamily:'Nunito', fontSize:20, fontWeight:800, color:'var(--text)' }}>{title}</h3>
-          <button
-            onClick={onClose}
-            type="button"
-            style={{
-              background:'none',
-              border:'none',
-              fontSize:20,
-              cursor:'pointer',
-              color:'var(--text3)',
-              padding:4,
-              borderRadius:8,
-              lineHeight:1
-            }}
-          >
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-
-  return createPortal(modalNode, document.body)
-}
-
-/* ── Modal Form Grid ── */
-export function FormGrid({ children }) {
-  return <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>{children}</div>
-}
-
-export function FormGroup({ label, full, children }) {
-  return (
-    <div style={{ display:'flex', flexDirection:'column', gap:6,
-      gridColumn: full ? '1/-1' : undefined }}>
-      <label style={{ fontSize:11, fontWeight:700, color:'var(--text3)',
-        letterSpacing:'0.5px', textTransform:'uppercase' }}>{label}</label>
-      {children}
-    </div>
-  )
-}
-
-export function FormInput({ type='text', placeholder, as='input', name, value, onChange }) {
-  const base = { width:'100%', background:'var(--surface2)', border:'1.5px solid var(--border)',
-    color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5,
-    fontFamily:'Outfit,sans-serif', outline:'none', transition:'border-color 0.15s' }
-  if (as === 'textarea') return (
-    <textarea 
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder} 
-      style={{ ...base, resize:'vertical', minHeight:80 }}
-      onFocus={e => e.target.style.borderColor='var(--primary)'}
-      onBlur={e => e.target.style.borderColor='var(--border)'} 
-    />
-  )
-  if (as === 'select') return null
-  return (
-    <input 
-      type={type} 
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder} 
-      style={base}
-      onFocus={e => e.target.style.borderColor='var(--primary)'}
-      onBlur={e => e.target.style.borderColor='var(--border)'} 
-    />
-  )
-}
-
-export function FormActions({ onClose, onSave, saveDisabled, saveText }) {
-  return (
-    <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:24 }}>
-      <button onClick={onClose}
-        style={{ padding:'9px 20px', borderRadius:10, background:'none',
-          border:'1.5px solid var(--border)', color:'var(--text2)',
-          fontFamily:'Outfit,sans-serif', fontWeight:600, fontSize:13.5, cursor:'pointer' }}>
-        Cancel
-      </button>
-      <button 
-        onClick={onSave}
-        disabled={saveDisabled}
-        style={{ padding:'9px 20px', borderRadius:10, 
-          background: saveDisabled ? 'var(--text3)' : 'var(--primary)',
-          border:'none', color:'#fff', fontFamily:'Nunito,sans-serif', fontWeight:800,
-          fontSize:13.5, cursor: saveDisabled ? 'not-allowed' : 'pointer',
-          opacity: saveDisabled ? 0.6 : 1 }}>
-        {saveText || 'Save Changes'}
-      </button>
-    </div>
-  )
-}
-
-/* ── Toggle Switch ── */
+/* ── Misc ── */
 export function Toggle({ on, onClick }) {
   return (
-    <div onClick={onClick}
-      style={{ width:42, height:24, borderRadius:20, cursor:'pointer', position:'relative',
-        background: on ? 'var(--primary)' : 'var(--border)', transition:'background 0.2s',
-        flexShrink:0, boxShadow: on ? '0 0 0 3px var(--primary-glow)' : 'none' }}>
-      <div style={{ position:'absolute', width:18, height:18, background:'#fff',
-        borderRadius:'50%', top:3, left: on ? 21 : 3, transition:'left 0.2s',
-        boxShadow:'0 2px 4px rgba(0,0,0,0.2)' }} />
+    <div onClick={onClick} style={{ width:44, height:24, borderRadius:20, cursor:'pointer', position:'relative', background: on ? 'var(--primary)' : 'var(--border)', transition:'0.2s' }}>
+      <div style={{ position:'absolute', width:18, height:18, background:'#fff', borderRadius:'50%', top:3, left: on ? 23 : 3, transition:'0.2s' }} />
     </div>
   )
 }
-
-/* ── Mini Activity Dot ── */
-export function ActivityDot({ color }) {
-  return <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0, marginTop:5 }} />
+export function StatCard({ icon, value, label, color }) {
+    return (
+        <SCard style={{ padding: 24, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', right: -16, bottom: -16, width: 80, height: 80, borderRadius: '50%', background: color, opacity: 0.1 }} />
+            <div style={{ fontSize: 24, marginBottom: 12 }}>{icon}</div>
+            <div style={{ fontSize: 28, fontWeight: 950, color, lineHeight:1.2 }}>{value}</div>
+            <div style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 700, marginTop:4 }}>{label}</div>
+        </SCard>
+    )
 }
+export function ActionBtn({ children, danger, onClick, style }) {
+    const [h, sH] = useState(false)
+    return <button onClick={onClick} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)} style={{ border:'1px solid var(--border)', borderRadius:10, padding:'6px 12px', fontSize:12, fontWeight:700, cursor:'pointer', background: h ? (danger?'#fee2e2':'var(--primary-l)') : 'transparent', color: h ? (danger?'#b91c1c':'var(--primary)') : 'var(--text2)', transition:'0.15s', ...style }}>{children}</button>
+}
+export function FiltersRow({ children }) { return <div style={{ display:'flex', gap:12, marginBottom:24, alignItems:'center' }}>{children}</div> }
+export function SearchInput({ value, onChange, placeholder }) {
+    return <input value={value} onChange={onChange} placeholder={placeholder || "Search..."} style={{ background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:12, padding:'10px 16px', fontSize:14, minWidth:280, outline:'none', fontFamily:'Outfit' }} />
+}
+export function FilterSelect({ children, value, onChange }) {
+    return <select value={value} onChange={onChange} style={{ background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:12, padding:'10px 16px', fontSize:14, cursor:'pointer', outline:'none', fontFamily:'Outfit' }}>{children}</select>
+}
+export function ActivityDot({ color }) { return <div style={{ width:10, height:10, borderRadius:'50%', background:color, flexShrink:0 }} /> }

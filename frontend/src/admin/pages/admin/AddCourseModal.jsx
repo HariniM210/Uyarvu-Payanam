@@ -5,11 +5,12 @@ import { courseService } from '../../../services/courseService';
 export default function AddCourseModal({ onClose, onCourseAdded }) {
   const [formData, setFormData] = useState({
     courseName: '',
-    category: 'Medical',
-    level: '10th',
+    category: 'Engineering',
+    level: 'Polytechnic',
+    targetLevel: 'After 10th',
     duration: '',
     eligibility: '',
-    futureScope: ''
+    shortDescription: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -30,9 +31,10 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
         courseName: formData.courseName,
         category: formData.category,
         level: formData.level,
+        targetLevel: formData.targetLevel,
         duration: formData.duration,
         eligibility: formData.eligibility,
-        futureScope: formData.futureScope
+        shortDescription: formData.shortDescription
       };
 
       const result = await courseService.createCourse(payload);
@@ -78,42 +80,49 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
             placeholder="e.g. JEE Preparation"
           />
         </FormGroup>
-        <FormGroup label="Category">
+        <FormGroup label="Target Level">
           <select 
-            name="category"
-            value={formData.category}
+            name="targetLevel"
+            value={formData.targetLevel}
             onChange={handleInputChange}
             style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
           >
-            {[
-              "Engineering", "Medical", "Law", "Arts", "Commerce",
-              "Science", "Design", "Architecture", "Education", "Aviation"
-            ].map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
+            <option value="After 10th">After 10th</option>
+            <option value="After 12th">After 12th</option>
           </select>
         </FormGroup>
-        <FormGroup label="Level">
+        <FormGroup label="Course Type (Level)">
           <select 
             name="level"
             value={formData.level}
             onChange={handleInputChange}
             style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
           >
-            <option value="5">Class 5</option>
-            <option value="8">Class 8</option>
-            <option value="10">Class 10</option>
-            <option value="12">Class 12</option>
+            <option value="Polytechnic">Polytechnic</option>
             <option value="Diploma">Diploma</option>
-            <option value="Undergraduate">Undergraduate</option>
+            <option value="B.Sc">B.Sc</option>
+            <option value="B.A">B.A</option>
+            <option value="B.Com">B.Com</option>
+            <option value="BBA">BBA</option>
+            <option value="BCA">BCA</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Medical">Medical</option>
+            <option value="Law">Law</option>
+            <option value="Architecture">Architecture</option>
+            <option value="Design">Design</option>
+            <option value="Vocational">Vocational</option>
+            <option value="Certification">Certification</option>
           </select>
+        </FormGroup>
+        <FormGroup label="Category">
+           <FormInput name="category" value={formData.category} onChange={handleInputChange} placeholder="e.g. Engineering, Medical, Arts" />
         </FormGroup>
         <FormGroup label="Duration">
           <FormInput 
             name="duration"
             value={formData.duration}
             onChange={handleInputChange}
-            placeholder="e.g. 2 Years"
+            placeholder="e.g. 3 Years"
           />
         </FormGroup>
         <FormGroup label="Eligibility">
@@ -121,15 +130,16 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
             name="eligibility"
             value={formData.eligibility}
             onChange={handleInputChange}
-            placeholder="e.g. 10+2 PCM"
+            placeholder="e.g. 10th Pass / 12th Pass"
           />
         </FormGroup>
-        <FormGroup label="Future Scope" full>
+        <FormGroup label="Short Description" full>
           <FormInput 
-            name="futureScope"
-            value={formData.futureScope}
+            name="shortDescription"
+            as="textarea"
+            value={formData.shortDescription}
             onChange={handleInputChange}
-            placeholder="e.g. Engineering Colleges"
+            placeholder="A brief overview of the course..."
           />
         </FormGroup>
       </FormGrid>

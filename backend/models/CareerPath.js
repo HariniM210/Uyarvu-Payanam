@@ -9,7 +9,8 @@ const careerPathSchema = new mongoose.Schema(
     },
     level: {
       type: String,
-      required: [true, "Class level is required"],
+      required: [true, "Level is required"],
+      enum: ["5th", "8th", "10th", "12th"],
       trim: true,
     },
     description: {
@@ -17,6 +18,30 @@ const careerPathSchema = new mongoose.Schema(
       required: [true, "Description is required"],
       trim: true,
     },
+    careerDirections: {
+      type: [String],
+      default: [],
+    },
+    suggestedSkills: {
+      type: [String],
+      default: [],
+    },
+    relatedScholarships: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Scholarship",
+      },
+    ],
+    image: {
+      type: String,
+      default: "",
+    },
+    status: {
+      type: String,
+      enum: ["draft", "published"],
+      default: "draft",
+    },
+    // Keep internal structure for potential legacy section support if needed
     sections: {
       type: [{
         heading: { type: String, trim: true },
@@ -26,40 +51,11 @@ const careerPathSchema = new mongoose.Schema(
       }],
       default: [],
     },
-    roadmap: {
-      type: [String],
-      default: [],
-    },
-    relatedCourses: {
-      type: [String],
-      default: [],
-    },
-    futureOpportunities: {
-      type: [String],
-      default: [],
-    },
     interestArea: {
       type: String,
-      enum: {
-        values: ["Science", "Arts", "Commerce", "General", "Technology", "Vocational"],
-        message: "Interest area must be one of: Science, Arts, Commerce, General, Technology, Vocational",
-      },
+      enum: ["Science", "Arts", "Commerce", "General", "Technology", "Vocational"],
       default: "General",
-      trim: true,
-    },
-    isRecommended: {
-      type: Boolean,
-      default: false,
-    },
-    ageGroup: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    careerDirections: {
-      type: [String],
-      default: [],
-    },
+    }
   },
   {
     timestamps: true,

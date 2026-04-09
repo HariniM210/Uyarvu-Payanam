@@ -5,7 +5,7 @@ const College = require("../models/College");
 // @access  Admin
 exports.createCollege = async (req, res) => {
   try {
-    const { collegeName, stream, district, location, state, feesPerYear, placementPercentage, rank, accreditation, coursesOffered } = req.body;
+    const { collegeName, stream, district, location, state, feesPerYear, placementPercentage, rank, accreditation, coursesOffered, website } = req.body;
 
     // Validation
     if (!collegeName || !stream) {
@@ -26,6 +26,7 @@ exports.createCollege = async (req, res) => {
       rank,
       accreditation,
       coursesOffered,
+      website,
     });
 
     res.status(201).json({
@@ -58,8 +59,13 @@ exports.createCollege = async (req, res) => {
 // @access  Public
 exports.getAllColleges = async (req, res) => {
   try {
-    const { stream, district, search } = req.query;
+    const { stream, district, search, courseId } = req.query;
     const filter = {};
+
+    // Filter by course mapping
+    if (courseId) {
+      filter.coursesOffered = courseId;
+    }
 
     // Filter by stream
     if (stream && stream !== "All") {
@@ -150,6 +156,7 @@ exports.updateCollege = async (req, res) => {
       "rank",
       "accreditation",
       "coursesOffered",
+      "website"
     ];
 
     allowedFields.forEach((field) => {

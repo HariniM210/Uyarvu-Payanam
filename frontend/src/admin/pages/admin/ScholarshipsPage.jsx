@@ -1,12 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Card, DataTable, TR, TD, ActionBtn, FiltersRow, SearchInput, PrimaryBtn, Modal, FormGrid, FormGroup, FormInput, FormActions } from '../../components/UI';
+import { 
+  FiSearch, FiPlus, FiUpload, FiEdit2, FiTrash2, FiExternalLink, 
+  FiFilter, FiLayers, FiInfo, FiCheckCircle 
+} from 'react-icons/fi';
+import { 
+  Card, DataTable, TR, TD, ActionBtn, FiltersRow, SearchInput, 
+  SBtn, Modal, FormGrid, FormGroup, FormInput, FormActions, 
+  FilterSelect, SBadge, SLoader 
+} from '../../components/UI';
+
+// Base URL for API
+const API_URL = "http://localhost:5000/api/scholarships";
 
 export default function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState({ open: false, isEdit: false, data: null });
   const [uploadMessage, setUploadMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterClass, setFilterClass] = useState("all");
+
+  const initialFormState = {
+    scholarshipName: '',
+    provider: '',
+    amount: '',
+    eligibility: '',
+    applicationLink: '',
+    targetClass: ["10"], // Default to 10th
+    category: 'Government',
+    description: '',
+    status: 'published'
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
     fetchScholarships();
@@ -14,8 +41,10 @@ export default function ScholarshipsPage() {
 
   const fetchScholarships = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/scholarships");
-      setScholarships(res.data);
+      setLoading(true);
+      const res = await axios.get(API_URL);
+      // Assuming res.data is the array or { data: [] }
+      setScholarships(Array.isArray(res.data) ? res.data : (res.data.data || []));
     } catch (err) {
       console.error("Error fetching scholarships", err);
     } finally {
@@ -23,37 +52,106 @@ export default function ScholarshipsPage() {
     }
   };
 
+  const handleOpenModal = (item = null) => {
+    if (item) {
+      setFormData({
+        ...item,
+        targetClass: item.targetClass || ["10"]
+      });
+      setModal({ open: true, isEdit: true, data: item });
+    } else {
+      setFormData(initialFormState);
+      setModal({ open: true, isEdit: false, data: null });
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleClassToggle = (cls) => {
+    setFormData(prev => {
+      const current = prev.targetClass || [];
+      if (current.includes(cls)) {
+        return { ...prev, targetClass: current.filter(c => c !== cls) };
+      } else {
+        return { ...prev, targetClass: [...current, cls] };
+      }
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (modal.isEdit) {
+        await axios.put(`${API_URL}/${modal.data._id}`, formData, { withCredentials: true });
+      } else {
+        await axios.post(`${API_URL}/add-scholarship`, formData, { withCredentials: true });
+      }
+      setModal({ open: false, isEdit: false, data: null });
+      fetchScholarships();
+    } catch (err) {
+      alert("Save failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this scholarship?")) return;
+    try {
+      await axios.delete(`${API_URL}/${id}`, { withCredentials: true });
+      fetchScholarships();
+    } catch (err) {
+      alert("Delete failed");
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const body = new FormData();
+    body.append("file", file);
 
     try {
       setLoading(true);
       setUploadMessage("Uploading...");
-      const res = await axios.post("http://localhost:5000/api/scholarships/upload", formData);
-      setUploadMessage(`${res.data.inserted} added, ${res.data.duplicates} duplicates skipped`);
-      fetchScholarships(); // Refresh list after upload
+      const res = await axios.post(`${API_URL}/upload`, body, { withCredentials: true });
+      setUploadMessage(`Success: ${res.data.inserted} added.`);
+      fetchScholarships();
     } catch (err) {
-      console.error("Upload error", err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setUploadMessage("Error: " + err.response.data.message);
-      } else {
-        setUploadMessage("Error uploading file");
-      }
-      setLoading(false);
+      setUploadMessage("Upload failed.");
     } finally {
-      e.target.value = ""; // Clear file input
-      setTimeout(() => setUploadMessage(""), 5000); // Clear message after 5s
+      e.target.value = ""; 
+      setTimeout(() => setUploadMessage(""), 5000);
     }
   };
+
+  const filteredData = useMemo(() => {
+    return scholarships.filter(s => {
+      const matchesSearch = (s.scholarshipName || "").toLowerCase().includes(search.toLowerCase()) ||
+                            (s.provider || "").toLowerCase().includes(search.toLowerCase());
+      const matchesClass = filterClass === "all" || (s.targetClass || []).includes(filterClass);
+      return matchesSearch && matchesClass;
+    });
+  }, [scholarships, search, filterClass]);
 
   return (
     <div style={{ animation: 'fadeUp 0.4s ease both' }}>
       <FiltersRow>
-        <SearchInput placeholder="🔍 Search scholarships..." />
+        <SearchInput 
+          placeholder="Search scholarship name or provider..." 
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <FilterSelect value={filterClass} onChange={e => setFilterClass(e.target.value)}>
+           <option value="all">All Grades</option>
+           <option value="5">Class 5th</option>
+           <option value="8">Class 8th</option>
+           <option value="10">Class 10th</option>
+           <option value="12">Class 12th</option>
+        </FilterSelect>
+
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
           {uploadMessage && <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '14px' }}>{uploadMessage}</span>}
           <input 
@@ -63,34 +161,42 @@ export default function ScholarshipsPage() {
             style={{ display: 'none' }} 
             onChange={handleFileUpload} 
           />
-          <PrimaryBtn onClick={() => document.getElementById('csv-upload').click()}>
-            Upload CSV/Excel
-          </PrimaryBtn>
-          <PrimaryBtn onClick={() => setModal(true)}>+ Add Scholarship</PrimaryBtn>
+          <SBtn variant="outline" onClick={() => document.getElementById('csv-upload').click()}>
+            <FiUpload style={{ marginRight:8 }} /> Import CSV
+          </SBtn>
+          <SBtn variant="primary" onClick={() => handleOpenModal()}>
+            <FiPlus style={{ marginRight:8 }} /> Add Scholarship
+          </SBtn>
         </div>
       </FiltersRow>
 
       <Card>
         {loading ? (
-          <p style={{ padding: 20 }}>Loading scholarships...</p>
+          <SLoader />
         ) : (
           <DataTable
-            columns={['Scholarship Name', 'Provider', 'Eligibility', 'Amount', 'Action']}
-            data={scholarships}
+            columns={['Scholarship Name', 'Grades', 'Provider', 'Benefit', 'Action']}
+            data={filteredData}
             renderRow={(s) => (
               <TR key={s._id}>
-                <TD style={{ fontWeight: 600, color: 'var(--text)' }}>{s.scholarshipName || 'N/A'}</TD>
-                <TD>{s.provider || 'N/A'}</TD>
-                <TD style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {s.eligibility || 'N/A'}
+                <TD style={{ fontWeight: 800, color: 'var(--text)', fontSize:15 }}>
+                  {(s.scholarshipName || '').toUpperCase()}
                 </TD>
-                <TD style={{ color: 'var(--text3)' }}>{s.amount || 'N/A'}</TD>
                 <TD>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {s.applicationLink ? (
-                      <ActionBtn onClick={() => window.open(s.applicationLink, '_blank')}>🔗 Apply Here</ActionBtn>
-                    ) : (
-                      <ActionBtn>No Link</ActionBtn>
+                   <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                      {(s.targetClass || []).map(c => (
+                        <SBadge key={c} color="blue">{c}th</SBadge>
+                      ))}
+                   </div>
+                </TD>
+                <TD>{s.provider || 'N/A'}</TD>
+                <TD style={{ fontWeight: 600, color: 'var(--primary)' }}>{s.amount || 'N/A'}</TD>
+                <TD>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <ActionBtn onClick={() => handleOpenModal(s)} title="Edit"><FiEdit2 size={16} /></ActionBtn>
+                    <ActionBtn onClick={() => handleDelete(s._id)} title="Delete" style={{ color:'#ef4444' }}><FiTrash2 size={16} /></ActionBtn>
+                    {s.applicationLink && (
+                       <ActionBtn onClick={() => window.open(s.applicationLink, '_blank')} title="Link"><FiExternalLink size={16} /></ActionBtn>
                     )}
                   </div>
                 </TD>
@@ -100,16 +206,55 @@ export default function ScholarshipsPage() {
         )}
       </Card>
 
-      {modal && (
-        <Modal title="Add New Scholarship" onClose={() => setModal(false)}>
-          <FormGrid>
-            <FormGroup label="Scholarship Name" full><FormInput placeholder="e.g. NSP Pre-Matric" /></FormGroup>
-            <FormGroup label="Provider"><FormInput placeholder="e.g. TN Govt" /></FormGroup>
-            <FormGroup label="Amount"><FormInput placeholder="e.g. ₹1L/yr" /></FormGroup>
-            <FormGroup label="Eligibility"><FormInput placeholder="e.g. Above 80%" /></FormGroup>
-            <FormGroup label="Application Link" full><FormInput placeholder="https://" /></FormGroup>
-          </FormGrid>
-          <FormActions onClose={() => setModal(false)} />
+      {modal.open && (
+        <Modal title={modal.isEdit ? "Edit Scholarship" : "Add Scholarship"} onClose={() => setModal({open:false, isEdit:false, data:null})}>
+          <form onSubmit={handleSubmit}>
+            <FormGrid>
+              <FormGroup label="Scholarship Name" full>
+                <FormInput name="scholarshipName" value={formData.scholarshipName} onChange={handleInputChange} required />
+              </FormGroup>
+              <FormGroup label="Provider">
+                <FormInput name="provider" value={formData.provider} onChange={handleInputChange} />
+              </FormGroup>
+              <FormGroup label="Benefit Amount">
+                <FormInput name="amount" value={formData.amount} onChange={handleInputChange} placeholder="e.g. ₹10,000" />
+              </FormGroup>
+              <FormGroup label="Category">
+                <select name="category" value={formData.category} onChange={handleInputChange} style={{ width:'100%', padding:12, borderRadius:12, border:'1.5px solid var(--border)' }}>
+                   <option value="Government">Government</option>
+                   <option value="Private">Private</option>
+                   <option value="Merit">Merit Based</option>
+                </select>
+              </FormGroup>
+              <FormGroup label="Eligibility">
+                <FormInput name="eligibility" value={formData.eligibility} onChange={handleInputChange} />
+              </FormGroup>
+              <FormGroup label="Target Grades (Select Multi)" full>
+                 <div style={{ display:'flex', gap:10 }}>
+                    {["5", "8", "10", "12"].map(cls => (
+                      <button 
+                         type="button" 
+                         key={cls}
+                         onClick={() => handleClassToggle(cls)}
+                         style={{ 
+                            padding:'10px 20px', borderRadius:12, border: formData.targetClass.includes(cls) ? '2px solid var(--primary)' : '1px solid var(--border)',
+                            background: formData.targetClass.includes(cls) ? 'var(--surface2)' : '#fff',
+                            color: formData.targetClass.includes(cls) ? 'var(--primary)' : 'var(--text3)',
+                            fontWeight: 700, cursor:'pointer'
+                         }}
+                      >Class {cls}th</button>
+                    ))}
+                 </div>
+              </FormGroup>
+              <FormGroup label="Application Link" full>
+                <FormInput name="applicationLink" value={formData.applicationLink} onChange={handleInputChange} placeholder="https://..." />
+              </FormGroup>
+              <FormGroup label="Description" full>
+                <FormInput as="textarea" name="description" value={formData.description} onChange={handleInputChange} style={{ minHeight:100 }} />
+              </FormGroup>
+            </FormGrid>
+            <FormActions onClose={() => setModal({open:false, isEdit:false, data:null})} />
+          </form>
         </Modal>
       )}
     </div>
