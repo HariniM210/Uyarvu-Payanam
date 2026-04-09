@@ -23,17 +23,16 @@ const courseSchema = new mongoose.Schema(
         lowercase: true,
     },
     level: {
-      type: String, // "Polytechnic", "B.Sc", etc.
+      type: String, // "Polytechnic", "B.Sc", "Degree", "Diploma", "Certificate" etc.
       required: [true, "Level is required"],
       trim: true,
     },
     targetLevel: {
-      type: String, 
-      enum: ["After 10th", "After 12th"],
-      required: [true, "Target level (10th/12th) is required"],
+      type: String, // "After 10th", "After 12th", "Diploma"
+      required: [true, "Target level is required"],
     },
     category: {
-      type: String, // "Medical", "Engineering", "Arts", etc.
+      type: String, // "Medical", "Engineering", "Arts", "Commerce", "Science", "Management", "Certificate", "Architecture"
       required: [true, "Category is required"],
       trim: true,
     },
@@ -53,6 +52,16 @@ const courseSchema = new mongoose.Schema(
       trim: true,
     },
     
+    // Extended fields for imported courses
+    scope: { type: String, default: "" },
+    averageSalary: { type: String, default: "" },
+    sourceName: { type: String, default: "" },
+    status: { 
+      type: String, 
+      enum: ["active", "draft", "archived"],
+      default: "active" 
+    },
+
     // Detailed Content (Full Page)
     overview: { type: String, default: "" },
     admissionProcess: { type: String, default: "" },
@@ -75,6 +84,14 @@ const courseSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isImported: {
+      type: Boolean,
+      default: false,
+    },
+    sourceUrl: {
+      type: String,
+      default: "",
+    }
   },
   {
     timestamps: true,

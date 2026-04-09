@@ -12,7 +12,8 @@ import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
 import AuthModal from '../../components/ui/AuthModal'
 import { courseService } from '../../../services/courseService'
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
+import { collegeService } from '../../services/index'
+import { FiChevronDown, FiChevronUp, FiMapPin } from 'react-icons/fi'
 const CLASS_SECTIONS = {
   default: [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
@@ -22,6 +23,7 @@ const CLASS_SECTIONS = {
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#10b981' },
     { id: 'Games', label: 'Games', icon: FiStar, color: '#8b5cf6' },
     { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
+    { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Videos', label: 'Videos', icon: FiVideo, color: '#ef4444' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
@@ -38,6 +40,7 @@ const CLASS_SECTIONS = {
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
     { id: 'Streams', label: 'Streams', icon: FiLayers, color: '#f59e0b' },
     { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
+    { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
@@ -48,6 +51,7 @@ const CLASS_SECTIONS = {
   "12": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
     { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
+    { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
@@ -58,6 +62,7 @@ const CLASS_SECTIONS = {
 
 const STREAM_TABS = ["Science", "Commerce", "Arts", "Diploma"];
 const SCHOLARSHIP_TABS = ["Government", "State Schemes", "Merit", "NSP", "Process", "Tips"];
+const COLLEGE_TABS = ['Engineering', 'Medical', 'Arts & Science', 'Law', 'Polytechnic', 'Agriculture', 'Others'];
 const EXAM_TABS = {
   "8": ["Scholarship Exam", "Olympiad", "Innovation"],
   "10": ["Science", "Diploma", "Scholarship", "Skill Exams", "Job Path"],
@@ -84,6 +89,10 @@ export default function ClassLevelPage(props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [courses, setCourses] = useState([])
   const [expandedCourseCat, setExpandedCourseCat] = useState(null)
+  
+  // Colleges state
+  const [colleges, setColleges] = useState([])
+  const [collegesLoading, setCollegesLoading] = useState(false)
 
   useEffect(() => {
     fetchContent()
@@ -96,13 +105,43 @@ export default function ClassLevelPage(props) {
     setActiveSubTab('All');
   }, [cleanLevel]);
 
+  // Specific effect for fetching colleges dynamically based on search/sub-filters
+  useEffect(() => {
+    if (activeSec !== 'Colleges') return;
+    const fetchColleges = async () => {
+      setCollegesLoading(true)
+      try {
+        const params = {}
+        if (activeSubTab !== 'All') params.stream = activeSubTab
+        if (searchQuery.trim() !== '') params.search = searchQuery.trim()
+        const res = await collegeService.getAll(params)
+        setColleges(res.data || [])
+      } catch (err) {
+        console.error('Error fetching colleges', err)
+      } finally {
+        setCollegesLoading(false)
+      }
+    }
+    
+    // Add small delay to debounce search typing
+    const t = setTimeout(fetchColleges, 350)
+    return () => clearTimeout(t)
+  }, [activeSec, activeSubTab, searchQuery])
+
   const fetchContent = async () => {
     try {
       setLoading(true)
+
+      // Map class level number to DB targetLevel field value
+      const targetLevelMap = { '10': 'After 10th', '12': 'After 12th' }
+      const targetLevel = targetLevelMap[cleanLevel]
+
       const [contentRes, scholarshipRes, coursesRes] = await Promise.all([
         classContentService.getPublicList({ targetClass: cleanLevel }),
         fetch("http://localhost:5000/api/scholarships").then(r => r.json()),
-        courseService.getAllCourses()
+        targetLevel
+          ? courseService.getAllCourses({ targetLevel })
+          : Promise.resolve({ success: true, data: [] })
       ])
 
       if (contentRes.success) setContents(contentRes.data)
@@ -136,6 +175,7 @@ export default function ClassLevelPage(props) {
       setLoading(false)
     }
   }
+
 
   const fetchSavedItems = async () => {
     try {
@@ -286,7 +326,7 @@ export default function ClassLevelPage(props) {
         </div>
 
         {/* Sub-Tabs for Targeted Sections */}
-        {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && (
+        {['Streams', 'Scholarships', 'Entrance Exams', 'Colleges'].includes(activeSec) && (
           <div style={{ 
             display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 10px 30px', 
             marginBottom: 30, justifyContent:'center', flexWrap:'wrap'
@@ -294,6 +334,7 @@ export default function ClassLevelPage(props) {
             {['All', ...(
                activeSec === 'Streams' ? STREAM_TABS : 
                activeSec === 'Scholarships' ? SCHOLARSHIP_TABS : 
+               activeSec === 'Colleges' ? COLLEGE_TABS :
                (EXAM_TABS[cleanLevel] || EXAM_TABS.default)
             )].map(tab => (
               <button
@@ -317,8 +358,10 @@ export default function ClassLevelPage(props) {
         ) : (
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
-               <h2 style={{ fontSize:28, fontWeight:900 }}>{activeSec} Content</h2>
-               <span style={{ color:'#94a3b8', fontSize:14, fontWeight:600 }}>{filteredContent.length} items found</span>
+               <h2 style={{ fontSize:28, fontWeight:900 }}>{activeSec} {activeSec !== 'Colleges' ? 'Content' : 'Directory'}</h2>
+               <span style={{ color:'#94a3b8', fontSize:14, fontWeight:600 }}>
+                 {activeSec === 'Colleges' ? colleges.length : activeSec === 'Careers' ? courses.length : filteredContent.length} items found
+               </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Careers' ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))', gap: 32 }}>
@@ -367,6 +410,73 @@ export default function ClassLevelPage(props) {
                          )}
                       </div>
                    ))
+                 )
+              ) : activeSec === 'Colleges' ? (
+                 collegesLoading ? (
+                   <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
+                 ) : colleges.length === 0 ? (
+                   <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                     <SEmpty title="No colleges found" desc="Try adjusting your filters or search terms." />
+                   </div>
+                 ) : (
+                   colleges.map(clg => {
+                      const STREAM_STYLE = {
+                        Engineering: { color: '#1d5fba', bg: '#eaf0fb' },
+                        Medical: { color: '#16a34a', bg: '#f0fdf4' },
+                        'Arts & Science': { color: '#7c3aed', bg: '#f3effe' },
+                        Law: { color: '#c48a1a', bg: '#fdf4e0' },
+                        Polytechnic: { color: '#e05e24', bg: '#fdeee6' },
+                        Agriculture: { color: '#15803d', bg: '#dcfce7' },
+                        Others: { color: '#64748b', bg: '#f1f5f9' },
+                      }
+                      const sc = STREAM_STYLE[clg.stream] || { color: 'var(--s-primary)', bg: 'var(--s-primary-l)' }
+                      const badgeColor = clg.stream === 'Engineering' ? 'blue' : clg.stream === 'Medical' ? 'green' : clg.stream === 'Arts & Science' ? 'purple' : clg.stream === 'Law' ? 'gold' : 'gray'
+                      
+                      return (
+                         <div key={clg._id} className="hover-lift" style={{ background:'#fff', borderRadius:24, border:`1px solid #f1f5f9`, borderTop:`4px solid ${sc.color}`, padding:24, boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', display:'flex', flexDirection:'column' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 16 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ width: 48, height: 48, borderRadius: 12, background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>🏫</div>
+                                <div>
+                                  <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 16, color: 'var(--s-text)', margin: '0 0 4px', lineHeight: 1.3 }}>{clg.collegeName}</h3>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--s-text3)' }}>
+                                    <FiMapPin size={12} /> {clg.district || clg.location || 'Tamil Nadu'}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+                              <SBadge color={badgeColor}>{clg.stream}</SBadge>
+                              {clg.accreditation && <SBadge color="gray">{clg.accreditation}</SBadge>}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 20, marginTop: 'auto' }}>
+                              {[
+                                { l: 'Fees/yr', v: clg.feesPerYear ? (clg.feesPerYear >= 100000 ? `${(clg.feesPerYear / 100000).toFixed(1)}L` : `${(clg.feesPerYear / 1000).toFixed(0)}K`) : '—', c: '#16a34a' },
+                                { l: 'Placement', v: clg.placementPercentage ? `${clg.placementPercentage}%` : '—', c: '#1d5fba' },
+                                { l: 'Rank', v: clg.rank || '—', c: 'var(--s-primary)' },
+                              ].map((s, i) => (
+                                <div key={i} style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 8px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
+                                  <div style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 15, color: s.c }}>{s.v}</div>
+                                  <div style={{ fontSize: 11, color: 'var(--s-text3)', marginTop: 4, fontWeight: 600 }}>{s.l}</div>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {clg.coursesOffered?.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
+                                {clg.coursesOffered.slice(0, 2).map((c, i) => (
+                                  <span key={i} style={{ fontSize: 12, background: '#f8fafc', color: 'var(--s-text2)', padding: '4px 10px', borderRadius: 8, fontWeight: 600, border: '1px solid #e2e8f0' }}>{c}</span>
+                                ))}
+                                {clg.coursesOffered.length > 2 && (
+                                  <span style={{ fontSize: 12, color: 'var(--s-text3)', padding: '4px' }}>+{clg.coursesOffered.length - 2} more</span>
+                                )}
+                              </div>
+                            )}
+                         </div>
+                      );
+                   })
                  )
               ) : filteredContent.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
