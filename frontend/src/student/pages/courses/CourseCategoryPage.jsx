@@ -133,11 +133,15 @@ export default function CourseCategoryPage() {
     setLoading(true)
     const params = {}
     
-    // Only apply hardcoded levels if NOT in generic search mode
-    if (!isSearchMode && config?.level) {
-        params.level = config.level
+    // Use targetLevel (e.g. "After 12th") — NOT level (e.g. "12") — to match the DB field
+    if (!isSearchMode && config?.targetLevel) {
+        params.targetLevel = config.targetLevel
     } else {
-        if (levelFilter !== 'All') params.level = levelFilter
+        if (levelFilter !== 'All') {
+          // Map UI filter values to DB targetLevel values
+          const levelMap = { '10': 'After 10th', '12': 'After 12th', 'Diploma': 'After 10th', 'Undergraduate': 'After 12th' }
+          params.targetLevel = levelMap[levelFilter] || levelFilter
+        }
     }
     
     if (streamFilter !== 'All') params.category = streamFilter
@@ -152,6 +156,7 @@ export default function CourseCategoryPage() {
       })
       .finally(() => setLoading(false))
   }, [config, streamFilter, levelFilter, isSearchMode])
+
 
   // Sync state if URL search param changes
   useEffect(() => {

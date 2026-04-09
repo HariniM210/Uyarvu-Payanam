@@ -7,8 +7,32 @@ export const courseService = {
     return response.data
   },
 
+  // Bulk import courses (text-based)
+  bulkImport: async (courseData) => {
+    const response = await axiosInstance.post('/courses/bulk', courseData)
+    return response.data
+  },
+
+  // Preview source import (dry run — no DB changes)
+  previewSourceImport: async (filters = {}) => {
+    const response = await axiosInstance.post('/courses/preview-import', filters)
+    return response.data
+  },
+
+  // Import from source (actual DB insert)
+  importFromSource: async (filters = {}) => {
+    const response = await axiosInstance.post('/courses/import-from-source', filters)
+    return response.data
+  },
+
   // Get all courses
   getAllCourses: async () => {
+    const response = await axiosInstance.get('/courses')
+    return response.data
+  },
+
+  // Alias used by LandingPage
+  getAll: async () => {
     const response = await axiosInstance.get('/courses')
     return response.data
   },

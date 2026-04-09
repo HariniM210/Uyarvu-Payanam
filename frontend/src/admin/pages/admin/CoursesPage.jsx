@@ -1,16 +1,20 @@
 // CoursesPage.jsx
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, LevelBadge, DataTable, TR, TD, ActionBtn, FiltersRow, SearchInput, FilterSelect, PrimaryBtn, SBtn, Modal, FormGrid, FormGroup, FormInput, FormActions } from '../../components/UI'
+import { Card, LevelBadge, DataTable, TR, TD, ActionBtn, FiltersRow, SearchInput, FilterSelect, PrimaryBtn, SBtn, SBadge, Modal, FormGrid, FormGroup, FormInput, FormActions } from '../../components/UI'
 import { courseService } from '../../../services/courseService'
 import AddCourseModal from './AddCourseModal'
+import BulkImportCoursesModal from './BulkImportCoursesModal'
+import SourceImportModal from './SourceImportModal'
 
 export default function CoursesPage() {
   const navigate = useNavigate()
   const [showAddCourseModal, setShowAddCourseModal] = useState(false)
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false)
+  const [showSourceImportModal, setShowSourceImportModal] = useState(false)
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedTarget, setSelectedTarget] = useState('All')
+  const [selectedType, setSelectedType] = useState('All')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -54,10 +58,9 @@ export default function CoursesPage() {
     const rows = filtered.map(c => [
       `"${c.courseName.replace(/"/g, '""')}"`,
       `"${(c.level || '').replace(/"/g, '""')}"`,
-      `"${(c.targetLevel || '').replace(/"/g, '""')}"`,
       `"${(c.category || '').replace(/"/g, '""')}"`,
       `"${(c.duration || '').replace(/"/g, '""')}"`,
-      `"${(c.eligibility || '').replace(/"/g, '""')}"`
+      `"${(c.sourceName || '').replace(/"/g, '""')}"`
     ]);
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -69,11 +72,32 @@ export default function CoursesPage() {
   }
 
   const filtered = courses.filter(c => {
-    const matchesTarget = selectedTarget === 'All' || c.targetLevel === selectedTarget
-    const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory
-    const matchesSearch = c.courseName.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesTarget && matchesCategory && matchesSearch
+    // Safely normalize strings
+    const normalize = (str) => typeof str === 'string' ? str.trim().toLowerCase() : ''
+    
+    // Normalize Database values
+    const dbType = normalize(c.level) || normalize(c.targetLevel)
+    const dbCategory = normalize(c.category)
+    const dbName = normalize(c.courseName)
+
+    // Check Matches
+    const normType = normalize(selectedType)
+    const matchesType = selectedType === 'All' || dbType === normType 
+    const matchesCategory = selectedCategory === 'All' || dbCategory === normalize(selectedCategory)
+    
+    const query = normalize(searchQuery)
+    const matchesSearch = query === '' || dbName.includes(query)
+
+    return matchesType && matchesCategory && matchesSearch
   })
+
+  // Derive dynamic category list from actual courses
+  const allCategories = [...new Set(courses.map(c => c.category).filter(Boolean))].sort()
+
+  // Stats
+  const totalCourses = courses.length
+  const importedCount = filtered.filter(c => c.isImported).length
+  const manualCount = filtered.length - importedCount
 
   if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text2)' }}>Loading courses...</div>
 
@@ -89,26 +113,63 @@ export default function CoursesPage() {
         </div>
       )}
 
+      {/* Stats Bar */}
+      <div style={{
+        display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap'
+      }}>
+        {[
+          { icon: '📚', label: 'Total Courses', value: totalCourses, color: '#6366f1' },
+          { icon: '🔍', label: 'Showing', value: filtered.length, color: '#2563eb' },
+          { icon: '📦', label: 'Imported', value: importedCount, color: '#16a34a' },
+          { icon: '✏️', label: 'Manual', value: manualCount, color: '#d97706' },
+        ].map(s => (
+          <div key={s.label} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'var(--surface)', border: '1.5px solid var(--border)',
+            borderRadius: 12, padding: '8px 16px', fontSize: 13, fontWeight: 700
+          }}>
+            <span>{s.icon}</span>
+            <span style={{ color: 'var(--text3)' }}>{s.label}:</span>
+            <span style={{ color: s.color, fontWeight: 900 }}>{s.value}</span>
+          </div>
+        ))}
+      </div>
+
       <FiltersRow>
         <SearchInput 
           placeholder="🔍 Search courses..." 
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
         />
-        <FilterSelect value={selectedTarget} onChange={e=>setSelectedTarget(e.target.value)}>
-          <option value="All">All Trajectories</option>
-          <option value="After 10th">After 10th</option>
+        <FilterSelect value={selectedType} onChange={e=>setSelectedType(e.target.value)}>
+          <option value="All">All Types</option>
+          <option value="Diploma">Diploma</option>
           <option value="After 12th">After 12th</option>
+          <option value="Certificate">Certificate</option>
         </FilterSelect>
         <FilterSelect value={selectedCategory} onChange={e=>setSelectedCategory(e.target.value)}>
           <option value="All">All Categories</option>
-          {[
-            "Engineering", "Medical", "Law", "Arts", "Commerce",
-            "Science", "Design", "Architecture", "Polytechnic", "Diploma"
-          ].map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          {["Agriculture", "Architecture", "Arts", "Commerce", "Design", "Engineering", "Hotel Management", "IT & Computer", "ITI", "Law", "Media & Journalism", "Medical", "Polytechnic", "Science"].map(
+            cat => <option key={cat} value={cat}>{cat}</option>
+          )}
         </FilterSelect>
-        <div style={{ marginLeft:'auto', display:'flex', gap:10 }}>
+        <div style={{ marginLeft:'auto', display:'flex', gap:10, flexWrap: 'wrap' }}>
           <SBtn variant="outline" onClick={handleExport} disabled={filtered.length === 0}>📥 Export</SBtn>
+          <SBtn variant="outline" onClick={()=>setShowBulkImportModal(true)} 
+            style={{ background: 'var(--primary-l)', color: 'var(--primary)', borderColor: 'var(--primary-l)', fontWeight: 700 }}>
+            ⚡ Text Import
+          </SBtn>
+          <SBtn 
+            onClick={()=>setShowSourceImportModal(true)}
+            style={{ 
+              background: 'linear-gradient(135deg, #16a34a, #059669)', 
+              color: '#fff', 
+              border: 'none', 
+              fontWeight: 800,
+              boxShadow: '0 3px 12px rgba(22,163,74,0.25)',
+            }}>
+            🌐 Import from Source
+          </SBtn>
           <PrimaryBtn onClick={()=>setShowAddCourseModal(true)}>+ Add Course</PrimaryBtn>
         </div>
       </FiltersRow>
@@ -120,13 +181,19 @@ export default function CoursesPage() {
             <p>No courses found</p>
           </div>
         ) : (
-          <DataTable columns={['Course Name', 'Type', 'Trajectory', 'Category', 'Duration', 'Actions']} data={filtered} renderRow={(c)=>(
+          <DataTable columns={['Course Name', 'Type', 'Category', 'Duration', 'Source', 'Actions']} data={filtered} renderRow={(c)=>(
             <TR key={c._id}>
-              <TD style={{ fontWeight:600, color:'var(--text)' }}>{c.courseName}</TD>
-              <TD style={{ color:'var(--text2)' }}>{c.level}</TD>
-              <TD><LevelBadge level={c.targetLevel}/></TD>
+              <TD style={{ fontWeight:600, color:'var(--text)', maxWidth: 280 }}>{c.courseName}</TD>
+              <TD><LevelBadge level={c.level || c.targetLevel}/></TD>
               <TD style={{ color:'var(--text3)' }}>{c.category}</TD>
               <TD style={{ color:'var(--text3)' }}>{c.duration}</TD>
+              <TD>
+                {c.isImported ? (
+                  <SBadge color="green" style={{ fontSize: 11 }}>Imported</SBadge>
+                ) : (
+                  <SBadge color="gray" style={{ fontSize: 11 }}>Manual</SBadge>
+                )}
+              </TD>
               <TD>
                 <div style={{ display:'flex', gap:6 }}>
                   <ActionBtn onClick={() => navigate(`/admin/courses/edit/${c._id}`)}>📝 Details</ActionBtn>
@@ -142,6 +209,28 @@ export default function CoursesPage() {
         <AddCourseModal
           onClose={() => setShowAddCourseModal(false)}
           onCourseAdded={fetchCourses}
+        />
+      )}
+
+      {showBulkImportModal && (
+        <BulkImportCoursesModal 
+          onClose={() => setShowBulkImportModal(false)}
+          onImportSuccess={() => {
+            setShowBulkImportModal(false)
+            fetchCourses()
+          }}
+        />
+      )}
+
+      {showSourceImportModal && (
+        <SourceImportModal
+          onClose={() => setShowSourceImportModal(false)}
+          onImportSuccess={() => {
+            setShowSourceImportModal(false)
+            setMessage({ type: 'success', text: '✅ Courses imported successfully from source!' })
+            fetchCourses()
+            setTimeout(() => setMessage({ type: '', text: '' }), 5000)
+          }}
         />
       )}
     </div>
