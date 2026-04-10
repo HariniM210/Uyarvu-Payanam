@@ -88,12 +88,10 @@ export default function ClassLevelPage(props) {
   const [alert, setAlert] = useState({ type: '', text: '' })
   const [searchQuery, setSearchQuery] = useState('')
   const [courses, setCourses] = useState([])
+  const [explorerData, setExplorerData] = useState([])
+  const [explorerLoading, setExplorerLoading] = useState(false)
   const [expandedCourseCat, setExpandedCourseCat] = useState(null)
   
-  // Colleges state
-  const [colleges, setColleges] = useState([])
-  const [collegesLoading, setCollegesLoading] = useState(false)
-
   useEffect(() => {
     fetchContent()
     if (isAuthenticated) fetchSavedItems()
@@ -105,26 +103,28 @@ export default function ClassLevelPage(props) {
     setActiveSubTab('All');
   }, [cleanLevel]);
 
-  // Specific effect for fetching colleges dynamically based on search/sub-filters
+  // Unified effect for fetching EXPLORER DATA (Courses + Colleges)
   useEffect(() => {
-    if (activeSec !== 'Colleges') return;
-    const fetchColleges = async () => {
-      setCollegesLoading(true)
+    if (!['Careers', 'Colleges'].includes(activeSec)) return;
+    
+    const fetchExplorerData = async () => {
+      setExplorerLoading(true)
       try {
-        const params = {}
-        if (activeSubTab !== 'All') params.stream = activeSubTab
-        if (searchQuery.trim() !== '') params.search = searchQuery.trim()
-        const res = await collegeService.getAll(params)
-        setColleges(res.data || [])
+        const query = { search: searchQuery.trim() }
+        if (activeSubTab !== 'All') query.category = activeSubTab
+        
+        const res = await courseService.getExplorerData(query)
+        if (res.success) {
+           setExplorerData(res.data)
+        }
       } catch (err) {
-        console.error('Error fetching colleges', err)
+        console.error('Error fetching explorer data', err)
       } finally {
-        setCollegesLoading(false)
+        setExplorerLoading(false)
       }
     }
     
-    // Add small delay to debounce search typing
-    const t = setTimeout(fetchColleges, 350)
+    const t = setTimeout(fetchExplorerData, 350)
     return () => clearTimeout(t)
   }, [activeSec, activeSubTab, searchQuery])
 
@@ -132,26 +132,12 @@ export default function ClassLevelPage(props) {
     try {
       setLoading(true)
 
-      // Map class level number to DB targetLevel field value
-      const targetLevelMap = { '10': 'After 10th', '12': 'After 12th' }
-      const targetLevel = targetLevelMap[cleanLevel]
-
-      const [contentRes, scholarshipRes, coursesRes] = await Promise.all([
+      const [contentRes, scholarshipRes] = await Promise.all([
         classContentService.getPublicList({ targetClass: cleanLevel }),
-        fetch("http://localhost:5000/api/scholarships").then(r => r.json()),
-        targetLevel
-          ? courseService.getAllCourses({ targetLevel })
-          : Promise.resolve({ success: true, data: [] })
+        fetch("http://localhost:5000/api/scholarships").then(r => r.json())
       ])
 
       if (contentRes.success) setContents(contentRes.data)
-      if (coursesRes.success) {
-         setCourses(coursesRes.data)
-      } else if (Array.isArray(coursesRes)) {
-         setCourses(coursesRes)
-      } else if (coursesRes.data && Array.isArray(coursesRes.data)) {
-         setCourses(coursesRes.data)
-      }
       
       // Filter direct scholarships by targetClass
       const rawScholarships = Array.isArray(scholarshipRes) ? scholarshipRes : (scholarshipRes.data || [])
@@ -175,7 +161,6 @@ export default function ClassLevelPage(props) {
       setLoading(false)
     }
   }
-
 
   const fetchSavedItems = async () => {
     try {
@@ -238,21 +223,6 @@ export default function ClassLevelPage(props) {
       return matchesSection && matchesSearch && matchesSubTab
     })
   }, [contents, scholarships, activeSec, searchQuery, activeSubTab])
-
-  const groupedCourses = useMemo(() => {
-     if (activeSec !== 'Careers') return {}
-     // Filter courses visually by search query
-     const filtered = courses.filter(c => c.courseName?.toLowerCase().includes(searchQuery.toLowerCase()) || c.category?.toLowerCase().includes(searchQuery.toLowerCase()))
-     
-     // Group by category (e.g. BA, BSc, Engineering, Medicine)
-     const groups = {}
-     filtered.forEach(c => {
-        const cat = c.category || 'General Careers'
-        if (!groups[cat]) groups[cat] = []
-        groups[cat].push(c)
-     })
-     return groups
-  }, [courses, activeSec, searchQuery])
 
   const handleCardClick = (item) => {
     if (item.isDirect) {
@@ -364,121 +334,103 @@ export default function ClassLevelPage(props) {
                </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Careers' ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))', gap: 32 }}>
-              {activeSec === 'Careers' ? (
-                 Object.keys(groupedCourses).length === 0 ? (
-                   <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
-                     <SEmpty title="No careers found" desc="We couldn't find matching courses." />
-                   </div>
-                 ) : (
-                   Object.keys(groupedCourses).sort().map(cat => (
-                      <div key={cat} style={{ background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', overflow:'hidden', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)' }}>
-                         <div 
-                           onClick={() => setExpandedCourseCat(expandedCourseCat === cat ? null : cat)}
-                           style={{ padding:24, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer', background: expandedCourseCat === cat ? '#f8fafc' : '#fff' }}
-                         >
-                            <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-                               <div style={{ width:50, height:50, borderRadius:12, background:'var(--s-primary-l)', color:'var(--s-primary)', display:'grid', placeItems:'center', fontWeight:900, fontSize:18 }}>
-                                  {cat.substring(0, 2).toUpperCase()}
-                               </div>
-                               <div>
-                                  <h3 style={{ margin:0, fontSize:22, fontWeight:900 }}>{cat}</h3>
-                                  <span style={{ fontSize:14, color:'#64748b', fontWeight:600 }}>{groupedCourses[cat].length} specialized courses</span>
-                               </div>
-                            </div>
-                            <div style={{ background:'#e2e8f0', width:36, height:36, borderRadius:'50%', display:'grid', placeItems:'center' }}>
-                               {expandedCourseCat === cat ? <FiChevronUp size={20} /> : <FiChevronDown size={20} />}
-                            </div>
-                         </div>
-                         
-                         {expandedCourseCat === cat && (
-                            <div style={{ padding: '0 24px 24px', borderTop:'1px solid #f1f5f9', display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:20, marginTop: 24 }}>
-                               {groupedCourses[cat].map(c => (
-                                 <div key={c._id} style={{ border:'1px solid #e2e8f0', borderRadius:16, padding:20, display:'flex', flexDirection:'column', background:'#fafafa' }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
-                                       <SBadge color="gray">{c.duration || 'Duration varies'}</SBadge>
-                                       {c.featured && <SBadge color="gold">TOP RATED</SBadge>}
-                                    </div>
-                                    <h4 style={{ margin:'0 0 8px', fontSize:18, fontWeight:800 }}>{c.courseName}</h4>
-                                    <p style={{ margin:'0 0 20px', fontSize:14, color:'#64748b', lineHeight:1.5 }}>{c.shortDescription}</p>
-                                    <SBtn variant="primary" style={{ marginTop:'auto', alignSelf:'flex-start', borderRadius:8 }} onClick={() => navigate(`/student/course/${c._id}`)}>
-                                       View Course & Cutoffs
-                                    </SBtn>
-                                 </div>
-                               ))}
-                            </div>
-                         )}
-                      </div>
-                   ))
-                 )
-              ) : activeSec === 'Colleges' ? (
-                 collegesLoading ? (
-                   <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
-                 ) : colleges.length === 0 ? (
-                   <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
-                     <SEmpty title="No colleges found" desc="Try adjusting your filters or search terms." />
-                   </div>
-                 ) : (
-                   colleges.map(clg => {
-                      const STREAM_STYLE = {
-                        Engineering: { color: '#1d5fba', bg: '#eaf0fb' },
-                        Medical: { color: '#16a34a', bg: '#f0fdf4' },
-                        'Arts & Science': { color: '#7c3aed', bg: '#f3effe' },
-                        Law: { color: '#c48a1a', bg: '#fdf4e0' },
-                        Polytechnic: { color: '#e05e24', bg: '#fdeee6' },
-                        Agriculture: { color: '#15803d', bg: '#dcfce7' },
-                        Others: { color: '#64748b', bg: '#f1f5f9' },
-                      }
-                      const sc = STREAM_STYLE[clg.stream] || { color: 'var(--s-primary)', bg: 'var(--s-primary-l)' }
-                      const badgeColor = clg.stream === 'Engineering' ? 'blue' : clg.stream === 'Medical' ? 'green' : clg.stream === 'Arts & Science' ? 'purple' : clg.stream === 'Law' ? 'gold' : 'gray'
-                      
-                      return (
-                         <div key={clg._id} className="hover-lift" style={{ background:'#fff', borderRadius:24, border:`1px solid #f1f5f9`, borderTop:`4px solid ${sc.color}`, padding:24, boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', display:'flex', flexDirection:'column' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 16 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <div style={{ width: 48, height: 48, borderRadius: 12, background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>🏫</div>
+             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Careers' ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))', gap: 32 }}>
+               {activeSec === 'Careers' || activeSec === 'Colleges' ? (
+                  explorerLoading ? (
+                    <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
+                  ) : explorerData.length === 0 ? (
+                    <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                      <SEmpty icon={activeSec === 'Careers' ? <FiBriefcase size={48} /> : <FiMapPin size={48} />} title={`No ${activeSec.toLowerCase()} found`} desc="We couldn't find matching data for this category." />
+                    </div>
+                  ) : (
+                    explorerData.map(group => (
+                       <div key={group.categoryName} style={{ background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', overflow:'hidden', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', gridColumn: '1/-1' }}>
+                          <div 
+                            onClick={() => setExpandedCourseCat(expandedCourseCat === group.categoryName ? null : group.categoryName)}
+                            style={{ padding:24, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer', background: expandedCourseCat === group.categoryName ? '#f8fafc' : '#fff' }}
+                          >
+                             <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+                                <div style={{ width:50, height:50, borderRadius:12, background:'var(--s-primary-l)', color:'var(--s-primary)', display:'grid', placeItems:'center', fontWeight:900, fontSize:18 }}>
+                                   {group.categoryName.substring(0, 2).toUpperCase()}
+                                </div>
                                 <div>
-                                  <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 16, color: 'var(--s-text)', margin: '0 0 4px', lineHeight: 1.3 }}>{clg.collegeName}</h3>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--s-text3)' }}>
-                                    <FiMapPin size={12} /> {clg.district || clg.location || 'Tamil Nadu'}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-                              <SBadge color={badgeColor}>{clg.stream}</SBadge>
-                              {clg.accreditation && <SBadge color="gray">{clg.accreditation}</SBadge>}
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 20, marginTop: 'auto' }}>
-                              {[
-                                { l: 'Fees/yr', v: clg.feesPerYear ? (clg.feesPerYear >= 100000 ? `${(clg.feesPerYear / 100000).toFixed(1)}L` : `${(clg.feesPerYear / 1000).toFixed(0)}K`) : '—', c: '#16a34a' },
-                                { l: 'Placement', v: clg.placementPercentage ? `${clg.placementPercentage}%` : '—', c: '#1d5fba' },
-                                { l: 'Rank', v: clg.rank || '—', c: 'var(--s-primary)' },
-                              ].map((s, i) => (
-                                <div key={i} style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 8px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                                  <div style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 15, color: s.c }}>{s.v}</div>
-                                  <div style={{ fontSize: 11, color: 'var(--s-text3)', marginTop: 4, fontWeight: 600 }}>{s.l}</div>
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {clg.coursesOffered?.length > 0 && (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
-                                {clg.coursesOffered.slice(0, 2).map((c, i) => (
-                                  <span key={i} style={{ fontSize: 12, background: '#f8fafc', color: 'var(--s-text2)', padding: '4px 10px', borderRadius: 8, fontWeight: 600, border: '1px solid #e2e8f0' }}>{c}</span>
-                                ))}
-                                {clg.coursesOffered.length > 2 && (
-                                  <span style={{ fontSize: 12, color: 'var(--s-text3)', padding: '4px' }}>+{clg.coursesOffered.length - 2} more</span>
+                                   <h3 style={{ margin:0, fontSize:22, fontWeight:900, color:'var(--s-text)' }}>{group.categoryName}</h3>
+                                   <div style={{ display:'flex', gap:12, marginTop:4 }}>
+                                      <span style={{ fontSize:13, color:'#64748b', fontWeight:600 }}>📚 {group.courseCount} Courses</span>
+                                      <span style={{ fontSize:13, color:'#64748b', fontWeight:600 }}>🏫 {group.collegeCount} Colleges</span>
+                                   </div>
+                                 </div>
+                             </div>
+                             <div style={{ background:'#e2e8f0', width:36, height:36, borderRadius:'50%', display:'grid', placeItems:'center' }}>
+                                {expandedCourseCat === group.categoryName ? <FiChevronUp size={20} /> : <FiChevronDown size={20} />}
+                             </div>
+                          </div>
+                          
+                          {expandedCourseCat === group.categoryName && (
+                             <div style={{ padding: '0 24px 24px', borderTop:'1px solid #f1f5f9', marginTop: 24 }}>
+                                {/* COURSES SECTION */}
+                                {group.courses.length > 0 && (
+                                   <div style={{ marginBottom: 32 }}>
+                                      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+                                         <div style={{ height:2, background:'#e2e8f0', flex:1 }} />
+                                         <h4 style={{ fontSize:13, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1 }}>Available Courses</h4>
+                                         <div style={{ height:2, background:'#e2e8f0', flex:1 }} />
+                                      </div>
+                                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:20 }}>
+                                         {group.courses.map(c => (
+                                           <div key={c._id} style={{ border:'1px solid #e2e8f0', borderRadius:16, padding:20, display:'flex', flexDirection:'column', background:'#fafafa' }}>
+                                              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+                                                 <SBadge color="blue">{c.duration || 'N/A'}</SBadge>
+                                                 <span style={{ fontSize:11, fontWeight:700, color:'#94a3b8' }}>{c.sourceName}</span>
+                                              </div>
+                                              <h4 style={{ margin:'0 0 8px', fontSize:17, fontWeight:800 }}>{c.courseName}</h4>
+                                              <div style={{ marginTop:'auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                                 <span style={{ fontSize:12, fontWeight:700, color:'var(--s-primary)' }}>{c.level}</span>
+                                                 <SBtn variant="primary" size="sm" style={{ borderRadius:8 }} onClick={() => navigate(`/student/course/${c._id}`)}>
+                                                    View Details
+                                                 </SBtn>
+                                              </div>
+                                           </div>
+                                         ))}
+                                      </div>
+                                   </div>
                                 )}
-                              </div>
-                            )}
-                         </div>
-                      );
-                   })
-                 )
-              ) : filteredContent.length === 0 ? (
+
+                                {/* COLLEGES SECTION */}
+                                {group.colleges.length > 0 && (
+                                   <div>
+                                      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+                                         <div style={{ height:2, background:'#e2e8f0', flex:1 }} />
+                                         <h4 style={{ fontSize:13, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1 }}>Top Colleges</h4>
+                                         <div style={{ height:2, background:'#e2e8f0', flex:1 }} />
+                                      </div>
+                                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(350px, 1fr))', gap:20 }}>
+                                         {group.colleges.map(clg => (
+                                            <div key={clg._id} style={{ background:'#fff', borderRadius:16, border:'1px solid #e2e8f0', padding:20 }}>
+                                               <div style={{ display:'flex', gap:12, alignItems:'center', marginBottom:12 }}>
+                                                  <div style={{ width:36, height:36, borderRadius:8, background:'#f8fafc', display:'grid', placeItems:'center', fontSize:16 }}>🏫</div>
+                                                  <h4 style={{ margin:0, fontSize:15, fontWeight:800 }}>{clg.collegeName}</h4>
+                                               </div>
+                                               <div style={{ display:'flex', alignItems:'center', gap:4, fontSize:12, color:'#64748b', marginBottom:12 }}>
+                                                  <FiMapPin size={12} /> {clg.district}, {clg.location}
+                                               </div>
+                                               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                                  <span style={{ fontSize:11, fontWeight:700, color:'var(--s-primary)', background:'var(--s-primary-l)', padding:'3px 8px', borderRadius:6 }}>{clg.stream}</span>
+                                                  <SBtn variant="outline" size="sm" style={{ borderRadius:8 }} onClick={() => navigate(`/colleges/${clg._id}`)}>
+                                                     Explore
+                                                  </SBtn>
+                                               </div>
+                                            </div>
+                                         ))}
+                                      </div>
+                                   </div>
+                                )}
+                             </div>
+                          )}
+                       </div>
+                    ))
+                  )
+               ) : filteredContent.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
                   <SEmpty title="Nothing found yet" desc={`We haven't added items to ${activeSec} for Class ${cleanLevel} yet.`} />
                 </div>

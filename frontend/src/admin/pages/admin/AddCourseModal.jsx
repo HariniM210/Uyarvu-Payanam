@@ -115,7 +115,16 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
           </select>
         </FormGroup>
         <FormGroup label="Category">
-           <FormInput name="category" value={formData.category} onChange={handleInputChange} placeholder="e.g. Engineering, Medical, Arts" />
+           <select 
+             name="category"
+             value={formData.category}
+             onChange={handleInputChange}
+             style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
+           >
+             {["Agriculture", "Architecture", "Arts", "Commerce", "Design", "Engineering", "Hotel Management", "IT & Computer", "ITI", "Law", "Media & Journalism", "Medical", "Polytechnic", "Science"].map(cat => (
+               <option key={cat} value={cat}>{cat}</option>
+             ))}
+           </select>
         </FormGroup>
         <FormGroup label="Duration">
           <FormInput 

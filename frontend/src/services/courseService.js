@@ -53,5 +53,11 @@ export const courseService = {
   deleteCourse: async (id) => {
     const response = await axiosInstance.delete(`/courses/${id}`)
     return response.data
+  },
+
+  // Explorer API (Used by Student Class 12 page)
+  getExplorerData: async (params = {}) => {
+    const response = await axiosInstance.get('/students/class12/exploration', { params })
+    return response.data
   }
 }

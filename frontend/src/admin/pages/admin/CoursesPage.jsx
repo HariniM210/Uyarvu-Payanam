@@ -72,32 +72,23 @@ export default function CoursesPage() {
   }
 
   const filtered = courses.filter(c => {
-    // Safely normalize strings
-    const normalize = (str) => typeof str === 'string' ? str.trim().toLowerCase() : ''
+    // Check Search
+    const matchesSearch = searchQuery === '' || 
+      c.courseName?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Normalize Database values
-    const dbType = normalize(c.level) || normalize(c.targetLevel)
-    const dbCategory = normalize(c.category)
-    const dbName = normalize(c.courseName)
-
-    // Check Matches
-    const normType = normalize(selectedType)
-    const matchesType = selectedType === 'All' || dbType === normType 
-    const matchesCategory = selectedCategory === 'All' || dbCategory === normalize(selectedCategory)
+    // Check Category
+    const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
     
-    const query = normalize(searchQuery)
-    const matchesSearch = query === '' || dbName.includes(query)
+    // Check Type (using level field from DB)
+    const matchesType = selectedType === 'All' || c.level === selectedType;
 
-    return matchesType && matchesCategory && matchesSearch
-  })
-
-  // Derive dynamic category list from actual courses
-  const allCategories = [...new Set(courses.map(c => c.category).filter(Boolean))].sort()
+    return matchesSearch && matchesCategory && matchesType;
+  });
 
   // Stats
-  const totalCourses = courses.length
-  const importedCount = filtered.filter(c => c.isImported).length
-  const manualCount = filtered.length - importedCount
+  const totalCourses = courses.length;
+  const importedCount = filtered.filter(c => c.isImported).length;
+  const manualCount = filtered.length - importedCount;
 
   if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text2)' }}>Loading courses...</div>
 

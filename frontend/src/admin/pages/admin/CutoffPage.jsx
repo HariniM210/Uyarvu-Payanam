@@ -63,7 +63,7 @@ export default function CutoffPage() {
   // ... dependencies and cutoffs search ...
 
   const filteredCutoffs = useMemo(() => {
-    let list = cutoffs.filter(c => {
+    let list = [...cutoffs].filter(c => {
       const colName = (c.collegeId?.collegeName || c.collegeName || c.college || '').toLowerCase()
       const crsName = (c.courseId?.courseName || c.department || c.course || '').toLowerCase()
       const searchLower = search.toLowerCase()
@@ -74,8 +74,10 @@ export default function CutoffPage() {
     return list.sort((a,b) => {
       const getVal = (obj, field) => {
         if(field.includes('.')) return field.split('.').reduce((o,i)=>o?.[i], obj) || ''
-        const score = obj.cutoffData?.find(d => d.category.toUpperCase() === field.toUpperCase())?.score
-        return score || obj[field.toLowerCase()] || 0
+        const foundScore = obj.cutoffData?.find(d => d.category?.toUpperCase() === field.toUpperCase())?.score
+        if (foundScore !== undefined && foundScore !== null) return Number(foundScore)
+        const legacyVal = obj[field.toLowerCase()]
+        return (legacyVal !== undefined && legacyVal !== null) ? Number(legacyVal) : 0
       }
       const vA = getVal(a, sortField); const vB = getVal(b, sortField)
       const res = vA < vB ? -1 : (vA > vB ? 1 : 0)
@@ -89,7 +91,10 @@ export default function CutoffPage() {
   }
 
   const handleSave = async () => {
-    if (!form.courseId || !form.collegeId) return
+    if (!form.courseId || !form.collegeId) {
+      alert('Please select both college and course');
+      return;
+    }
     try {
       setSaving(true)
       if (editing) {
@@ -99,20 +104,27 @@ export default function CutoffPage() {
       }
       fetchCutoffs()
       setModal(false)
+      setEditing(null)
+      setForm({
+        courseId: '', collegeId: '', year: 2024, round: 'Round 1',
+        cutoffData: [{ category: 'OC', score: '' }, { category: 'BC', score: '' }],
+        downloadUrl: ''
+      })
     } catch (err) {
-      alert('Failed to save')
+      console.error('Save error:', err)
+      alert('Failed to save cutoff data')
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this cutoff entry?')) return
+    if (!window.confirm('Are you sure you want to delete this cutoff entry?')) return
     try {
       await cutoffService.deleteCutoff(id)
       fetchCutoffs()
     } catch (err) {
-      alert('Failed to delete')
+      alert('Failed to delete cutoff record')
     }
   }
 

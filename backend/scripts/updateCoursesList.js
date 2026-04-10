@@ -252,10 +252,7 @@ const allCourses = [
 async function run() {
   try {
     const mongoURI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/uyarvu_payanam";
-    await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(mongoURI);
     console.log("Connected to MongoDB");
 
     await Course.deleteMany({});
