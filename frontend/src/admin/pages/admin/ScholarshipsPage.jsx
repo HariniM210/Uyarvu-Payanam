@@ -13,6 +13,21 @@ import {
 // Base URL for API
 const API_URL = "http://localhost:5000/api/scholarships";
 
+export const formatGrade = (grade) => {
+  if (!grade) return '';
+  const numMatches = String(grade).match(/\d+/);
+  if (!numMatches) return grade; // Return original if no digits found
+
+  const num = parseInt(numMatches[0], 10);
+  const j = num % 10;
+  const k = num % 100;
+  
+  if (j === 1 && k !== 11) return num + "st";
+  if (j === 2 && k !== 12) return num + "nd";
+  if (j === 3 && k !== 13) return num + "rd";
+  return num + "th";
+};
+
 export default function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +131,14 @@ export default function ScholarshipsPage() {
     try {
       setLoading(true);
       setUploadMessage("Uploading...");
-      const res = await axios.post(`${API_URL}/upload`, body, { withCredentials: true });
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const res = await axios.post(`${API_URL}/upload`, body, { 
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
       setUploadMessage(`Success: ${res.data.inserted} added.`);
       fetchScholarships();
     } catch (err) {
@@ -182,13 +204,13 @@ export default function ScholarshipsPage() {
                 <TD style={{ fontWeight: 800, color: 'var(--text)', fontSize:15 }}>
                   {(s.scholarshipName || '').toUpperCase()}
                 </TD>
-                <TD>
+                 <TD>
                    <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
                       {(s.targetClass || []).map(c => (
-                        <SBadge key={c} color="blue">{c}th</SBadge>
+                        <SBadge key={c} color="blue">{formatGrade(c)}</SBadge>
                       ))}
                    </div>
-                </TD>
+                 </TD>
                 <TD>{s.provider || 'N/A'}</TD>
                 <TD style={{ fontWeight: 600, color: 'var(--primary)' }}>{s.amount || 'N/A'}</TD>
                 <TD>
@@ -242,7 +264,7 @@ export default function ScholarshipsPage() {
                             color: formData.targetClass.includes(cls) ? 'var(--primary)' : 'var(--text3)',
                             fontWeight: 700, cursor:'pointer'
                          }}
-                      >Class {cls}th</button>
+                      >Class {formatGrade(cls)}</button>
                     ))}
                  </div>
               </FormGroup>

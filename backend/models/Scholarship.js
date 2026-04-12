@@ -4,6 +4,7 @@ const scholarshipSchema = new mongoose.Schema(
   {
     scholarshipName: { 
       type: String, 
+      alias: "name",
       required: [true, "Scholarship name is required"],
       trim: true,
       lowercase: true,
@@ -26,10 +27,12 @@ const scholarshipSchema = new mongoose.Schema(
     },
     applicationLink: { 
       type: String, 
+      alias: "link",
       trim: true,
       maxlength: [1000, "Application link must be at most 1000 characters"]
     },
     targetClass: {
+      alias: "grades",
       type: [String], // ["5", "8", "10", "12"]
       default: ["10"]
     },
@@ -41,13 +44,23 @@ const scholarshipSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    deadline: {
+      type: String,
+      trim: true,
+      default: ""
+    },
     status: {
       type: String,
       enum: ["published", "draft"],
       default: "published"
     }
   },
-  { collection: "scholarships", timestamps: true }
+  {
+    collection: "scholarships",
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 // Explicit index to guarantee uniqueness at DB level for (name + provider) case-insensitively. (Already lowercase due to schema properties)

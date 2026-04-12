@@ -2,10 +2,12 @@ const path = require("path");
 const xlsx = require("xlsx");
 const fs = require("fs");
 const csvParser = require("csv-parser");
+const csvtojson = require("csvtojson");
 const Scholarship = require("../models/Scholarship");
 const ScholarshipApplication = require("../models/ScholarshipApplication");
 
 const normalizeString = (v) => (v === null || v === undefined ? "" : String(v).trim());
+const normalizeLower = (v) => normalizeString(v).toLowerCase();
 
 const normalizeLevel = (v) => {
   const s = normalizeString(v);
@@ -34,6 +36,57 @@ const parseDocuments = (v) => {
     .split(/[,;\n]+/)
     .map((x) => x.trim())
     .filter(Boolean);
+};
+
+const parseGrades = (v) => {
+  if (Array.isArray(v)) {
+    return v.map((x) => normalizeString(x)).filter(Boolean);
+  }
+  const s = normalizeString(v);
+  if (!s) return ["10"];
+  return s
+    .split(/[,;\n]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+};
+
+const pickValue = (row, keys) => {
+  const rowKeys = Object.keys(row || {});
+  for (const rawKey of rowKeys) {
+    const key = normalizeLower(rawKey).replace(/\s+/g, "");
+    if (keys.some((candidate) => key.includes(candidate))) {
+      return row[rawKey];
+    }
+  }
+  return "";
+};
+
+const mapScholarshipRow = (row) => {
+  const nameRaw = pickValue(row, ["name", "scholarship"]);
+  const providerRaw = pickValue(row, ["provider", "organization", "sponsor"]);
+  const categoryRaw = pickValue(row, ["category", "type", "segment"]);
+  const eligibilityRaw = pickValue(row, ["eligibility", "criteria"]);
+  const gradesRaw = pickValue(row, ["grades", "targetclass", "targetgrade", "class"]);
+  const amountRaw = pickValue(row, ["amount", "benefit", "award", "fund"]);
+  const deadlineRaw = pickValue(row, ["deadline", "lastdate", "enddate", "closingdate"]);
+  const linkRaw = pickValue(row, ["link", "url", "apply"]);
+  const descriptionRaw = pickValue(row, ["description", "details", "about", "info"]);
+
+  const name = normalizeLower(nameRaw);
+  const provider = normalizeLower(providerRaw);
+
+  return {
+    scholarshipName: name,
+    provider,
+    category: normalizeString(categoryRaw) || "General",
+    eligibility: normalizeString(eligibilityRaw),
+    targetClass: parseGrades(gradesRaw),
+    amount: normalizeString(amountRaw),
+    deadline: normalizeString(deadlineRaw),
+    applicationLink: normalizeString(linkRaw),
+    description: normalizeString(descriptionRaw),
+    status: "published",
+  };
 };
 
 // @desc    Create scholarship manually
@@ -92,7 +145,27 @@ exports.addScholarship = async (req, res) => {
 // @route   GET /api/scholarships
 exports.getAllScholarships = async (req, res) => {
   try {
-    const scholarships = await Scholarship.find().sort({ createdAt: -1 });
+    const { search, category, grade } = req.query;
+    const filter = {};
+
+    if (category && category !== "All") {
+      filter.category = category;
+    }
+    if (grade && grade !== "all") {
+      filter.targetClass = grade;
+    }
+    if (search && normalizeString(search)) {
+      filter.$or = [
+        { scholarshipName: new RegExp(normalizeString(search), "i") },
+        { provider: new RegExp(normalizeString(search), "i") },
+      ];
+    }
+
+    const scholarships = await Scholarship.find(filter).sort({ createdAt: -1 });
+    
+    // Add Console Log for Debugging
+    console.log(`[Backend] GET /api/scholarships - Fetched ${scholarships.length} scholarships from MongoDB`);
+
     return res.status(200).json({
       success: true,
       count: scholarships.length,
@@ -105,6 +178,218 @@ exports.getAllScholarships = async (req, res) => {
       message: "Failed to fetch scholarships",
       error: error.message,
     });
+  }
+};
+
+// @desc    Import scholarships from CSV
+// @route   POST /api/scholarships/import
+exports.importScholarshipsCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "CSV file is required" });
+    }
+
+    // Convert CSV rows into JSON using csvtojson
+    const jsonArray = await csvtojson().fromFile(req.file.path);
+
+    console.log("[Backend] Parsed CSV Data Preview:", jsonArray.slice(0, 2));
+
+    const validDocs = [];
+
+    // Map CSV fields correctly
+    for (const row of jsonArray) {
+      const name = normalizeString(row.Name || row.scholarshipName || row.name || "");
+      const provider = normalizeString(row.Provider || row.provider || "");
+      
+      // Skip empty rows
+      if (!name) continue;
+
+      let targetClass = ["10"];
+      const gradesRaw = row.Grades || row.grades || row.targetClass;
+      if (gradesRaw) {
+        targetClass = gradesRaw.split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+      }
+
+      validDocs.push({
+        scholarshipName: name.trim().toLowerCase(),
+        provider: provider.trim().toLowerCase(),
+        amount: normalizeString(row.Amount || row.amount || ""),
+        eligibility: normalizeString(row.Eligibility || row.eligibility || ""),
+        targetClass: targetClass,
+        category: normalizeString(row.Category || row.category || "") || "General",
+        deadline: normalizeString(row.Deadline || row.deadline || ""),
+        applicationLink: normalizeString(row.Link || row.link || row.applicationLink || ""),
+        description: normalizeString(row.Description || row.description || ""),
+        status: "published"
+      });
+    }
+
+    if (!validDocs.length) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, message: "No valid scholarship rows found in CSV" });
+    }
+
+    // Filter out duplicates based on exact name and provider combination in MongoDB
+    const existing = await Scholarship.find(
+      {
+        $or: validDocs.map((doc) => ({
+          scholarshipName: doc.scholarshipName,
+          provider: doc.provider,
+        })),
+      },
+      { scholarshipName: 1, provider: 1 }
+    );
+
+    const existingKeys = new Set(
+      existing.map((d) => `${d.scholarshipName}::${d.provider || ""}`)
+    );
+
+    const docsToInsert = [];
+    const seen = new Set();
+    
+    for (const doc of validDocs) {
+      const key = `${doc.scholarshipName}::${doc.provider || ""}`;
+      if (!existingKeys.has(key) && !seen.has(key)) {
+        seen.add(key);
+        docsToInsert.push(doc);
+      }
+    }
+
+    let insertedCount = 0;
+    // Insert data using insertMany()
+    if (docsToInsert.length > 0) {
+      const inserted = await Scholarship.insertMany(docsToInsert, { ordered: false });
+      insertedCount = inserted.length;
+    }
+
+    console.log(`[Backend] Successfully inserted ${insertedCount} new records.`);
+
+    // Clean up temporary file
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    // Return success message with number of records inserted
+    return res.status(201).json({
+      success: true,
+      message: `Successfully imported ${insertedCount} scholarships.`,
+      summary: {
+        totalRows: jsonArray.length,
+        inserted: insertedCount,
+        skipped: jsonArray.length - insertedCount
+      }
+    });
+
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error("❌ [Backend] CSV import failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to import scholarships",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Import scholarships from a local CSV file directly from hard disk (No upload required)
+// @route   POST /api/scholarships/import-csv
+exports.importScholarshipsFromLocalCSV = async (req, res) => {
+  try {
+    const defaultFilePath = "C:\\Users\\harin\\OneDrive\\Desktop\\Uyarvu Payanam\\Uyarvu-Payanam\\backend\\uploads\\Scholarship - Sheet1.csv";
+    const filePath = req.body.filePath || defaultFilePath;
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: "CSV file not found at the given path: " + filePath });
+    }
+
+    console.log(`\n[Backend] Reading CSV file from: ${filePath}`);
+
+    // Parse CSV to JSON
+    const jsonArray = await csvtojson().fromFile(filePath);
+    
+    console.log("[Backend] Raw CSV Data Preview:", jsonArray.slice(0, 2));
+
+    const validDocs = [];
+
+    // Map columns
+    for (const row of jsonArray) {
+      // Handle potential casing issues
+      const name = normalizeString(row.Name || row.scholarshipName || row.name || "");
+      if (!name) continue; // skip blanks
+
+      const provider = normalizeString(row.Provider || row.provider || "");
+      const amount = normalizeString(row.Amount || row.amount || "");
+      const eligibility = normalizeString(row.Eligibility || row.eligibility || "");
+      const category = normalizeString(row.Category || row.category || "") || "General";
+      const deadline = normalizeString(row.Deadline || row.deadline || "");
+      const link = normalizeString(row.Link || row.link || row.applicationLink || "");
+      const description = normalizeString(row.Description || row.description || "");
+
+      let targetClass = ["10"];
+      const gradesRaw = row.Grades || row.grades || row.targetClass;
+      if (gradesRaw) {
+        targetClass = gradesRaw.split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+      }
+
+      validDocs.push({
+        scholarshipName: name.toLowerCase(),
+        provider: provider.toLowerCase(),
+        amount: amount,
+        eligibility: eligibility,
+        targetClass: targetClass,
+        category: category,
+        deadline: deadline,
+        applicationLink: link,
+        description: description,
+        status: "published"
+      });
+    }
+
+    console.log("[Backend] Mapped Data Preview:", validDocs.slice(0, 2));
+
+    if (validDocs.length === 0) {
+      return res.status(400).json({ success: false, message: "No valid rows to insert." });
+    }
+
+    // Avoid duplicates using existing records in DB
+    const existing = await Scholarship.find(
+      { $or: validDocs.map((doc) => ({ scholarshipName: doc.scholarshipName, provider: doc.provider })) },
+      { scholarshipName: 1, provider: 1 }
+    );
+    const existingKeys = new Set(existing.map((d) => `${d.scholarshipName}::${d.provider || ""}`));
+
+    const docsToInsert = [];
+    const seen = new Set();
+    
+    for (const doc of validDocs) {
+      const key = `${doc.scholarshipName}::${doc.provider || ""}`;
+      if (!existingKeys.has(key) && !seen.has(key)) {
+        seen.add(key);
+        docsToInsert.push(doc);
+      }
+    }
+
+    let insertedCount = 0;
+    
+    // VERY IMPORTANT: Use insertMany with { ordered: false } to append data & skip constraints issues silently
+    if (docsToInsert.length > 0) {
+      const inserted = await Scholarship.insertMany(docsToInsert, { ordered: false });
+      insertedCount = inserted.length;
+    }
+
+    console.log(`[Backend] Number of inserted records: ${insertedCount}`);
+
+    return res.status(201).json({
+      success: true,
+      message: `Data added seamlessly. Inserted ${insertedCount} new records into "scholarships".`,
+      summary: {
+        totalParsed: jsonArray.length,
+        inserted: insertedCount,
+        skipped: jsonArray.length - insertedCount
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ [Backend] Error during local CSV import:", error);
+    return res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
@@ -191,129 +476,108 @@ exports.deleteScholarship = async (req, res) => {
 // @route   POST /api/scholarships/upload
 exports.uploadScholarshipsCSV = async (req, res) => {
   try {
+    console.log("[Backend] incoming file:", req.file);
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    const results = [];
     const filePath = req.file.path;
     const fileExt = req.file.originalname.split('.').pop().toLowerCase();
 
-    // Read the file
-    if (fileExt === 'csv') {
-      await new Promise((resolve, reject) => {
-        const stream = fs.createReadStream(filePath);
-        stream
-          .pipe(csvParser({ mapHeaders: ({ header }) => header.trim().replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "") }))
-          .on('data', (data) => results.push(data))
-          .on('end', () => {
-            stream.destroy();
-            resolve();
-          })
-          .on('error', (err) => {
-            stream.destroy();
-            reject(err);
-          });
+    if (fileExt !== 'csv') {
+       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+       return res.status(400).json({ success: false, message: "Invalid file format. Only .csv allowed for this route." });
+    }
+
+    // Parse CSV to JSON
+    const jsonArray = await csvtojson().fromFile(filePath);
+    console.log("[Backend] Parsed CSV Data Preview:", jsonArray.slice(0, 2));
+
+    const validDocs = [];
+
+    // Map CSV fields to Mongoose schema
+    for (const row of jsonArray) {
+      // Intelligently fallback on headers
+      const name = normalizeString(row.Name || row.scholarshipName || row.name || "");
+      if (!name) continue; // Skip empty rows silently
+
+      const provider = normalizeString(row.Provider || row.provider || "");
+      const amount = normalizeString(row.Amount || row.amount || "");
+      const eligibility = normalizeString(row.Eligibility || row.eligibility || "");
+      const category = normalizeString(row.Category || row.category || "") || "General";
+      const deadline = normalizeString(row.Deadline || row.deadline || "");
+      const link = normalizeString(row.Link || row.link || row.applicationLink || "");
+      const description = normalizeString(row.Description || row.description || "");
+
+      let targetClass = ["10"];
+      const gradesRaw = row.Grades || row.grades || row.targetClass;
+      if (gradesRaw) {
+        targetClass = gradesRaw.split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+      }
+
+      validDocs.push({
+        scholarshipName: name.toLowerCase(),
+        provider: provider.toLowerCase(),
+        amount,
+        eligibility,
+        targetClass,
+        category,
+        deadline,
+        applicationLink: link,
+        description,
+        status: "published"
       });
-    } else if (fileExt === 'xlsx' || fileExt === 'xls') {
-      const workbook = xlsx.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = xlsx.utils.sheet_to_json(sheet, { defval: "" });
-      results.push(...rows);
-    } else {
-      if (fs.existsSync(filePath)) {
-        try { fs.unlinkSync(filePath); } catch(err){}
-      }
-      return res.status(400).json({ message: "Invalid file format. Only .csv or .xlsx allowed." });
     }
 
-    let inserted = 0;
-    let skipped = 0;
+    if (!validDocs.length) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, message: "No valid rows found in CSV." });
+    }
 
-    const findVal = (row, keys) => {
-      const rowKeys = Object.keys(row);
-      for (let k of rowKeys) {
-        const lowerK = k.toLowerCase().trim();
-        if (keys.some(searchK => lowerK.includes(searchK))) {
-          return row[k];
-        }
-      }
-      return "";
-    };
+    // Check existing records without overwriting
+    const existing = await Scholarship.find(
+      { $or: validDocs.map(doc => ({ scholarshipName: doc.scholarshipName, provider: doc.provider })) },
+      { scholarshipName: 1, provider: 1 }
+    );
+    
+    const existingKeys = new Set(existing.map(d => `${d.scholarshipName}::${d.provider || ""}`));
 
-    for (const row of results) {
-      try {
-        console.log("Row:", row); // DEBUGGING: Log each raw row
-
-        const name = normalizeString(findVal(row, ["name", "scholarship"]));
-        const provider = normalizeString(findVal(row, ["provider"]));
-        const amount = normalizeString(findVal(row, ["amount"]));
-        const eligibility = normalizeString(findVal(row, ["eligibility", "level", "class"]));
-        const link = normalizeString(findVal(row, ["link", "url", "apply"]));
-
-        // If any important field is missing -> skip row
-        if (!name || name.trim() === "") {
-          console.log("Skipping row: Missing Name");
-          skipped++;
-          continue; 
-        }
-
-        // Format for uniqueness
-        const normalizedName = name.trim().toLowerCase();
-        const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
-
-        // Check Duplicate
-        const existing = await Scholarship.findOne({
-          scholarshipName: normalizedName,
-          provider: normalizedProvider
-        });
-
-        if (existing) {
-          console.log("Skipping row: Duplicate found ->", name);
-          skipped++;
-        } else {
-          // Insert new record
-          await Scholarship.create({
-            scholarshipName: normalizedName,
-            provider: normalizedProvider,
-            amount: amount,
-            eligibility: eligibility,
-            applicationLink: link,
-          });
-          inserted++;
-          console.log("Inserted row:", name);
-        }
-      } catch (rowError) {
-        console.error("Error inserting row:", row, "->", rowError.message);
-        skipped++; // Skip if validation fails (e.g. length limits)
+    const docsToInsert = [];
+    const seen = new Set();
+    
+    for (const doc of validDocs) {
+      const key = `${doc.scholarshipName}::${doc.provider || ""}`;
+      if (!existingKeys.has(key) && !seen.has(key)) {
+        seen.add(key);
+        docsToInsert.push(doc);
       }
     }
 
-    // Clean up temp file safely
+    let insertedCount = 0;
+    // Insert new data, skipping validation errors via { ordered: false } explicitly without deleting
+    if (docsToInsert.length > 0) {
+      const inserted = await Scholarship.insertMany(docsToInsert, { ordered: false });
+      insertedCount = inserted.length;
+    }
+
+    console.log(`[Backend] Number of inserted records: ${insertedCount}`);
+
     if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn("Could not delete temp file:", err.message);
-      }
+      fs.unlinkSync(filePath);
     }
 
     return res.status(201).json({
-      inserted,
-      skipped,
-      duplicates: skipped // (Keeping variable to support existing frontend structure)
+      success: true,
+      message: `File uploaded successfully. Added ${insertedCount} new records.`,
+      inserted: insertedCount,
+      skipped: jsonArray.length - insertedCount,
+      duplicates: jsonArray.length - insertedCount
     });
 
   } catch (error) {
-    console.error("❌ [Backend] Upload import failed:", error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
-    }
-    return res.status(500).json({
-      message: "Failed to import scholarships",
-      error: error.message,
-    });
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error("❌ [Backend] CSV upload/import failed:", error);
+    return res.status(500).json({ success: false, message: "Upload failed", error: error.message });
   }
 };
 

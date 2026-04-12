@@ -37,7 +37,9 @@ function AppRoutes() {
       />
 
       {/* ── Student Frontend ── */}
-      <Route path="/*" element={<StudentRoutes />} />
+      <Route path="/" element={<Navigate to="/student" replace />} />
+      <Route path="/student/*" element={<StudentRoutes />} />
+      <Route path="*" element={<Navigate to="/student" replace />} />
     </Routes>
   )
 }

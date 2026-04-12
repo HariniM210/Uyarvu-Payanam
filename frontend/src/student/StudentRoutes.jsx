@@ -15,6 +15,7 @@ import CoursesPage from './pages/courses/CoursesPage'
 import CourseCategoryPage from './pages/courses/CourseCategoryPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 import ProfilePage from './pages/profile/ProfilePage'
+import ScholarshipsPage from './pages/scholarships/ScholarshipsPage'
 import ClassLandingPage from './pages/careers/ClassLandingPage'
 import ClassLevelPage from './pages/careers/ClassLevelPage'
 import ContentDetailPage from './pages/careers/ContentDetailPage'
@@ -58,6 +59,7 @@ export default function StudentRoutes() {
           <Route path="careers/path/:id" element={<CareerDetailPage />} />
 
           <Route path="colleges" element={<CollegesPage />} />
+          <Route path="scholarships" element={<ScholarshipsPage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="courses/:categoryKey" element={<CourseCategoryPage />} />
           <Route path="course/:slug" element={<CourseDetailPage />} />
