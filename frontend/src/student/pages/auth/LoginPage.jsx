@@ -3,13 +3,23 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import axios from 'axios'
 import { SBtn, SInput, SAlert, SCard, SDivider } from '../../components/ui'
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi'
+
+const API_BASE = 'http://localhost:5000/api'
 
 export default function LoginPage() {
-  const { login }  = useStudentAuth()
+  const { login, isAuthenticated }  = useStudentAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
-  const from       = location.state?.from?.pathname || '/student/dashboard'
+  let from       = location.state?.from?.pathname || '/dashboard'
+  if (from === '/signin' || from === '/signup') from = '/dashboard'
+
+  // If already authenticated, redirect to dashboard
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const [form,     setForm]     = useState({ email: '', password: '' })
   const [errors,   setErrors]   = useState({})
@@ -32,12 +42,13 @@ export default function LoginPage() {
     setLoading(true)
     setApiError('')
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', form)
+      const res = await axios.post(`${API_BASE}/students/login`, form)
       localStorage.setItem('studentToken', res.data.token)
       login(res.data.token, res.data.student)
       navigate(from, { replace: true })
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Login failed. Check your credentials.')
+      const msg = err.response?.data?.message || 'Login failed. Check your credentials.'
+      setApiError(msg)
     } finally {
       setLoading(false)
     }
@@ -57,10 +68,14 @@ export default function LoginPage() {
     }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link to="/student" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--s-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 21 }}>🗺️</div>
+          <Link to="/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/logo.png"
+              alt="Uyarvu Payanam"
+              style={{ height: 44, width: 'auto', objectFit: 'contain', borderRadius: 12 }}
+            />
             <span style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: 'var(--s-text)' }}>
-              Career<span style={{ color: 'var(--s-primary)' }}>Map</span>
+              Uyarvu <span style={{ color: 'var(--s-primary)' }}>Payanam</span>
             </span>
           </Link>
         </div>
@@ -84,6 +99,7 @@ export default function LoginPage() {
               label="Email Address" type="email" placeholder="you@email.com"
               icon={<FiMail />} value={form.email}
               onChange={set('email')} error={errors.email}
+              id="login-email"
             />
             <div style={{ position: 'relative' }}>
               <SInput
@@ -92,6 +108,7 @@ export default function LoginPage() {
                 placeholder="Your password"
                 icon={<FiLock />} value={form.password}
                 onChange={set('password')} error={errors.password}
+                id="login-password"
               />
               <button type="button" onClick={() => setShowPwd(s => !s)} style={{
                 position: 'absolute', right: 12,
@@ -103,7 +120,23 @@ export default function LoginPage() {
                 {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
               </button>
             </div>
-            <SBtn type="submit" variant="primary" style={{ width: '100%', justifyContent: 'center', marginTop: 4 }} disabled={loading}>
+
+            {/* Forgot Password Link */}
+            <div style={{ textAlign: 'right', marginTop: -10 }}>
+              <Link
+                to="/forgot-password"
+                style={{
+                  fontSize: 13, fontWeight: 600, color: 'var(--s-primary)',
+                  textDecoration: 'none', fontFamily: 'var(--s-font-display)',
+                  transition: 'opacity 0.2s',
+                }}
+                id="forgot-password-link"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+
+            <SBtn type="submit" variant="primary" style={{ width: '100%', justifyContent: 'center', marginTop: 4 }} disabled={loading} id="login-submit">
               {loading ? 'Signing In…' : 'Sign In'}
             </SBtn>
           </form>
@@ -111,11 +144,21 @@ export default function LoginPage() {
           <SDivider label="or" />
           <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--s-text3)' }}>
             Don't have an account?{' '}
-            <Link to="/student/signup" style={{ color: 'var(--s-primary)', fontWeight: 700, textDecoration: 'none' }}>
+            <Link to="/signup" style={{ color: 'var(--s-primary)', fontWeight: 700, textDecoration: 'none' }}>
               Create one free →
             </Link>
           </p>
         </SCard>
+
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <Link to="/home" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: 14, fontWeight: 600, color: 'var(--s-text3)',
+            textDecoration: 'none', fontFamily: 'var(--s-font-display)',
+          }}>
+            <FiArrowLeft size={15} /> Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   )

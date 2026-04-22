@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../../config/axios';
 import { 
   FiSearch, FiPlus, FiUpload, FiEdit2, FiTrash2, FiExternalLink, 
   FiFilter, FiLayers, FiInfo, FiCheckCircle 
@@ -10,8 +10,8 @@ import {
   FilterSelect, SBadge, SLoader 
 } from '../../components/UI';
 
-// Base URL for API
-const API_URL = "http://localhost:5000/api/scholarships";
+// Base route string
+const API_ROUTE = "/scholarships";
 
 export default function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
@@ -24,12 +24,13 @@ export default function ScholarshipsPage() {
   const initialFormState = {
     scholarshipName: '',
     provider: '',
-    amount: '',
+    benefit: '',
     eligibility: '',
     applicationLink: '',
-    targetClass: ["10"], // Default to 10th
+    grades: ["10th"], // Default to 10th
     category: 'Government',
     description: '',
+    deadline: '',
     status: 'published'
   };
 
@@ -42,7 +43,7 @@ export default function ScholarshipsPage() {
   const fetchScholarships = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_URL);
+      const res = await axiosInstance.get(API_ROUTE);
       // Assuming res.data is the array or { data: [] }
       setScholarships(Array.isArray(res.data) ? res.data : (res.data.data || []));
     } catch (err) {
@@ -56,7 +57,7 @@ export default function ScholarshipsPage() {
     if (item) {
       setFormData({
         ...item,
-        targetClass: item.targetClass || ["10"]
+        grades: item.grades || ["10th"]
       });
       setModal({ open: true, isEdit: true, data: item });
     } else {
@@ -72,11 +73,11 @@ export default function ScholarshipsPage() {
 
   const handleClassToggle = (cls) => {
     setFormData(prev => {
-      const current = prev.targetClass || [];
+      const current = prev.grades || [];
       if (current.includes(cls)) {
-        return { ...prev, targetClass: current.filter(c => c !== cls) };
+        return { ...prev, grades: current.filter(c => c !== cls) };
       } else {
-        return { ...prev, targetClass: [...current, cls] };
+        return { ...prev, grades: [...current, cls] };
       }
     });
   };
@@ -84,10 +85,14 @@ export default function ScholarshipsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Synchronize grades and targetClass for full compatibility
+      const targetClass = formData.grades.map(g => g.replace('th', ''));
+      const submissionData = { ...formData, targetClass };
+
       if (modal.isEdit) {
-        await axios.put(`${API_URL}/${modal.data._id}`, formData, { withCredentials: true });
+        await axiosInstance.put(`${API_ROUTE}/${modal.data._id}`, submissionData);
       } else {
-        await axios.post(`${API_URL}/add-scholarship`, formData, { withCredentials: true });
+        await axiosInstance.post(`${API_ROUTE}/add-scholarship`, submissionData);
       }
       setModal({ open: false, isEdit: false, data: null });
       fetchScholarships();
@@ -99,7 +104,7 @@ export default function ScholarshipsPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this scholarship?")) return;
     try {
-      await axios.delete(`${API_URL}/${id}`, { withCredentials: true });
+      await axiosInstance.delete(`${API_ROUTE}/${id}`);
       fetchScholarships();
     } catch (err) {
       alert("Delete failed");
@@ -116,7 +121,11 @@ export default function ScholarshipsPage() {
     try {
       setLoading(true);
       setUploadMessage("Uploading...");
-      const res = await axios.post(`${API_URL}/upload`, body, { withCredentials: true });
+      const res = await axiosInstance.post(`${API_ROUTE}/upload`, body, { 
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       setUploadMessage(`Success: ${res.data.inserted} added.`);
       fetchScholarships();
     } catch (err) {
@@ -131,7 +140,7 @@ export default function ScholarshipsPage() {
     return scholarships.filter(s => {
       const matchesSearch = (s.scholarshipName || "").toLowerCase().includes(search.toLowerCase()) ||
                             (s.provider || "").toLowerCase().includes(search.toLowerCase());
-      const matchesClass = filterClass === "all" || (s.targetClass || []).includes(filterClass);
+      const matchesClass = filterClass === "all" || (s.grades || []).includes(filterClass);
       return matchesSearch && matchesClass;
     });
   }, [scholarships, search, filterClass]);
@@ -146,10 +155,10 @@ export default function ScholarshipsPage() {
         />
         <FilterSelect value={filterClass} onChange={e => setFilterClass(e.target.value)}>
            <option value="all">All Grades</option>
-           <option value="5">Class 5th</option>
-           <option value="8">Class 8th</option>
-           <option value="10">Class 10th</option>
-           <option value="12">Class 12th</option>
+           <option value="5th">Class 5th</option>
+           <option value="8th">Class 8th</option>
+           <option value="10th">Class 10th</option>
+           <option value="12th">Class 12th</option>
         </FilterSelect>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -184,13 +193,13 @@ export default function ScholarshipsPage() {
                 </TD>
                 <TD>
                    <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                      {(s.targetClass || []).map(c => (
-                        <SBadge key={c} color="blue">{c}th</SBadge>
+                      {(s.grades || []).map(c => (
+                        <SBadge key={c} color="blue">{c}</SBadge>
                       ))}
                    </div>
                 </TD>
                 <TD>{s.provider || 'N/A'}</TD>
-                <TD style={{ fontWeight: 600, color: 'var(--primary)' }}>{s.amount || 'N/A'}</TD>
+                <TD style={{ fontWeight: 600, color: 'var(--primary)' }}>{s.benefit || 'N/A'}</TD>
                 <TD>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <ActionBtn onClick={() => handleOpenModal(s)} title="Edit"><FiEdit2 size={16} /></ActionBtn>
@@ -217,7 +226,7 @@ export default function ScholarshipsPage() {
                 <FormInput name="provider" value={formData.provider} onChange={handleInputChange} />
               </FormGroup>
               <FormGroup label="Benefit Amount">
-                <FormInput name="amount" value={formData.amount} onChange={handleInputChange} placeholder="e.g. ₹10,000" />
+                <FormInput name="benefit" value={formData.benefit} onChange={handleInputChange} placeholder="e.g. ₹10,000" />
               </FormGroup>
               <FormGroup label="Category">
                 <select name="category" value={formData.category} onChange={handleInputChange} style={{ width:'100%', padding:12, borderRadius:12, border:'1.5px solid var(--border)' }}>
@@ -230,30 +239,40 @@ export default function ScholarshipsPage() {
                 <FormInput name="eligibility" value={formData.eligibility} onChange={handleInputChange} />
               </FormGroup>
               <FormGroup label="Target Grades (Select Multi)" full>
-                 <div style={{ display:'flex', gap:10 }}>
-                    {["5", "8", "10", "12"].map(cls => (
+                 <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                    {["5th", "8th", "10th", "12th"].map(cls => (
                       <button 
                          type="button" 
                          key={cls}
                          onClick={() => handleClassToggle(cls)}
                          style={{ 
-                            padding:'10px 20px', borderRadius:12, border: formData.targetClass.includes(cls) ? '2px solid var(--primary)' : '1px solid var(--border)',
-                            background: formData.targetClass.includes(cls) ? 'var(--surface2)' : '#fff',
-                            color: formData.targetClass.includes(cls) ? 'var(--primary)' : 'var(--text3)',
-                            fontWeight: 700, cursor:'pointer'
+                            padding:'10px 24px', borderRadius:14, border: formData.grades.includes(cls) ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                            background: formData.grades.includes(cls) ? '#eff6ff' : '#fff',
+                            color: formData.grades.includes(cls) ? '#3b82f6' : '#64748b',
+                            fontWeight: 800, cursor:'pointer', transition:'0.2s'
                          }}
-                      >Class {cls}th</button>
+                      >Class {cls}</button>
                     ))}
                  </div>
               </FormGroup>
-              <FormGroup label="Application Link" full>
+              <FormGroup label="Application Link">
                 <FormInput name="applicationLink" value={formData.applicationLink} onChange={handleInputChange} placeholder="https://..." />
               </FormGroup>
+              <FormGroup label="Deadline">
+                <FormInput name="deadline" value={formData.deadline} onChange={handleInputChange} placeholder="e.g. 30th April 2026" />
+              </FormGroup>
+              <FormGroup label="Visibility Status">
+                <select name="status" value={formData.status} onChange={handleInputChange} style={{ width:'100%', padding:'12px 16px', borderRadius:12, border:'1.5px solid #e2e8f0', fontWeight:700 }}>
+                   <option value="published">Published (Visible to Students)</option>
+                   <option value="active">Active (Internal Use)</option>
+                   <option value="inactive">Inactive (Hidden)</option>
+                </select>
+              </FormGroup>
               <FormGroup label="Description" full>
-                <FormInput as="textarea" name="description" value={formData.description} onChange={handleInputChange} style={{ minHeight:100 }} />
+                <FormInput as="textarea" name="description" value={formData.description} onChange={handleInputChange} style={{ minHeight:120, borderRadius:16 }} placeholder="Describe the scholarship in detail..." />
               </FormGroup>
             </FormGrid>
-            <FormActions onClose={() => setModal({open:false, isEdit:false, data:null})} />
+            <FormActions onClose={() => setModal({open:false, isEdit:false, data:null})} onSave={handleSubmit} />
           </form>
         </Modal>
       )}

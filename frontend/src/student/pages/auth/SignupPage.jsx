@@ -15,8 +15,15 @@ const TN_DISTRICTS = [
 ]
 
 export default function SignupPage() {
-  const { login }  = useStudentAuth()
+  const { login, isAuthenticated }  = useStudentAuth()
   const navigate   = useNavigate()
+
+  // If already authenticated, redirect to dashboard
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', classLevel: '10th', district: '' })
   const [errors,   setErrors]   = useState({})
@@ -42,13 +49,20 @@ export default function SignupPage() {
     setLoading(true)
     setApiError('')
     try {
-      await axios.post('http://localhost:5000/api/auth/register', {
+      await axios.post('http://localhost:5000/api/students/register', {
         name: form.name, email: form.email,
         password: form.password, classLevel: form.classLevel,
         district: form.district,
       })
-      alert("Signup successful");
-      navigate('/student/login')
+      
+      // Auto-login after successful signup
+      const loginRes = await axios.post('http://localhost:5000/api/students/login', {
+        email: form.email, password: form.password
+      })
+      
+      localStorage.setItem('studentToken', loginRes.data.token)
+      login(loginRes.data.token, loginRes.data.student)
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setApiError(err.response?.data?.message || 'Signup failed. Please try again.')
     } finally {
@@ -70,10 +84,10 @@ export default function SignupPage() {
     }}>
       <div style={{ width: '100%', maxWidth: 480 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link to="/student" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--s-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 21 }}>🗺️</div>
+          <Link to="/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <img src="/logo.png" alt="Uyarvu Payanam" style={{ height: 44, width: 'auto', objectFit: 'contain', borderRadius: 12 }} />
             <span style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: 'var(--s-text)' }}>
-              Career<span style={{ color: 'var(--s-primary)' }}>Map</span>
+              Uyarvu <span style={{ color: 'var(--s-primary)' }}>Payanam</span>
             </span>
           </Link>
         </div>
@@ -131,7 +145,7 @@ export default function SignupPage() {
           <SDivider label="or" />
           <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--s-text3)' }}>
             Already have an account?{' '}
-            <Link to="/student/login" style={{ color: 'var(--s-primary)', fontWeight: 700, textDecoration: 'none' }}>Sign in →</Link>
+            <Link to="/signin" style={{ color: 'var(--s-primary)', fontWeight: 700, textDecoration: 'none' }}>Sign in →</Link>
           </p>
         </SCard>
       </div>

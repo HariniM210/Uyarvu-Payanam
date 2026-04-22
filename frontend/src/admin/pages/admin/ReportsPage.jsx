@@ -158,9 +158,9 @@ export default function ReportsPage() {
     <div style={{ animation:'fadeUp 0.4s ease both' }}>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:24 }}>
         {[
-          { icon:'👨‍🎓', title:'Registration Report',  desc:'All students by level & date',       color:'#2d9e5f' },
-          { icon:'📘', title:'Popular Courses',       desc:'Most selected courses this month',    color:'#3b82f6' },
-          { icon:'🎓', title:'Scholarship Trends',    desc:'Application & deadline tracking',     color:'#f59e0b' },
+          { icon:'👨‍🎓', title:'Registration Report',  desc:'All students by level & date',       color:'var(--primary)' },
+          { icon:'📘', title:'Popular Courses',       desc:'Most selected courses this month',    color:'var(--accent3)' },
+          { icon:'🎓', title:'Scholarship Trends',    desc:'Application & deadline tracking',     color:'var(--accent)' },
         ].map((r,i) => (
           <Card key={i} style={{ cursor: 'default', borderTop:`3px solid ${r.color}` }}>
             <div style={{ fontSize:32, marginBottom:12 }}>{r.icon}</div>
@@ -273,6 +273,43 @@ export default function ReportsPage() {
               <div style={{ textAlign: 'center', color: 'var(--text3)', fontSize: 13, padding: 20 }}>
                 Not enough data
               </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <Card>
+          <CardHeader title="👥 Recent Registrations List" />
+          <div style={{ marginTop: 20, overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ textAlign: 'left', borderBottom: '1.5px solid var(--border)' }}>
+                  <th style={{ padding: '12px 14px', color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', fontSize: 11 }}>Name</th>
+                  <th style={{ padding: '12px 14px', color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', fontSize: 11 }}>Email</th>
+                  <th style={{ padding: '12px 14px', color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', fontSize: 11 }}>Interest</th>
+                  <th style={{ padding: '12px 14px', color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', fontSize: 11 }}>District</th>
+                  <th style={{ padding: '12px 14px', color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', fontSize: 11 }}>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reportData?.students?.slice(0, 10).map((student, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }}>
+                    <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--text)' }}>{student.name}</td>
+                    <td style={{ padding: '12px 14px', color: 'var(--text2)' }}>{student.email}</td>
+                    <td style={{ padding: '12px 14px' }}>
+                      <span style={{ padding: '4px 8px', borderRadius: 20, background: 'var(--primary-l)', color: 'var(--primary)', fontWeight: 700, fontSize: 11 }}>
+                        {student.courseInterest}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 14px', color: 'var(--text3)' }}>{student.state}</td>
+                    <td style={{ padding: '12px 14px', color: 'var(--text3)' }}>{student.createdAt}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {(!reportData?.students || reportData.students.length === 0) && (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--text4)' }}>No student records found</div>
             )}
           </div>
         </Card>

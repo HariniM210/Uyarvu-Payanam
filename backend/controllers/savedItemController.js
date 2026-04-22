@@ -3,7 +3,7 @@ const SavedItem = require("../models/SavedItem");
 exports.saveItem = async (req, res) => {
   try {
     const { contentId, contentType } = req.body;
-    const userId = req.student?._id; // student/user id from auth middleaware
+    const userId = req.student?._id || req.user?._id; // student/user id from auth middleaware
 
     if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
 
@@ -21,7 +21,7 @@ exports.saveItem = async (req, res) => {
 
 exports.getSavedItems = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.student?._id || req.user?._id;
     const { contentType } = req.query;
     
     const filter = { userId };
@@ -39,7 +39,7 @@ exports.getSavedItems = async (req, res) => {
 
 exports.unsaveItem = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.student?._id || req.user?._id;
     const { contentId } = req.params;
 
     const removed = await SavedItem.findOneAndDelete({ userId, contentId });

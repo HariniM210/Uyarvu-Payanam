@@ -51,26 +51,11 @@ export default function CourseDetailPage() {
         courseData.category?.toLowerCase().includes('it') ||
         courseData.category?.toLowerCase().includes('computer')
 
-      // Fetch colleges explicitly mapped to this course ID from admin
+      // Fetch colleges explicitly mapped to this course ID from actual data/imports
       const expRes = await adminService.getColleges({ courseId: courseData._id })
       const explicitlyMapped = expRes.data || []
-
-      // Fetch colleges generally in the same stream as fallback
-      const streamName = CATEGORY_STREAM_MAP[courseData.category] || 'Others'
-      const stRes = await adminService.getColleges({ stream: streamName })
-      const streamColleges = stRes.data || []
-
-      // Combine and deduplicate, prioritizing explicitly mapped ones
-      const combined = [...explicitlyMapped]
-      const ids = new Set(combined.map(c => c._id))
-      streamColleges.forEach(c => {
-         if (!ids.has(c._id)) {
-            combined.push(c)
-            ids.add(c._id)
-         }
-      })
       
-      setColleges(combined.slice(0, 50))
+      setColleges(explicitlyMapped.slice(0, 50))
 
       if (isCourseEngineering) {
         // Engineering: fetch TNEA cutoffs filtered by courseId

@@ -15,21 +15,19 @@ const collegeSchema = new mongoose.Schema(
     },
     stream: {
       type: String,
-      required: [true, "Stream is required"],
-      enum: {
-        values: [
-          "Engineering",
-          "Medical",
-          "Arts & Science",
-          "Law",
-          "Polytechnic",
-          "Agriculture",
-          "Others",
-        ],
-        message:
-          "Stream must be one of: Engineering, Medical, Arts & Science, Law, Polytechnic, Agriculture, Others",
-      },
       trim: true,
+    },
+    category: {
+      type: String,
+      trim: true,
+    },
+    type: {
+      type: String,
+      trim: true,
+    },
+    streamsOffered: {
+      type: [String],
+      default: []
     },
     district: {
       type: String,
@@ -75,6 +73,22 @@ const collegeSchema = new mongoose.Schema(
     website: {
       type: String,
       trim: true,
+      default: "",
+    },
+    fetchStatus: {
+      type: String,
+      enum: ["ideal", "pending", "success", "failed"],
+      default: "ideal",
+    },
+    lastFetchedAt: {
+      type: Date,
+    },
+    totalCoursesFound: {
+      type: Number,
+      default: 0,
+    },
+    fetchError: {
+      type: String,
       default: "",
     }
   },

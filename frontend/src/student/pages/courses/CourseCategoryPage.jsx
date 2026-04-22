@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+﻿import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { FiArrowLeft, FiClock, FiFilter, FiSearch, FiTarget, FiArrowRight, FiInfo } from 'react-icons/fi'
 import { useStudentAuth } from '../../context/StudentAuthContext'
@@ -133,7 +133,7 @@ export default function CourseCategoryPage() {
     setLoading(true)
     const params = {}
     
-    // Use targetLevel (e.g. "After 12th") — NOT level (e.g. "12") — to match the DB field
+    // Use targetLevel (e.g. "After 12th") â€” NOT level (e.g. "12") â€” to match the DB field
     if (!isSearchMode && config?.targetLevel) {
         params.targetLevel = config.targetLevel
     } else {
@@ -190,7 +190,7 @@ export default function CourseCategoryPage() {
           borderRadius: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
         }}>
           <div>
-            <Link to="/student/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20, color: 'var(--s-text3)', textDecoration: 'none', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Link to="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20, color: 'var(--s-text3)', textDecoration: 'none', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               <FiArrowLeft size={16} /> Course Browser Dashboard
             </Link>
             <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 'clamp(28px, 4vw, 38px)', color: 'var(--s-text)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
@@ -288,7 +288,7 @@ export default function CourseCategoryPage() {
             <p style={{ margin: '0 auto 24px', opacity: 0.8, maxWidth: 640, fontSize: 15.5, lineHeight: 1.7 }}>
               Create an account to track entrance dates, scholarship deadlines, and college admission portals for all these courses.
             </p>
-            <Link to="/student/signup" style={{ textDecoration: 'none' }}>
+            <Link to="/signup" style={{ textDecoration: 'none' }}>
               <SBtn variant="white" size="lg">Join Uyarvu Payanam Free</SBtn>
             </Link>
           </div>

@@ -77,4 +77,24 @@ export const adminService = {
     const response = await axiosInstance.delete(`/colleges/${id}`)
     return response.data
   },
+
+  fetchCollegeCourses: async (id) => {
+    const response = await axiosInstance.post(`/colleges/${id}/fetch-courses`)
+    return response.data
+  },
+
+  getFetchedCourses: async (id) => {
+    const response = await axiosInstance.get(`/colleges/${id}/courses`)
+    return response.data
+  },
+
+  syncCollegeCourses: async (id) => {
+    const response = await axiosInstance.post(`/colleges/${id}/sync-courses`)
+    return response.data
+  },
+
+  bulkFetchAllCollegeCourses: async () => {
+    const response = await axiosInstance.post('/colleges/bulk/fetch-all-courses')
+    return response.data
+  },
 }

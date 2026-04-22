@@ -36,13 +36,12 @@
   min-height: 72px;
 }
 
-.logoIcon {
-  width: 38px; height: 38px; min-width: 38px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-d));
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 4px 12px var(--primary-glow);
+.sidebarLogoImg {
+  width: auto;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 .logoText { display: flex; flex-direction: column; overflow: hidden; }

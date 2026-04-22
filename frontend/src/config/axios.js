@@ -9,18 +9,21 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Determine if request is admin-related (you may adjust this logic as needed)
-    const isAdminRoute = config.url.startsWith('/admin')
+    // Context URL helps us determine which token to attach if both exist.
+    const isClientAdmin = window.location.pathname.startsWith('/admin')
+    const isAdminRoute = config.url.startsWith('/admin') || isClientAdmin
     const adminToken = localStorage.getItem('adminToken')
     const studentToken = localStorage.getItem('studentToken')
 
-    // Choose token contextually. Admin token takes precedence for admin routes
+    // Choose token contextually. Admin token takes precedence for admin routes/panels
     if (isAdminRoute && adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`
-    } else if (studentToken) {
+    } else if (!isAdminRoute && studentToken) {
       config.headers.Authorization = `Bearer ${studentToken}`
     } else if (adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`
+    } else if (studentToken) {
+      config.headers.Authorization = `Bearer ${studentToken}`
     }
 
     return config

@@ -11,7 +11,6 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: [true, "Course name is required"],
       trim: true,
-      unique: true,
     },
     branchCode: {
       type: String, // TNEA Branch Code (e.g., CS, IT)
@@ -23,16 +22,12 @@ const courseSchema = new mongoose.Schema(
         lowercase: true,
     },
     level: {
-      type: String, // "Polytechnic", "B.Sc", "Degree", "Diploma", "Certificate" etc.
+      type: String, // "after10th", "after12th", "diploma"
       required: [true, "Level is required"],
       trim: true,
     },
-    targetLevel: {
-      type: String, // "After 10th", "After 12th", "Diploma"
-      required: [true, "Target level is required"],
-    },
     category: {
-      type: String, // "Medical", "Engineering", "Arts", "Commerce", "Science", "Management", "Certificate", "Architecture"
+      type: String, // "Medical", "Engineering", "Arts", "Commerce", "Science", "Management", "Certificate", "Architecture", "Diploma"
       required: [true, "Category is required"],
       trim: true,
     },

@@ -9,7 +9,8 @@ import {
   scholarshipService,
   collegeService,
 } from '../../services'
-import { SBtn, SLoader, SSectionHeader, SEmpty } from '../../components/ui'
+import { userActionService } from '../../../services/userActionService'
+import { SBtn, SLoader, SSectionHeader, SEmpty, SBadge } from '../../components/ui'
 import {
   FiGrid, FiBookOpen, FiMapPin, FiFileText, FiAward,
   FiBell, FiUser, FiSettings, FiLogOut, FiArrowRight,
@@ -17,19 +18,19 @@ import {
 } from 'react-icons/fi'
 import s from './DashboardPage.module.css'
 
-/* ── Sidebar navigation config ─────────────────────────────── */
+/* â”€â”€ Sidebar navigation config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const SIDEBAR_NAV = [
-  { id: 'dashboard',     icon: FiGrid,     label: 'Dashboard',      to: '/student/dashboard' },
-  { id: 'courses',       icon: FiBookOpen, label: 'Courses',        to: '/student/careers' },
-  { id: 'colleges',      icon: FiMapPin,   label: 'Colleges',       to: '/student/colleges' },
-  { id: 'exams',         icon: FiFileText, label: 'Entrance Exams', to: '/student/careers' },
-  { id: 'scholarships',  icon: FiAward,    label: 'Scholarships',   to: '/student/careers' },
-  { id: 'notifications', icon: FiBell,     label: 'Notifications',  to: '/student/notifications' },
-  { id: 'profile',       icon: FiUser,     label: 'Profile',        to: '/student/profile' },
-  { id: 'settings',      icon: FiSettings, label: 'Settings',       to: '/student/profile' },
+  { id: 'dashboard',     icon: FiGrid,     label: 'Dashboard',      to: '/dashboard' },
+  { id: 'courses',       icon: FiBookOpen, label: 'Courses',        to: '/careers' },
+  { id: 'colleges',      icon: FiMapPin,   label: 'Colleges',       to: '/colleges' },
+  { id: 'exams',         icon: FiFileText, label: 'Entrance Exams', to: '/careers' },
+  { id: 'scholarships',  icon: FiAward,    label: 'Scholarships',   to: '/careers' },
+  { id: 'notifications', icon: FiBell,     label: 'Notifications',  to: '/notifications' },
+  { id: 'profile',       icon: FiUser,     label: 'Profile',        to: '/profile' },
+  { id: 'settings',      icon: FiSettings, label: 'Settings',       to: '/profile' },
 ]
 
-/* ── Stat card gradient presets ─────────────────────────────── */
+/* â”€â”€ Stat card gradient presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const STAT_GRADIENTS = [
   'linear-gradient(135deg, #1d5fba 0%, #3b82f6 100%)',
   'linear-gradient(135deg, #e17055 0%, #f97316 100%)',
@@ -37,15 +38,15 @@ const STAT_GRADIENTS = [
   'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
 ]
 
-/* ── Recommended careers (static) ──────────────────────────── */
+/* â”€â”€ Recommended careers (static) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CAREER_CARDS = [
-  { icon: '⚙️', title: 'Engineering',  sub: 'Build the future',      bg: '#eaf0fb', color: '#1d5fba' },
-  { icon: '🩺', title: 'Medicine',     sub: 'Heal & innovate',       bg: '#fce4ec', color: '#c62828' },
-  { icon: '📊', title: 'Commerce',     sub: 'Business & finance',    bg: '#fdf4e0', color: '#c48a1a' },
-  { icon: '🎨', title: 'Arts',         sub: 'Create & express',      bg: '#f3effe', color: '#7c3aed' },
+  { icon: 'âš™ï¸', title: 'Engineering',  sub: 'Build the future',      bg: '#eaf0fb', color: '#1d5fba' },
+  { icon: 'ðŸ©º', title: 'Medicine',     sub: 'Heal & innovate',       bg: '#fce4ec', color: '#c62828' },
+  { icon: 'ðŸ“Š', title: 'Commerce',     sub: 'Business & finance',    bg: '#fdf4e0', color: '#c48a1a' },
+  { icon: 'ðŸŽ¨', title: 'Arts',         sub: 'Create & express',      bg: '#f3effe', color: '#7c3aed' },
 ]
 
-/* ── TimeAgo helper ────────────────────────────────────────── */
+/* â”€â”€ TimeAgo helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function timeAgo(date) {
   if (!date) return ''
   const diff = Date.now() - new Date(date).getTime()
@@ -58,13 +59,13 @@ function timeAgo(date) {
 }
 
 function formatDate(d) {
-  if (!d) return '—'
+  if (!d) return 'â€”'
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DASHBOARD PAGE
-   ══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export default function DashboardPage() {
   const { student, logout } = useStudentAuth()
   const navigate = useNavigate()
@@ -72,15 +73,16 @@ export default function DashboardPage() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  /* ── Data state ─────────────────────────────────────────── */
+  /* â”€â”€ Data state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const [notifications, setNotifications] = useState([])
   const [careers, setCareers] = useState([])
   const [exams, setExams] = useState([])
   const [scholarships, setScholarships] = useState([])
   const [stats, setStats] = useState({ courses: 0, exams: 0, scholarships: 0, colleges: 0 })
+  const [savedGuidance, setSavedGuidance] = useState([])
   const [loading, setLoading] = useState(true)
 
-  /* ── Fetch all data on mount ────────────────────────────── */
+  /* â”€â”€ Fetch all data on mount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     const normalize = (res) => {
       if (Array.isArray(res)) return res
@@ -100,7 +102,8 @@ export default function DashboardPage() {
       scholarshipService.getAll(),
       courseService.getAll(),
       collegeService.getAll(),
-    ]).then(([notifR, careerR, examR, scholR, courseR, collegeR]) => {
+      userActionService.getSavedList('ClassContent')
+    ]).then(([notifR, careerR, examR, scholR, courseR, collegeR, savedR]) => {
       const notifs = normalize(notifR.value)
       setNotifications(notifs.slice(0, 3))
       setCareers(normalize(careerR.value).slice(0, 6))
@@ -117,11 +120,16 @@ export default function DashboardPage() {
         scholarships: scholArr.length,
         colleges: normalize(collegeR.value).length,
       })
+
+      if (savedR.status === 'fulfilled' && savedR.value?.success) {
+        setSavedGuidance(savedR.value.data)
+      }
+
       setLoading(false)
     })
   }, [])
 
-  /* ── Derived ────────────────────────────────────────────── */
+  /* â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const unreadCount = notifications.filter((n) => !n.isRead).length
   const hour = new Date().getHours()
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -129,21 +137,33 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout()
-    navigate('/student/login')
+    navigate('/signin')
   }
 
-  /* ── Stat card data ─────────────────────────────────────── */
+  const handleUnsave = async (contentId) => {
+    try {
+      await userActionService.unsaveItem(contentId)
+      setSavedGuidance(prev => prev.filter(item => {
+        const id = item.contentId?._id || item.contentId
+        return id !== contentId
+      }))
+    } catch (err) {
+      console.error('Failed to remove saved item', err)
+    }
+  }
+
+  /* â”€â”€ Stat card data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const STAT_CARDS = [
-    { icon: '📘', label: 'Courses Available', value: stats.courses },
-    { icon: '📝', label: 'Entrance Exams', value: stats.exams },
-    { icon: '🎓', label: 'Scholarships', value: stats.scholarships },
-    { icon: '🏫', label: 'Colleges', value: stats.colleges },
+    { icon: 'ðŸ“˜', label: 'Courses Available', value: stats.courses },
+    { icon: 'ðŸ“', label: 'Entrance Exams', value: stats.exams },
+    { icon: 'ðŸŽ“', label: 'Scholarships', value: stats.scholarships },
+    { icon: 'ðŸ«', label: 'Colleges', value: stats.colleges },
   ]
 
   return (
     <div className={s.layout}>
 
-      {/* ── SIDEBAR ──────────────────────────────────────── */}
+      {/* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {sidebarOpen && <div className={s.overlay} onClick={() => setSidebarOpen(false)} />}
 
       <aside className={`${s.sidebar} ${sidebarOpen ? s.sidebarOpen : ''}`}>
@@ -151,7 +171,7 @@ export default function DashboardPage() {
 
         {SIDEBAR_NAV.map(({ id, icon: Icon, label, to }) => {
           const isActive = id === 'dashboard'
-            ? location.pathname === '/student/dashboard'
+            ? location.pathname === '/dashboard'
             : location.pathname.startsWith(to) && id !== 'dashboard'
           return (
             <Link
@@ -204,20 +224,20 @@ export default function DashboardPage() {
         {sidebarOpen ? <FiX /> : <FiMenu />}
       </button>
 
-      {/* ── MAIN CONTENT ─────────────────────────────────── */}
+      {/* â”€â”€ MAIN CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className={s.main}>
 
         {/* Welcome Banner */}
         <div className={`${s.welcomeBanner} s-anim-up`}>
-          <div className={s.welcomeGreet}>{greet} 👋</div>
+          <div className={s.welcomeGreet}>{greet} ðŸ‘‹</div>
           <div className={s.welcomeName}>Welcome back, {firstName}!</div>
           <div className={s.welcomeDesc}>
             Explore your future career paths, find the right colleges, and never miss an exam deadline.
           </div>
           <div className={s.welcomeBadges}>
-            {student?.classLevel && <span className={s.welcomeTag}>🎓 Class {student.classLevel}</span>}
-            {student?.district && <span className={s.welcomeTag}>📍 {student.district}</span>}
-            {unreadCount > 0 && <span className={s.welcomeTag}>🔔 {unreadCount} new alert{unreadCount > 1 ? 's' : ''}</span>}
+            {student?.classLevel && <span className={s.welcomeTag}>ðŸŽ“ Class {student.classLevel}</span>}
+            {student?.district && <span className={s.welcomeTag}>ðŸ“ {student.district}</span>}
+            {unreadCount > 0 && <span className={s.welcomeTag}>ðŸ”” {unreadCount} new alert{unreadCount > 1 ? 's' : ''}</span>}
           </div>
         </div>
 
@@ -225,7 +245,7 @@ export default function DashboardPage() {
           <SLoader />
         ) : (
           <>
-            {/* ── Statistics Cards ─────────────────────────── */}
+            {/* â”€â”€ Statistics Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className={`${s.statsGrid} s-anim-up s-d1`}>
               {STAT_CARDS.map((stat, i) => (
                 <div
@@ -240,17 +260,17 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* ── Recommended Careers ──────────────────────── */}
+            {/* â”€â”€ Recommended Careers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title="🧭 Recommended Careers"
+                title="ðŸ§­ Recommended Careers"
                 subtitle="Popular career paths for students"
-                action={() => navigate('/student/careers')}
+                action={() => navigate('/careers')}
                 actionLabel="View All"
               />
               <div className={s.careerGrid}>
                 {CAREER_CARDS.map((c) => (
-                  <Link key={c.title} to="/student/careers" className={s.careerCard}>
+                  <Link key={c.title} to="/careers" className={s.careerCard}>
                     <div className={s.careerIcon} style={{ background: c.bg }}>
                       {c.icon}
                     </div>
@@ -261,17 +281,57 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ── 2-Column: Upcoming Exams + Latest Scholarships ── */}
+            {/* ── Saved Guidance Content ─────────────────────────────── */}
+            <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
+              <SSectionHeader
+                title="🔖 Saved Guidance Content"
+                subtitle="Your bookmarked career paths and guides"
+              />
+              {savedGuidance.length === 0 ? (
+                <SEmpty icon="🔖" title="No saved content yet" desc="Bookmark items from class guidance pages to see them here." />
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                  {savedGuidance.map((item, i) => {
+                    const c = item.contentId
+                    if (!c) return null
+                    return (
+                      <div key={item._id || i} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ height: '140px', width: '100%', background: '#f1f5f9', position: 'relative' }}>
+                          <img src={c.coverImage || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=400'} alt="thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                            <SBadge color="blue">Class {c.targetClass}</SBadge>
+                            <SBadge color="gray">{c.sectionType}</SBadge>
+                          </div>
+                          <h4 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 800, color: '#1e293b' }}>{c.title}</h4>
+                          <div style={{ marginTop: 'auto', display: 'flex', gap: '10px' }}>
+                            <SBtn variant="primary" size="sm" style={{ flex: 1, borderRadius: '8px' }} onClick={() => navigate(`/class${c.targetClass}/content/${c.slug}`)}>
+                              View 
+                            </SBtn>
+                            <SBtn variant="outline" size="sm" style={{ flex: 1, borderRadius: '8px', color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleUnsave(c._id)}>
+                              Remove
+                            </SBtn>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* â”€â”€ 2-Column: Upcoming Exams + Latest Scholarships â”€â”€ */}
             <div className={`${s.sectionGrid} s-anim-up s-d3`}>
 
               {/* Upcoming Exams */}
               <div>
                 <SSectionHeader
-                  title="📝 Upcoming Exams"
+                  title="ðŸ“ Upcoming Exams"
                   subtitle="Important entrance exams"
                 />
                 {exams.length === 0 ? (
-                  <SEmpty icon="📝" title="No exams listed yet" />
+                  <SEmpty icon="ðŸ“" title="No exams listed yet" />
                 ) : (
                   <div className={s.examList}>
                     {exams.map((exam, i) => {
@@ -283,7 +343,7 @@ export default function DashboardPage() {
                             className={s.examIcon}
                             style={{ background: colors[i % 4], color: textColors[i % 4] }}
                           >
-                            📝
+                            ðŸ“
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div className={s.examTitle}>{exam.name || exam.title || 'Exam'}</div>
@@ -302,11 +362,11 @@ export default function DashboardPage() {
               {/* Latest Scholarships */}
               <div>
                 <SSectionHeader
-                  title="🎓 Latest Scholarships"
+                  title="ðŸŽ“ Latest Scholarships"
                   subtitle="Don't miss these deadlines"
                 />
                 {scholarships.length === 0 ? (
-                  <SEmpty icon="🎓" title="No scholarships yet" />
+                  <SEmpty icon="ðŸŽ“" title="No scholarships yet" />
                 ) : (
                   <div className={s.scholarshipList}>
                     {scholarships.map((sch, i) => (
@@ -330,16 +390,16 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ── Notifications Preview ────────────────────── */}
+            {/* â”€â”€ Notifications Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className="s-anim-up s-d4" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title="🔔 Notifications"
+                title="ðŸ”” Notifications"
                 subtitle="Latest 3 updates from admin"
-                action={() => navigate('/student/notifications')}
+                action={() => navigate('/notifications')}
                 actionLabel="View All"
               />
               {notifications.length === 0 ? (
-                <SEmpty icon="🔔" title="No notifications yet" desc="Admin updates will appear here" />
+                <SEmpty icon="ðŸ””" title="No notifications yet" desc="Admin updates will appear here" />
               ) : (
                 <div className={s.notifList}>
                   {notifications.map((n, i) => (
@@ -352,12 +412,12 @@ export default function DashboardPage() {
                         {!n.isRead && <span className={s.notifDot} />}
                       </div>
                       <div className={s.notifMsg}>
-                        {n.message?.substring(0, 120)}{n.message?.length > 120 ? '…' : ''}
+                        {n.message?.substring(0, 120)}{n.message?.length > 120 ? 'â€¦' : ''}
                       </div>
                       <div className={s.notifTime}>{timeAgo(n.createdAt)}</div>
                     </div>
                   ))}
-                  <Link to="/student/notifications" style={{ textDecoration: 'none' }}>
+                  <Link to="/notifications" style={{ textDecoration: 'none' }}>
                     <SBtn variant="ghost" size="sm" style={{ width: '100%', justifyContent: 'center' }}>
                       View All Notifications <FiArrowRight size={13} />
                     </SBtn>

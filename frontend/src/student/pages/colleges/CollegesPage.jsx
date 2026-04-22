@@ -19,7 +19,7 @@ const STREAM_STYLE = {
 }
 
 function formatFees(n) {
-  if (!n) return '—'
+  if (!n) return 'â€”'
   if (n >= 100000) return `${(n / 100000).toFixed(1)}L/yr`
   if (n >= 1000) return `${(n / 1000).toFixed(0)}K/yr`
   return `${n}/yr`
@@ -32,7 +32,7 @@ function CollegeCard({ college }) {
     <SCard hover style={{ borderTop: `3px solid ${sc.color}` }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }}>🏫</div>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }}>ðŸ«</div>
           <div>
             <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 14.5, color: 'var(--s-text)', marginBottom: 2 }}>{college.collegeName}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--s-text3)' }}>
@@ -46,8 +46,8 @@ function CollegeCard({ college }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 7, marginBottom: 12 }}>
         {[
           { l: 'Fees', v: formatFees(college.feesPerYear), c: '#16a34a' },
-          { l: 'Placement', v: college.placementPercentage ? `${college.placementPercentage}%` : '—', c: '#1d5fba' },
-          { l: 'Rank', v: college.rank || '—', c: 'var(--s-primary)' },
+          { l: 'Placement', v: college.placementPercentage ? `${college.placementPercentage}%` : 'â€”', c: '#1d5fba' },
+          { l: 'Rank', v: college.rank || 'â€”', c: 'var(--s-primary)' },
         ].map((s, i) => (
           <div key={i} style={{ background: 'var(--s-bg2)', borderRadius: 8, padding: '8px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 14, color: s.c }}>{s.v}</div>
@@ -111,12 +111,21 @@ export default function CollegesPage() {
     <div className="student-root" style={{ padding: '32px 20px', maxWidth: 1100, margin: '0 auto' }}>
 
       <div className="s-anim-up" style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 'clamp(24px,4vw,32px)', color: 'var(--s-text)', marginBottom: 6 }}>
-          College Finder
-        </h1>
-        <p style={{ fontSize: 14.5, color: 'var(--s-text3)' }}>
-          Discover colleges across Tamil Nadu — filter by stream, district and search by name
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+          <div>
+            <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 'clamp(24px,4vw,32px)', color: 'var(--s-text)', marginBottom: 6 }}>
+              College Finder
+            </h1>
+            <p style={{ fontSize: 14.5, color: 'var(--s-text3)' }}>
+              Discover colleges across Tamil Nadu â€” filter by stream, district and search by name
+            </p>
+          </div>
+          <Link to="/colleges/explorer" style={{ textDecoration: 'none' }}>
+            <SBtn variant="outline" style={{ display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12, padding: '10px 18px', border: '2px solid var(--s-primary)' }}>
+              ðŸ“š Course Wise Fetch
+            </SBtn>
+          </Link>
+        </div>
       </div>
 
       {/* Stream tabs */}
@@ -150,7 +159,7 @@ export default function CollegesPage() {
       </div>
 
       {loading ? <SLoader /> : colleges.length === 0 ? (
-        <SEmpty icon="🏫" title="No colleges found" desc="Try changing your stream or district filter" />
+        <SEmpty icon="ðŸ«" title="No colleges found" desc="Try changing your stream or district filter" />
       ) : (
         <div className="s-anim-up s-d3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
           {colleges.map(c => <CollegeCard key={c._id} college={c} />)}
@@ -172,7 +181,7 @@ export default function CollegesPage() {
           <p style={{ fontSize: 14.5, color: 'var(--s-text3)', marginBottom: 20, maxWidth: 500, margin: '0 auto 20px' }}>
             Login to unlock personalized career recommendations tailored to your exact skills, streams, and aspirations.
           </p>
-          <Link to="/student/login" state={{ from: location.pathname }} style={{ textDecoration: 'none' }}>
+          <Link to="/signin" state={{ from: location.pathname }} style={{ textDecoration: 'none' }}>
             <SBtn variant="primary">Login / Sign Up To Continue</SBtn>
           </Link>
         </div>

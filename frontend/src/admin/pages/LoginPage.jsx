@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import styles from './LoginPage.module.css'
+import uyarvuLogo from '../../uyarvu-logo.png'
 
 /* ── floating study icons in background ── */
 const ICONS = ['📚','✏️','🎓','📐','🔬','🖊️','📖','🏫','📝','🔭','🧮','📏']
@@ -125,20 +126,33 @@ export default function LoginPage() {
       {/* Left panel */}
       <div className={styles.leftPanel}>
         <div className={styles.brandWrap}>
-          <div className={styles.brandLogo}>
-            <span>🎓</span>
-          </div>
-          <h1 className={styles.brandName}>CareerMap</h1>
+          <img src={uyarvuLogo} alt="Uyarvu Payanam Logo" className={styles.brandLogoImg} />
+          <h1 className={styles.brandName}>UYARVU PAYANAM</h1>
           <p className={styles.brandTag}>Career Guidance System</p>
         </div>
+        
         <div className={styles.illustrationBox}>
-          <div className={styles.bookStack}>
-            <div className={styles.book} style={{ background:'#2d9e5f', '--r':'2deg' }}>📚 Course Management</div>
-            <div className={styles.book} style={{ background:'#228751', '--r':'-1.5deg' }}>🏫 College Database</div>
-            <div className={styles.book} style={{ background:'#1e7a47', '--r':'1deg' }}>📝 Exam Tracker</div>
-            <div className={styles.book} style={{ background:'#186640', '--r':'-2deg' }}>🎓 Scholarships</div>
+          <p className={styles.introMessage}>
+            Empowering students from 5th to 12th standard with career guidance, courses, scholarships, colleges, and exam support.
+          </p>
+          <div className={styles.featureGrid}>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIcon}>📚</span>
+              <span>Course Management</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIcon}>🏫</span>
+              <span>College Database</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIcon}>📝</span>
+              <span>Exam Tracker</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIcon}>🎓</span>
+              <span>Scholarships</span>
+            </div>
           </div>
-          <p className={styles.illustrationTag}>Empowering students from 5th to 12th grade</p>
         </div>
         <div className={styles.statsRow}>
           {[['2,847','Students'], ['64','Courses'], ['28','Exams'], ['15','Scholarships']].map(([v,l]) => (
@@ -270,7 +284,7 @@ export default function LoginPage() {
 
               <div className={styles.secNote}>
                 <span>📱</span>
-                <span>Open Google Authenticator or any TOTP app and enter the 6-digit code for CareerMap Admin.</span>
+                <span>Open Google Authenticator or any TOTP app and enter the 6-digit code for UYARVU PAYANAM Admin.</span>
               </div>
             </div>
           )}
@@ -291,7 +305,7 @@ export default function LoginPage() {
         </div>
 
         <p className={styles.footer}>
-          © 2025 CareerMap · Career Guidance System · Secure Admin Portal
+          © 2025 UYARVU PAYANAM · Career Guidance System · Secure Admin Portal
         </p>
       </div>
     </div>

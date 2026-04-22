@@ -19,6 +19,8 @@ const TN_DISTRICTS = [
 const EMPTY_FORM = {
   collegeName: '',
   stream: 'Engineering',
+  category: '',
+  type: '',
   district: '',
   location: '',
   state: 'Tamil Nadu',
@@ -38,11 +40,18 @@ export default function CollegesPage() {
   const [activeStream, setActiveStream] = useState('All')
   const [activeDistrict, setActiveDistrict] = useState('All')
 
-  // Modal state
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+
+  // Fetch courses state
+  const [fetchModal, setFetchModal] = useState(false)
+  const [selectedCollege, setSelectedCollege] = useState(null)
+  const [fetchedCourses, setFetchedCourses] = useState([])
+  const [isFetching, setIsFetching] = useState(false)
+  const [isBulkFetching, setIsBulkFetching] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(false)
 
   // ── Fetch dependencies ──
   const fetchCourses = async () => {
@@ -106,6 +115,8 @@ export default function CollegesPage() {
     setForm({
       collegeName: c.collegeName,
       stream: c.stream,
+      category: c.category || '',
+      type: c.type || '',
       district: c.district || '',
       location: c.location || '',
       state: c.state || 'Tamil Nadu',
@@ -163,6 +174,66 @@ export default function CollegesPage() {
     }
   }
 
+  // ── Automated Course Fetching ──
+  const handleFetchCourses = async (college) => {
+    if (!college.website) {
+      alert("Please add a website URL for this college first.")
+      return
+    }
+
+    setIsFetching(true)
+    try {
+      const res = await adminService.fetchCollegeCourses(college._id)
+      alert(res.message || "Courses fetched successfully")
+      fetchColleges() // Refresh to update status and count
+      
+      // Optionally open view modal
+      handleViewCourses(college)
+    } catch (err) {
+      console.error('Fetch courses error:', err)
+      alert(err.response?.data?.message || 'Failed to fetch courses')
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
+  const handleViewCourses = async (college) => {
+    setSelectedCollege(college)
+    setFetchLoading(true)
+    setFetchModal(true)
+    try {
+      const res = await adminService.getFetchedCourses(college._id)
+      setFetchedCourses(res.data || [])
+    } catch (err) {
+      console.error('Get fetched courses error:', err)
+      alert('Failed to load courses')
+    } finally {
+      setFetchLoading(false)
+    }
+  }
+
+  const closeFetchModal = () => {
+    setFetchModal(false)
+    setFetchedCourses([])
+    setSelectedCollege(null)
+  }
+
+  const handleBulkFetch = async () => {
+    if (!window.confirm("This will fetch courses for ALL colleges with a website. This might take some time and overwrite auto-mapped data. Proceed?")) return
+    
+    setIsBulkFetching(true)
+    try {
+      const res = await adminService.bulkFetchAllCollegeCourses()
+      alert(res.message)
+      fetchColleges()
+    } catch (err) {
+      console.error('Bulk fetch error:', err)
+      alert(err.response?.data?.message || 'Bulk fetch failed')
+    } finally {
+      setIsBulkFetching(false)
+    }
+  }
+
   const formatFees = (n) => {
     if (!n) return '\u2014'
     if (n >= 100000) return `\u20B9${(n / 100000).toFixed(1)}L/yr`
@@ -195,7 +266,16 @@ export default function CollegesPage() {
             <option key={d} value={d}>{d === 'All' ? '📍 All Districts' : d}</option>
           ))}
         </FilterSelect>
-        <PrimaryBtn style={{ marginLeft: 'auto' }} onClick={openAdd}>+ Add College</PrimaryBtn>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
+          <ActionBtn 
+            onClick={handleBulkFetch} 
+            disabled={isBulkFetching}
+            style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
+          >
+            {isBulkFetching ? '🔄 Processing...' : '🤖 Bulk Sync All'}
+          </ActionBtn>
+          <PrimaryBtn onClick={openAdd}>+ Add College</PrimaryBtn>
+        </div>
       </FiltersRow>
 
       <Card>
@@ -205,17 +285,48 @@ export default function CollegesPage() {
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--text3)' }}>No colleges found</div>
         ) : (
           <DataTable
-            columns={['College Name', 'Stream', 'District', 'Location', 'Courses', 'Actions']}
+            columns={['College Name', 'Stream', 'District', 'Location', 'Courses (Verified)', 'Auto Fetch', 'Actions']}
             data={colleges}
             renderRow={(c) => (
               <TR key={c._id}>
                 <TD>
                   <div style={{ fontWeight: 600, color: 'var(--text)' }}>{c.collegeName}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)' }}>{c.website || 'No website'}</div>
                 </TD>
                 <TD><LevelBadge level={c.stream} /></TD>
                 <TD style={{ color: 'var(--text2)' }}>{c.district || '\u2014'}</TD>
                 <TD style={{ color: 'var(--text3)' }}>{c.location || '\u2014'}</TD>
-                <TD style={{ color: 'var(--primary)', fontWeight:800 }}>{(c.coursesOffered || []).length} Courses</TD>
+                <TD style={{ color: 'var(--primary)', fontWeight: 800 }}>
+                  {(c.coursesOffered || []).length} Verified
+                </TD>
+                <TD>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <ActionBtn 
+                          title="Fetch from Website" 
+                          onClick={() => handleFetchCourses(c)}
+                          disabled={isFetching || !c.website}
+                        >
+                          {c.fetchStatus === 'pending' ? '⏳' : '📥'}
+                        </ActionBtn>
+                        <ActionBtn 
+                          title="View Fetched" 
+                          onClick={() => handleViewCourses(c)}
+                        >
+                          👁️
+                        </ActionBtn>
+                      </div>
+                      {c.fetchStatus && c.fetchStatus !== 'ideal' && (
+                        <div style={{ 
+                          fontSize: 10, 
+                          color: c.fetchStatus === 'success' ? '#10b981' : c.fetchStatus === 'failed' ? '#ef4444' : '#f59e0b',
+                          fontWeight: 600
+                        }}>
+                          {c.fetchStatus.toUpperCase()} {c.totalCoursesFound > 0 && `(${c.totalCoursesFound})`}
+                        </div>
+                      )}
+                   </div>
+                </TD>
                 <TD>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <ActionBtn onClick={() => openEdit(c)}>✏️</ActionBtn>
@@ -238,6 +349,12 @@ export default function CollegesPage() {
               <FilterSelect name="stream" value={form.stream} onChange={handleChange} style={{ width:'100%' }}>
                 {STREAMS.filter(s => s !== 'All').map(s => <option key={s} value={s}>{s}</option>)}
               </FilterSelect>
+            </FormGroup>
+            <FormGroup label="Type (Govt/Private)">
+               <FormInput name="type" value={form.type} onChange={handleChange} placeholder="e.g. Govt / Private / Deemed" />
+            </FormGroup>
+            <FormGroup label="Institutional Category">
+               <FormInput name="category" value={form.category} onChange={handleChange} placeholder="e.g. Co-Ed / Women / Minority" />
             </FormGroup>
             <FormGroup label="District">
                <FilterSelect name="district" value={form.district} onChange={handleChange} style={{ width:'100%' }}>
@@ -284,6 +401,65 @@ export default function CollegesPage() {
             saveDisabled={saving}
             saveText={saving ? 'Saving...' : editing ? 'Update College' : 'Add College'}
           />
+        </Modal>
+      )}
+      {fetchModal && (
+        <Modal 
+          title={`Courses for ${selectedCollege?.collegeName}`} 
+          onClose={closeFetchModal}
+          width="600px"
+        >
+          {fetchLoading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text3)' }}>Loading fetched courses...</div>
+          ) : fetchedCourses.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center' }}>
+              <div style={{ color: 'var(--text3)', marginBottom: 16 }}>No courses found for this college yet.</div>
+              <PrimaryBtn onClick={() => handleFetchCourses(selectedCollege)} disabled={isFetching}>
+                {isFetching ? 'Fetching...' : 'Start Fetching Now'}
+              </PrimaryBtn>
+            </div>
+          ) : (
+            <div>
+              <div style={{ marginBottom: 16, padding: '10px 16px', background: 'var(--primary-l)', borderRadius: 12, border: '1px solid var(--primary-border)' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>
+                  Total Courses Identified: {fetchedCourses.length}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)' }}>
+                  Last Checked: {selectedCollege?.lastFetchedAt ? new Date(selectedCollege.lastFetchedAt).toLocaleString() : 'Just now'}
+                </div>
+              </div>
+              
+              <div style={{ maxHeight: '400px', overflowY: 'auto', padding: '4px' }}>
+                <DataTable
+                  columns={['Full Name', 'Code', 'Status']}
+                  data={fetchedCourses}
+                  renderRow={(rc) => (
+                    <TR key={rc._id}>
+                      <TD style={{ fontWeight: 600 }}>{rc.courseFullName}</TD>
+                      <TD><LevelBadge level={rc.normalizedCourseName} /></TD>
+                      <TD>
+                        <span style={{ 
+                          fontSize: 10, padding: '2px 8px', borderRadius: 10,
+                          background: rc.isActive ? '#dcfce7' : '#fee2e2',
+                          color: rc.isActive ? '#166534' : '#991b1b',
+                          fontWeight: 700
+                        }}>
+                          {rc.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </TD>
+                    </TR>
+                  )}
+                />
+              </div>
+
+              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <ActionBtn onClick={closeFetchModal}>Close</ActionBtn>
+                <PrimaryBtn onClick={() => handleFetchCourses(selectedCollege)} disabled={isFetching}>
+                  {isFetching ? 'Syncing...' : 'Sync Now'}
+                </PrimaryBtn>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </div>

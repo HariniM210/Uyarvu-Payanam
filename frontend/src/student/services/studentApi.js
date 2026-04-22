@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const studentApi = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 12000,
 })
 
@@ -17,7 +17,7 @@ studentApi.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('studentToken')
       localStorage.removeItem('studentData')
-      window.location.href = '/student/login'
+      window.location.href = '/signin'
     }
     return Promise.reject(err)
   }

@@ -37,9 +37,25 @@ exports.getAllCourses = async (req, res) => {
     const { level, targetLevel, category } = req.query;
     const filter = {};
 
-    if (level) filter.level = level;
-    if (targetLevel) filter.targetLevel = targetLevel;
-    if (category) filter.category = category;
+    if (level) {
+      const normalizedLevel = level.replace(/\s/g, '');
+      const levelRegex = new RegExp(`^${normalizedLevel.split('').join('[\\s]*')}$`, "i");
+      filter.$or = [
+        { level: levelRegex },
+        { targetLevel: levelRegex }
+      ];
+    }
+    if (targetLevel) {
+       const normalizedTargetLevel = targetLevel.replace(/\s/g, '');
+       const targetLevelRegex = new RegExp(`^${normalizedTargetLevel.split('').join('[\\s]*')}$`, "i");
+       if (!filter.$or) {
+          filter.$or = [
+            { level: targetLevelRegex },
+            { targetLevel: targetLevelRegex }
+          ];
+       }
+    }
+    if (category) filter.category = new RegExp(`^${category}$`, "i");
 
     const courses = await Course.find(filter).sort({ courseName: 1 });
 

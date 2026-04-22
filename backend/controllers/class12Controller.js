@@ -43,10 +43,15 @@ const MASTER_CATEGORIES = [
 
 exports.getClass12Categories = async (req, res) => {
   try {
+    const { level } = req.query;
+    // Map class level to course level
+    let targetLevel = ["After 12th", "Diploma"];
+    if (level === "10") targetLevel = ["After 10th", "Diploma"];
+    
     const courses = await Course.find({ 
       isPublished: true, 
       status: "active",
-      level: { $in: ["After 12th", "Diploma"] } 
+      level: { $in: targetLevel } 
     }).select("category");
 
     const colleges = await College.find().select("stream");
@@ -69,9 +74,13 @@ exports.getClass12Categories = async (req, res) => {
 
 exports.getClass12Content = async (req, res) => {
   try {
-    const { category, search } = req.query;
+    const { category, search, level } = req.query;
 
-    let courseQuery = { isPublished: true, status: "active", level: { $in: ["After 12th", "Diploma"] } };
+    // Map class level to course level
+    let targetLevel = ["After 12th", "Diploma"];
+    if (level === "10") targetLevel = ["After 10th", "Diploma"];
+
+    let courseQuery = { isPublished: true, status: "active", level: { $in: targetLevel } };
     let collegeQuery = {};
 
     if (search) {

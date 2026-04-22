@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   FiArrowLeft, FiBookOpen, FiCheckCircle,
@@ -8,13 +8,13 @@ import { careerService } from '../../services'
 import { SBadge, SBtn, SCard, SLoader } from '../../components/ui'
 import { CAREER_CLASS_MAP, CAREER_CLASS_CONFIGS } from './careerCatalog'
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getConfigByLevel(level) {
   return CAREER_CLASS_CONFIGS.find((c) => c.level === level) || CAREER_CLASS_CONFIGS[0]
 }
 
-// ── sub-components ────────────────────────────────────────────────────────────
+// â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SectionHeader({ icon: Icon, label, accent }) {
   return (
@@ -80,26 +80,26 @@ function TagList({ items, accent }) {
   )
 }
 
-// ── error state ───────────────────────────────────────────────────────────────
+// â”€â”€ error state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function NotFound({ id }) {
   return (
     <div style={{ padding: '60px 20px', maxWidth: 540, margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ fontSize: 56, marginBottom: 16 }}>🧭</div>
+      <div style={{ fontSize: 56, marginBottom: 16 }}>ðŸ§­</div>
       <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, color: 'var(--s-text)', margin: '0 0 10px' }}>
         Career Path Not Found
       </h2>
       <p style={{ color: 'var(--s-text3)', fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
         The career path you're looking for doesn't exist or may have been removed.
       </p>
-      <Link to="/student/careers" style={{ textDecoration: 'none' }}>
+      <Link to="/careers" style={{ textDecoration: 'none' }}>
         <SBtn variant="primary">Back to Careers</SBtn>
       </Link>
     </div>
   )
 }
 
-// ── main component ────────────────────────────────────────────────────────────
+// â”€â”€ main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function CareerDetailPage() {
   const { id } = useParams()
@@ -139,9 +139,9 @@ export default function CareerDetailPage() {
   return (
     <div className="student-root" style={{ padding: '32px 20px 60px', maxWidth: 980, margin: '0 auto' }}>
 
-      {/* ── back nav ── */}
+      {/* â”€â”€ back nav â”€â”€ */}
       <Link
-        to={`/student/careers/class/${classKey}`}
+        to={`/careers/class/${classKey}`}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
           marginBottom: 24, color: 'var(--s-text2)',
@@ -152,7 +152,7 @@ export default function CareerDetailPage() {
         Back to {config.title} Career Paths
       </Link>
 
-      {/* ── hero banner ── */}
+      {/* â”€â”€ hero banner â”€â”€ */}
       <SCard className="s-anim-up" style={{
         padding: 'clamp(24px, 4vw, 40px)',
         marginBottom: 28,
@@ -199,7 +199,7 @@ export default function CareerDetailPage() {
         )}
       </SCard>
 
-      {/* ── 3-col grid: roadmap | courses | opportunities ── */}
+      {/* â”€â”€ 3-col grid: roadmap | courses | opportunities â”€â”€ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
 
         {/* Roadmap */}
@@ -241,7 +241,7 @@ export default function CareerDetailPage() {
         </div>
       </div>
 
-      {/* ── footer CTA ── */}
+      {/* â”€â”€ footer CTA â”€â”€ */}
       <div className="s-anim-up" style={{
         marginTop: 32, padding: '28px 28px',
         borderRadius: 24, textAlign: 'center',
@@ -252,10 +252,10 @@ export default function CareerDetailPage() {
           Interested in exploring more career paths for {config.title}?
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to={`/student/careers/class/${classKey}`} style={{ textDecoration: 'none' }}>
+          <Link to={`/careers/class/${classKey}`} style={{ textDecoration: 'none' }}>
             <SBtn variant="primary">More {config.title} Careers</SBtn>
           </Link>
-          <Link to="/student/careers" style={{ textDecoration: 'none' }}>
+          <Link to="/careers" style={{ textDecoration: 'none' }}>
             <SBtn variant="ghost">All Classes</SBtn>
           </Link>
         </div>

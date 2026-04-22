@@ -40,51 +40,52 @@ const parseDocuments = (v) => {
 // @route   POST /api/scholarships/add-scholarship
 exports.addScholarship = async (req, res) => {
   try {
-    let { scholarshipName, provider, amount, eligibility, applicationLink, targetClass, category, description } = req.body;
+    let { 
+      scholarshipName, 
+      provider, 
+      description, 
+      benefit, 
+      grades, 
+      category, 
+      eligibility, 
+      applicationLink, 
+      deadline, 
+      image,
+      status 
+    } = req.body;
 
     if (!scholarshipName) {
       return res.status(400).json({ message: "Scholarship name is required" });
     }
 
-    // Normalize text
-    const normalizedName = scholarshipName.trim().toLowerCase();
-    const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
-
-    // Check for duplicates
-    const existingScholarship = await Scholarship.findOne({ scholarshipName: normalizedName, provider: normalizedProvider });
-
-    if (existingScholarship) {
-      return res.status(409).json({ message: "Scholarship already exists" });
-    }
-
     // Insert new scholarship
     const newScholarship = new Scholarship({
-      scholarshipName: normalizedName,
-      provider: normalizedProvider,
-      amount: amount ? amount.trim() : "",
+      scholarshipName: scholarshipName.trim(),
+      provider: provider ? provider.trim() : "",
+      description: description || "",
+      benefit: benefit || "",
+      grades: Array.isArray(grades) ? grades : (grades ? [grades] : ["10th"]),
+      category: category || "Government",
       eligibility: eligibility ? eligibility.trim() : "",
       applicationLink: applicationLink ? applicationLink.trim() : "",
-      targetClass: Array.isArray(targetClass) ? targetClass : (targetClass ? [targetClass] : ["10"]),
-      category: category || "Government",
-      description: description || ""
+      deadline: deadline || "",
+      image: image || "",
+      status: status || "active"
     });
 
     await newScholarship.save();
 
     return res.status(201).json({ 
+      success: true,
       message: "Scholarship added successfully",
       data: newScholarship
     });
   } catch (error) {
-    // Handle duplicate key error (race-condition safe)
     if (error && (error.code === 11000 || error.code === 11001)) {
       return res.status(409).json({ message: "Scholarship already exists" });
     }
-    console.error("❌ [Backend] Error adding scholarship:", error);
-    return res.status(500).json({ 
-      message: "Server error while adding scholarship", 
-      error: error.message 
-    });
+    console.error("❌ Error adding scholarship:", error);
+    return res.status(500).json({ message: "Server error while adding scholarship", error: error.message });
   }
 };
 
@@ -92,14 +93,50 @@ exports.addScholarship = async (req, res) => {
 // @route   GET /api/scholarships
 exports.getAllScholarships = async (req, res) => {
   try {
-    const scholarships = await Scholarship.find().sort({ createdAt: -1 });
+    const { grade, category, status } = req.query;
+    
+    let filter = {};
+    
+    // For user side, usually only show active/published
+    if (status) {
+      filter.status = status;
+    } else if (req.query.userSide === 'true' || req.query.userSide === true) {
+      filter.status = { $in: ['active', 'published'] };
+    }
+
+    if (grade) {
+      const numMatch = grade.match(/\d+/);
+      const gradeNum = numMatch ? numMatch[0] : grade;
+      const cleanGrade = gradeNum.toString();
+      
+      const searchStrings = [
+        cleanGrade,
+        `${cleanGrade}th`,
+        `Class ${cleanGrade}`,
+        `Grade ${cleanGrade}`,
+        `After ${cleanGrade}`
+      ];
+
+      filter.$or = [
+        { grades: { $in: searchStrings } },
+        { targetClass: { $in: searchStrings } },
+        { grades: new RegExp(`\\b${cleanGrade}(th)?\\b`, 'i') },
+        { targetClass: new RegExp(`\\b${cleanGrade}(th)?\\b`, 'i') }
+      ];
+    }
+    
+    if (category && category !== 'All') {
+      filter.category = category;
+    }
+
+    const scholarships = await Scholarship.find(filter).sort({ createdAt: -1 });
     return res.status(200).json({
       success: true,
       count: scholarships.length,
       data: scholarships,
     });
   } catch (error) {
-    console.error("❌ [Backend] Error fetching scholarships:", error);
+    console.error("❌ Error fetching scholarships:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch scholarships",
@@ -134,26 +171,28 @@ exports.updateScholarship = async (req, res) => {
     const {
       scholarshipName,
       provider,
-      amount,
+      description,
+      benefit,
+      grades,
+      category,
       eligibility,
       applicationLink,
-      targetClass,
-      category,
-      description,
+      deadline,
+      image,
       status,
     } = req.body;
 
-    if (scholarshipName !== undefined) scholarship.scholarshipName = normalizeString(scholarshipName);
-    if (provider !== undefined) scholarship.provider = normalizeString(provider);
-    if (amount !== undefined) scholarship.amount = normalizeString(amount);
-    if (eligibility !== undefined) scholarship.eligibility = normalizeString(eligibility);
-    if (applicationLink !== undefined) scholarship.applicationLink = normalizeString(applicationLink);
-    if (targetClass !== undefined) {
-      scholarship.targetClass = Array.isArray(targetClass) ? targetClass : [targetClass];
-    }
-    if (category !== undefined) scholarship.category = normalizeString(category);
-    if (description !== undefined) scholarship.description = normalizeString(description);
-    if (status !== undefined) scholarship.status = normalizeString(status);
+    if (scholarshipName !== undefined) scholarship.scholarshipName = scholarshipName;
+    if (provider !== undefined) scholarship.provider = provider;
+    if (description !== undefined) scholarship.description = description;
+    if (benefit !== undefined) scholarship.benefit = benefit;
+    if (grades !== undefined) scholarship.grades = Array.isArray(grades) ? grades : [grades];
+    if (category !== undefined) scholarship.category = category;
+    if (eligibility !== undefined) scholarship.eligibility = eligibility;
+    if (applicationLink !== undefined) scholarship.applicationLink = applicationLink;
+    if (deadline !== undefined) scholarship.deadline = deadline;
+    if (image !== undefined) scholarship.image = image;
+    if (status !== undefined) scholarship.status = status;
 
     await scholarship.save();
 
@@ -163,7 +202,7 @@ exports.updateScholarship = async (req, res) => {
       data: scholarship,
     });
   } catch (error) {
-    console.error("❌ [Backend] Error updating scholarship:", error);
+    console.error("❌ Error updating scholarship:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update scholarship",
@@ -263,6 +302,27 @@ exports.uploadScholarshipsCSV = async (req, res) => {
         const normalizedName = name.trim().toLowerCase();
         const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
 
+        // Detect grades from eligibility or other fields
+        let detectedGrades = [];
+        const classNames = ["5th", "8th", "10th", "12th"];
+        const searchPool = (name + " " + eligibility + " " + provider).toLowerCase();
+        
+        classNames.forEach(cls => {
+          const num = cls.replace('th', '');
+          if (searchPool.includes(cls.toLowerCase()) || searchPool.includes(`class ${num}`) || searchPool.includes(`grade ${num}`)) {
+            detectedGrades.push(cls);
+          }
+        });
+
+        // If no grade detected, default based on common patterns or 10th/12th
+        if (detectedGrades.length === 0) {
+           if (searchPool.includes("college") || searchPool.includes("degree") || searchPool.includes("university")) {
+              detectedGrades = ["12th"];
+           } else {
+              detectedGrades = ["10th"]; // Default fallback
+           }
+        }
+
         // Check Duplicate
         const existing = await Scholarship.findOne({
           scholarshipName: normalizedName,
@@ -275,11 +335,13 @@ exports.uploadScholarshipsCSV = async (req, res) => {
         } else {
           // Insert new record
           await Scholarship.create({
-            scholarshipName: normalizedName,
-            provider: normalizedProvider,
-            amount: amount,
+            scholarshipName: name.trim(), // Use original casing for display
+            provider: provider.trim(),
+            benefit: amount,
             eligibility: eligibility,
             applicationLink: link,
+            grades: detectedGrades,
+            status: "active"
           });
           inserted++;
           console.log("Inserted row:", name);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   FiArrowRight, FiCompass, FiFlag, FiTarget, FiTrendingUp, 
@@ -23,7 +23,7 @@ function ProfessionalClassCard({ item, index }) {
 
   return (
     <Link 
-      to={`/student/${item.key.replace('-', '')}`} 
+      to={`/${item.key.replace('-', '')}`} 
       style={{ textDecoration: 'none' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -162,7 +162,7 @@ export default function CareersPage() {
             <p style={{ fontSize: 18, color: '#94a3b8', margin: '0 auto 32px', maxWidth: 600, lineHeight: 1.7 }}>
               Join thousands of students who are already tracking their progress and receiving custom career recommendations based on their unique interests.
             </p>
-            <Link to="/student/login" state={{ from: location.pathname }} style={{ textDecoration: 'none' }}>
+            <Link to="/signin" state={{ from: location.pathname }} style={{ textDecoration: 'none' }}>
               <SBtn size="lg" style={{ background: '#fff', color: '#0f172a', fontWeight: 900, padding: '16px 48px', borderRadius: 20 }}>
                 Create Your Free Profile
               </SBtn>

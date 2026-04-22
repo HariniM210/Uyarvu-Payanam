@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema(
     district: { type: String },
     selectedCareer: { type: String },
     status: { type: String, enum: ["active", "blocked"], default: "active" },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

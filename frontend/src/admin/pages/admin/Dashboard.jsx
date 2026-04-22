@@ -3,11 +3,11 @@ import { StatCard, Card, CardHeader, ProgressBar, ActivityDot } from '../../comp
 import { adminService } from '../../../services/adminService'
 
 const levelColors = {
-  '12th': '#ef4444',
-  '10th': '#2d9e5f',
-  '8th': '#f59e0b',
-  '5th': '#8b5cf6',
-  'Graduate': '#3b82f6',
+  '12th': 'var(--accent2)',
+  '10th': 'var(--primary)',
+  '8th': 'var(--accent)',
+  '5th': 'var(--primary-d)',
+  'Graduate': 'var(--accent3)',
 }
 
 const activityColors = {
@@ -18,7 +18,7 @@ const activityColors = {
   course: '#3b82f6',
 }
 
-const careerColors = ['#2d9e5f', '#ef4444', '#f59e0b', '#8b5cf6', '#3b82f6']
+const careerColors = ['var(--primary)', 'var(--accent)', 'var(--accent2)', 'var(--accent3)', 'var(--primary-d)']
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -67,10 +67,10 @@ export default function Dashboard() {
     <div style={{ animation:'fadeUp 0.4s ease both' }}>
       {/* Stats */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
-        <StatCard icon="👨‍🎓" value={stats.totalStudents.toLocaleString()} label="Total Students" color="#2d9e5f" />
-        <StatCard icon="📘" value={stats.activeCourses} label="Active Courses" color="#3b82f6" />
-        <StatCard icon="📝" value={stats.examsCount} label="Exams Listed" color="#f59e0b" />
-        <StatCard icon="🎓" value={stats.scholarshipsCount} label="Scholarships" color="#ef4444" />
+        <StatCard icon="👨‍🎓" value={stats.totalStudents.toLocaleString()} label="Total Students" color="var(--primary)" />
+        <StatCard icon="📘" value={stats.activeCourses} label="Active Courses" color="var(--accent3)" />
+        <StatCard icon="📝" value={stats.examsCount} label="Exams Listed" color="var(--accent)" />
+        <StatCard icon="🎓" value={stats.scholarshipsCount} label="Scholarships" color="var(--accent2)" />
       </div>
 
       {/* Charts row */}

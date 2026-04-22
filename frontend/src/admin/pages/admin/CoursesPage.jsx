@@ -14,7 +14,7 @@ export default function CoursesPage() {
   const [showSourceImportModal, setShowSourceImportModal] = useState(false)
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedType, setSelectedType] = useState('All')
+  const [selectedSection, setSelectedSection] = useState('All')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -22,6 +22,11 @@ export default function CoursesPage() {
   useEffect(() => {
     fetchCourses()
   }, [])
+
+  // Reset category when section changes
+  useEffect(() => {
+    setSelectedCategory('All')
+  }, [selectedSection])
 
   const fetchCourses = async () => {
     try {
@@ -54,13 +59,14 @@ export default function CoursesPage() {
 
   const handleExport = () => {
     if (filtered.length === 0) return;
-    const headers = ['Course Name', 'Type', 'Trajectory', 'Category', 'Duration', 'Eligibility'];
+    const headers = ['Course Name', 'Section', 'Category', 'Duration', 'Source', 'Eligibility'];
     const rows = filtered.map(c => [
       `"${c.courseName.replace(/"/g, '""')}"`,
       `"${(c.level || '').replace(/"/g, '""')}"`,
       `"${(c.category || '').replace(/"/g, '""')}"`,
       `"${(c.duration || '').replace(/"/g, '""')}"`,
-      `"${(c.sourceName || '').replace(/"/g, '""')}"`
+      `"${(c.isImported ? 'Imported' : 'Manual').replace(/"/g, '""')}"`,
+      `"${(c.eligibility || '').replace(/"/g, '""')}"`
     ]);
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -76,14 +82,23 @@ export default function CoursesPage() {
     const matchesSearch = searchQuery === '' || 
       c.courseName?.toLowerCase().includes(searchQuery.toLowerCase());
     
+    // Check Section (using level field)
+    const matchesSection = selectedSection === 'All' || 
+      (c.level || '').toLowerCase().replace(/\s/g, '') === selectedSection.toLowerCase().replace(/\s/g, '');
+
     // Check Category
     const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
     
-    // Check Type (using level field from DB)
-    const matchesType = selectedType === 'All' || c.level === selectedType;
-
-    return matchesSearch && matchesCategory && matchesType;
+    return matchesSearch && matchesSection && matchesCategory;
   });
+
+  // Dynamically derive categories based on selected section
+  const availableCategories = Array.from(new Set(
+    courses
+      .filter(c => selectedSection === 'All' || (c.level || '').toLowerCase().replace(/\s/g, '') === selectedSection.toLowerCase().replace(/\s/g, ''))
+      .map(c => c.category)
+      .filter(Boolean)
+  )).sort();
 
   // Stats
   const totalCourses = courses.length;
@@ -132,17 +147,17 @@ export default function CoursesPage() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
         />
-        <FilterSelect value={selectedType} onChange={e=>setSelectedType(e.target.value)}>
-          <option value="All">All Types</option>
-          <option value="Diploma">Diploma</option>
-          <option value="After 12th">After 12th</option>
-          <option value="Certificate">Certificate</option>
+        <FilterSelect value={selectedSection} onChange={e=>setSelectedSection(e.target.value)}>
+          <option value="All">All Sections</option>
+          <option value="after10th">After 10th</option>
+          <option value="after12th">After 12th</option>
+          <option value="diploma">Diploma</option>
         </FilterSelect>
         <FilterSelect value={selectedCategory} onChange={e=>setSelectedCategory(e.target.value)}>
           <option value="All">All Categories</option>
-          {["Agriculture", "Architecture", "Arts", "Commerce", "Design", "Engineering", "Hotel Management", "IT & Computer", "ITI", "Law", "Media & Journalism", "Medical", "Polytechnic", "Science"].map(
-            cat => <option key={cat} value={cat}>{cat}</option>
-          )}
+          {availableCategories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
         </FilterSelect>
         <div style={{ marginLeft:'auto', display:'flex', gap:10, flexWrap: 'wrap' }}>
           <SBtn variant="outline" onClick={handleExport} disabled={filtered.length === 0}>📥 Export</SBtn>
@@ -164,6 +179,7 @@ export default function CoursesPage() {
           <PrimaryBtn onClick={()=>setShowAddCourseModal(true)}>+ Add Course</PrimaryBtn>
         </div>
       </FiltersRow>
+
 
       <Card>
         {filtered.length === 0 ? (

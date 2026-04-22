@@ -92,7 +92,20 @@ export function SEmpty({ title, desc, icon }) {
 
 /* ── Level Badge ── */
 export function LevelBadge({ level }) {
-  return <SBadge color={level === '5th' ? 'purple' : 'green'}>{level}</SBadge>
+  const colorMap = {
+    '5th': 'purple',
+    '8th': 'blue',
+    '10th': 'gold',
+    '12th': 'green',
+    'CSE': 'blue',
+    'ECE': 'green',
+    'EEE': 'gold',
+    'IT': 'purple',
+    'AIDS': 'red',
+    'Mechanical': 'gray',
+    'Civil': 'gray',
+  }
+  return <SBadge color={colorMap[level] || 'gray'}>{level}</SBadge>
 }
 
 /* ── Legacy Mappings ── */

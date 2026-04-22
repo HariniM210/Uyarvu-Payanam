@@ -4,32 +4,32 @@
 /* ── CSS Variables ── */
 :root {
   /* Light Mode */
-  --bg:        #f4faf5;
-  --bg2:       #eaf5ec;
-  --surface:   #ffffff;
-  --surface2:  #f0f7f1;
-  --border:    #d4ebd7;
-  --border2:   #b8debb;
+  --bg:        #F7FAF5;
+  --bg2:       #EDF4E9;
+  --surface:   #FFFFFF;
+  --surface2:  #F9FCF8;
+  --border:    #DDE7D8;
+  --border2:   #C5D6BF;
 
-  --primary:   #2d9e5f;
-  --primary-d: #1e7a47;
-  --primary-l: #e8f7ee;
-  --primary-xl:#f0fbf3;
-  --primary-glow: rgba(45,158,95,0.18);
+  --primary:   #6E9F00;
+  --primary-d: #5A8200;
+  --primary-l: #F1F8E6;
+  --primary-xl:#F8FBF3;
+  --primary-glow: rgba(110, 159, 0, 0.18);
 
-  --accent:    #f59e0b;
-  --accent2:   #ef4444;
-  --accent3:   #3b82f6;
-  --accent4:   #8b5cf6;
+  --accent:    #E8891A;
+  --accent2:   #D9700B;
+  --accent3:   #8BC34A;
+  --accent-l:  #FDF3E8;
 
-  --text:      #1a2e1f;
-  --text2:     #4a6b52;
-  --text3:     #8aaa8f;
-  --text4:     #bdd4bf;
+  --text:      #1F2D1F;
+  --text2:     #3B4E3B;
+  --text3:     #5F6F5F;
+  --text4:     #8EA38E;
 
-  --shadow-sm: 0 1px 4px rgba(45,158,95,0.08);
-  --shadow-md: 0 4px 16px rgba(45,158,95,0.12);
-  --shadow-lg: 0 8px 32px rgba(45,158,95,0.16);
+  --shadow-sm: 0 1px 4px rgba(110, 159, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(110, 159, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(110, 159, 0, 0.16);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -42,23 +42,28 @@
 
 /* Dark Mode */
 [data-theme="dark"] {
-  --bg:        #0d1a0f;
-  --bg2:       #111f13;
-  --surface:   #162018;
-  --surface2:  #1e2e20;
-  --border:    #243628;
-  --border2:   #2e4433;
+  --bg:        #111A11;
+  --bg2:       #162416;
+  --surface:   #1A261A;
+  --surface2:  #213321;
+  --border:    #2C422C;
+  --border2:   #3B573B;
 
-  --primary:   #3dba72;
-  --primary-d: #2d9e5f;
-  --primary-l: #1a3320;
-  --primary-xl:#152a1a;
-  --primary-glow: rgba(61,186,114,0.2);
+  --primary:   #8BC34A;
+  --primary-d: #6E9F00;
+  --primary-l: #243B14;
+  --primary-xl:#1C2E0C;
+  --primary-glow: rgba(139, 195, 74, 0.2);
 
-  --text:      #e8f5eb;
-  --text2:     #9ec9a5;
-  --text3:     #4e7055;
-  --text4:     #2d4a32;
+  --accent:    #F5A623;
+  --accent2:   #E8891A;
+  --accent3:   #A0D468;
+  --accent-l:  #38240A;
+
+  --text:      #F0F5F0;
+  --text2:     #C2D6C2;
+  --text3:     #88A688;
+  --text4:     #557055;
 
   --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.4);

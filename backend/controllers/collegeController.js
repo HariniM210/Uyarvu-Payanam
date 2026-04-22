@@ -1,4 +1,5 @@
 const College = require("../models/College");
+const CollegeFetchedCourse = require("../models/CollegeFetchedCourse");
 
 // @desc    Create new college
 // @route   POST /api/colleges
@@ -126,6 +127,44 @@ exports.getCollegeById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch college",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get offered courses for a college
+// @route   GET /api/colleges/:id/offered-courses
+// @access  Public
+exports.getOfferedCourses = async (req, res) => {
+  try {
+    const college = await College.findById(req.params.id).populate("coursesOffered");
+
+    if (!college) {
+      return res.status(404).json({
+        success: false,
+        message: "College not found",
+      });
+    }
+
+    const autoCourses = await CollegeFetchedCourse.find({ collegeId: college._id, isActive: true });
+
+    res.status(200).json({
+      success: true,
+      college: {
+        id: college._id,
+        name: college.collegeName,
+        location: college.location,
+        district: college.district
+      },
+      verifiedCourses: college.coursesOffered || [],
+      autoFetchedCourses: autoCourses || [],
+      courses: college.coursesOffered || [] // Fallback for existing components
+    });
+  } catch (error) {
+    console.error("Get offered courses error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch offered courses",
       error: error.message,
     });
   }

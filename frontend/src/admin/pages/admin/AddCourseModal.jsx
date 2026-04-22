@@ -6,8 +6,7 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
   const [formData, setFormData] = useState({
     courseName: '',
     category: 'Engineering',
-    level: 'Polytechnic',
-    targetLevel: 'After 10th',
+    level: 'after12th',
     duration: '',
     eligibility: '',
     shortDescription: ''
@@ -31,7 +30,6 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
         courseName: formData.courseName,
         category: formData.category,
         level: formData.level,
-        targetLevel: formData.targetLevel,
         duration: formData.duration,
         eligibility: formData.eligibility,
         shortDescription: formData.shortDescription
@@ -80,48 +78,26 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
             placeholder="e.g. JEE Preparation"
           />
         </FormGroup>
-        <FormGroup label="Target Level">
-          <select 
-            name="targetLevel"
-            value={formData.targetLevel}
-            onChange={handleInputChange}
-            style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
-          >
-            <option value="After 10th">After 10th</option>
-            <option value="After 12th">After 12th</option>
-          </select>
-        </FormGroup>
-        <FormGroup label="Course Type (Level)">
+        <FormGroup label="Course Level (Target)">
           <select 
             name="level"
             value={formData.level}
             onChange={handleInputChange}
             style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
           >
-            <option value="Polytechnic">Polytechnic</option>
-            <option value="Diploma">Diploma</option>
-            <option value="B.Sc">B.Sc</option>
-            <option value="B.A">B.A</option>
-            <option value="B.Com">B.Com</option>
-            <option value="BBA">BBA</option>
-            <option value="BCA">BCA</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Medical">Medical</option>
-            <option value="Law">Law</option>
-            <option value="Architecture">Architecture</option>
-            <option value="Design">Design</option>
-            <option value="Vocational">Vocational</option>
-            <option value="Certification">Certification</option>
+            <option value="after10th">After 10th</option>
+            <option value="after12th">After 12th</option>
+            <option value="diploma">Diploma</option>
           </select>
         </FormGroup>
-        <FormGroup label="Category">
+        <FormGroup label="Category (Stream)">
            <select 
              name="category"
              value={formData.category}
              onChange={handleInputChange}
              style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
            >
-             {["Agriculture", "Architecture", "Arts", "Commerce", "Design", "Engineering", "Hotel Management", "IT & Computer", "ITI", "Law", "Media & Journalism", "Medical", "Polytechnic", "Science"].map(cat => (
+             {["Agriculture", "Architecture", "Arts", "Commerce", "Design", "Diploma", "Engineering", "Hotel Management", "IT & Computer", "ITI", "Law", "Media & Journalism", "Medical", "Polytechnic", "Science"].map(cat => (
                <option key={cat} value={cat}>{cat}</option>
              ))}
            </select>

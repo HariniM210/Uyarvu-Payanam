@@ -9,12 +9,11 @@ import {
 } from 'react-icons/fi'
 
 const PUBLIC_NAV_LINKS = [
-  { to: '/student',         label: 'Home',     end: true },
-  { to: '/class5',          label: 'Class 5',  end: false },
-  { to: '/class8',          label: 'Class 8',  end: false },
-  { to: '/class10',         label: 'Class 10', end: false },
-  { to: '/class12',         label: 'Class 12', end: false },
-  { to: '/student/courses', label: 'Courses',  end: false },
+  { to: '/home',    label: 'Home',     end: true },
+  { to: '/class5',  label: 'Class 5',  end: false },
+  { to: '/class8',  label: 'Class 8',  end: false },
+  { to: '/class10', label: 'Class 10', end: false },
+  { to: '/class12', label: 'Class 12', end: false },
 ]
 
 export default function StudentNavbar() {
@@ -59,7 +58,7 @@ export default function StudentNavbar() {
 
   const handleLogout = () => {
     logout()
-    navigate('/student/login')
+    navigate('/signin')
   }
 
   return (
@@ -67,7 +66,7 @@ export default function StudentNavbar() {
       <div className="s-navbar-inner" style={{ maxWidth: 1240 }}>
 
         {/* Logo */}
-        <Link to="/student" className="s-nav-logo" style={{ textDecoration: 'none' }}>
+        <Link to="/home" className="s-nav-logo" style={{ textDecoration: 'none' }}>
           <img
             src="/logo.png"
             alt="Uyarvu Payanam"
@@ -94,14 +93,14 @@ export default function StudentNavbar() {
           {isAuthenticated && (
             <>
               <NavLink
-                to="/student/dashboard"
+                to="/dashboard"
                 end
                 className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
               >
                 Dashboard
               </NavLink>
               <NavLink
-                to="/student/notifications"
+                to="/notifications"
                 end
                 className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
                 style={{ position: 'relative' }}
@@ -133,10 +132,10 @@ export default function StudentNavbar() {
 
               {profileOpen && (
                 <div className="s-profile-dropdown s-anim-down">
-                  <Link to="/student/profile">
+                  <Link to="/profile">
                     <FiUser size={15} /> My Profile
                   </Link>
-                  <Link to="/student/dashboard">
+                  <Link to="/dashboard">
                     <FiGrid size={15} /> Dashboard
                   </Link>
                   <div style={{ height: 1, background: 'var(--s-border)', margin: '4px 8px' }} />
@@ -148,8 +147,8 @@ export default function StudentNavbar() {
             </div>
           ) : (
             <div className="s-nav-desktop-auth" style={{ display: 'flex', gap: 8 }}>
-              <Link to="/student/login" className="s-nav-auth-btn login">Sign In</Link>
-              <Link to="/student/signup" className="s-nav-auth-btn signup" style={{ background: 'var(--s-primary)' }}>Get Started</Link>
+              <Link to="/signin" className="s-nav-auth-btn login">Sign In</Link>
+              <Link to="/signup" className="s-nav-auth-btn signup" style={{ background: 'var(--s-primary)' }}>Get Started</Link>
             </div>
           )}
 
@@ -179,14 +178,14 @@ export default function StudentNavbar() {
           {isAuthenticated && (
             <>
               <NavLink
-                to="/student/dashboard"
+                to="/dashboard"
                 end
                 className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
               >
                 Dashboard
               </NavLink>
               <NavLink
-                to="/student/notifications"
+                to="/notifications"
                 end
                 className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
                 style={{ position: 'relative' }}
@@ -207,8 +206,8 @@ export default function StudentNavbar() {
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <Link to="/student/login" className="s-nav-auth-btn login" style={{ flex: 1, justifyContent: 'center' }}>Sign In</Link>
-              <Link to="/student/signup" className="s-nav-auth-btn signup" style={{ flex: 1, justifyContent: 'center', background: 'var(--s-primary)' }}>Get Started</Link>
+              <Link to="/signin" className="s-nav-auth-btn login" style={{ flex: 1, justifyContent: 'center' }}>Sign In</Link>
+              <Link to="/signup" className="s-nav-auth-btn signup" style={{ flex: 1, justifyContent: 'center', background: 'var(--s-primary)' }}>Get Started</Link>
             </div>
           )}
         </div>

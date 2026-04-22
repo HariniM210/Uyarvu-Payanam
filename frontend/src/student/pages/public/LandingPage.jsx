@@ -112,7 +112,7 @@ function CourseMiniCard({ course }) {
       <div style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, flex: 1 }}>
         {course.eligibility?.split(',')[0]} • {course.duration}
       </div>
-      <Link to="/student/courses" style={{ textDecoration: 'none', fontSize: 13, fontWeight: 700, color: 'var(--s-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <Link to="/courses" style={{ textDecoration: 'none', fontSize: 13, fontWeight: 700, color: 'var(--s-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
         Explore This Course <FiArrowRight size={14} />
       </Link>
     </div>
@@ -152,7 +152,7 @@ function TopCoursesSection() {
         )}
 
         <div style={{ marginTop: 32, textAlign: 'center' }}>
-          <Link to="/student/courses" style={{ textDecoration: 'none' }}>
+          <Link to="/courses" style={{ textDecoration: 'none' }}>
              <button className="s-btn s-btn-md s-btn-ghost">Browse All 500+ Courses <FiArrowRight size={15} /></button>
           </Link>
         </div>
@@ -223,7 +223,7 @@ export default function LandingPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/student/dashboard', { replace: true })
+    if (isAuthenticated) navigate('/dashboard', { replace: true })
   }, [isAuthenticated])
 
   return (
@@ -247,10 +247,10 @@ export default function LandingPage() {
               Expert mentorship and dynamic course finder for Class 5 to Class 12 students across Tamil Nadu.
             </p>
             <div className="s-hero-actions s-anim-up s-d3">
-              <Link to="/student/careers" className="s-btn s-btn-lg s-btn-white">
+              <Link to="/careers" className="s-btn s-btn-lg s-btn-white">
                 <FiBookOpen size={17} /> Explore Career Paths
               </Link>
-              <Link to="/student/signup" className="s-btn s-btn-lg s-btn-outline">
+              <Link to="/signup" className="s-btn s-btn-lg s-btn-outline">
                 Get Started Free <FiArrowRight size={17} />
               </Link>
             </div>
@@ -281,7 +281,7 @@ export default function LandingPage() {
             </div>
             <div className="s-class-cards-grid">
               {CLASS_LEVELS.map((item, index) => (
-                <Link key={item.key} to={`/student/${item.key}`} className={`s-class-card s-anim-up s-d${index + 1}`} style={{ '--card-accent': item.accentColor, '--card-accent-light': item.accentBg }}>
+                <Link key={item.key} to={`/${item.key}`} className={`s-class-card s-anim-up s-d${index + 1}`} style={{ '--card-accent': item.accentColor, '--card-accent-light': item.accentBg }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="s-class-card-icon"><item.icon size={22} /></div>
                     <span className="s-class-card-label">{item.classLabel}</span>
@@ -322,7 +322,7 @@ export default function LandingPage() {
         <section className="s-cta-banner">
           <h2>Empower Your Future Today</h2>
           <p>Join thousands of students who have found their passion with Uyarvu Payanam.</p>
-          <Link to="/student/signup" className="s-btn s-btn-lg s-btn-white" style={{ position: 'relative', zIndex: 1 }}>
+          <Link to="/signup" className="s-btn s-btn-lg s-btn-white" style={{ position: 'relative', zIndex: 1 }}>
             Sign Up For Free <FiArrowRight size={16} />
           </Link>
         </section>

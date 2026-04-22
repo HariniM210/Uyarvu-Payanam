@@ -27,7 +27,7 @@ export default function StudentProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/student/login" state={{ from: location }} replace />
+    return <Navigate to="/signin" state={{ from: location }} replace />
   }
 
   return children

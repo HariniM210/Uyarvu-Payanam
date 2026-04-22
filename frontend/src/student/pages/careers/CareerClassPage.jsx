@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+﻿import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FiArrowLeft, FiSearch, FiStar } from 'react-icons/fi'
 import { careerService } from '../../services'
@@ -11,7 +11,7 @@ import {
   getCareerShortDescription,
 } from './careerCatalog'
 
-// ── Career card ───────────────────────────────────────────────────────────────
+// â”€â”€ Career card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CareerPathCard({ career, accent, badgeColor }) {
   const shortDesc = getCareerShortDescription(career)
@@ -32,7 +32,7 @@ function CareerPathCard({ career, accent, badgeColor }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
           <SBadge color={badgeColor}>{career.level}</SBadge>
           <SBadge color="gray">{career.interestArea || 'General'}</SBadge>
-          {career.isRecommended && <SBadge color="gold">⭐ Recommended</SBadge>}
+          {career.isRecommended && <SBadge color="gold">â­ Recommended</SBadge>}
         </div>
         <h2 style={{
           fontFamily: 'var(--s-font-display)', fontWeight: 800,
@@ -44,7 +44,7 @@ function CareerPathCard({ career, accent, badgeColor }) {
 
       {/* description */}
       <p style={{ margin: 0, fontSize: 14, color: 'var(--s-text3)', lineHeight: 1.75, flex: 1 }}>
-        {shortDesc.length > 180 ? shortDesc.slice(0, 180) + '…' : shortDesc}
+        {shortDesc.length > 180 ? shortDesc.slice(0, 180) + 'â€¦' : shortDesc}
       </p>
 
       {/* course tags */}
@@ -68,7 +68,7 @@ function CareerPathCard({ career, accent, badgeColor }) {
 
       {/* CTA */}
       <div style={{ marginTop: 'auto' }}>
-        <Link to={`/student/careers/path/${career._id}`} style={{ textDecoration: 'none' }}>
+        <Link to={`/careers/path/${career._id}`} style={{ textDecoration: 'none' }}>
           <SBtn variant="primary">View Details</SBtn>
         </Link>
       </div>
@@ -76,7 +76,7 @@ function CareerPathCard({ career, accent, badgeColor }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function CareerClassPage() {
   const { classKey } = useParams()
@@ -113,17 +113,17 @@ export default function CareerClassPage() {
     })
   }, [careers, interestFilter, search])
 
-  // ── invalid class key ──
+  // â”€â”€ invalid class key â”€â”€
   if (!config) {
     return (
       <div className="student-root" style={{ padding: '40px 20px', maxWidth: 1080, margin: '0 auto' }}>
         <SEmpty
-          icon="🧭"
+          icon="ðŸ§­"
           title="Class not found"
           desc="Choose one of the available class guidance categories to continue."
         />
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Link to="/student/careers" style={{ textDecoration: 'none' }}>
+          <Link to="/careers" style={{ textDecoration: 'none' }}>
             <SBtn variant="primary">Back to All Classes</SBtn>
           </Link>
         </div>
@@ -136,7 +136,7 @@ export default function CareerClassPage() {
   return (
     <div className="student-root" style={{ padding: '32px 20px 48px', maxWidth: 1180, margin: '0 auto' }}>
 
-      {/* ── hero banner ── */}
+      {/* â”€â”€ hero banner â”€â”€ */}
       <div className="s-anim-up" style={{
         marginBottom: 28,
         padding: '28px clamp(20px, 4vw, 34px)',
@@ -146,7 +146,7 @@ export default function CareerClassPage() {
         boxShadow: 'var(--s-shadow-lg)',
       }}>
         <Link
-          to="/student/careers"
+          to="/careers"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             marginBottom: 18, color: 'var(--s-text2)',
@@ -187,13 +187,13 @@ export default function CareerClassPage() {
               fontFamily: 'var(--s-font-display)',
               fontSize: 34, fontWeight: 900, color: accent,
             }}>
-              {loading ? '…' : filteredCareers.length}
+              {loading ? 'â€¦' : filteredCareers.length}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── search + filter row ── */}
+      {/* â”€â”€ search + filter row â”€â”€ */}
       <div className="s-anim-up s-d1" style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1.4fr) minmax(200px, 0.8fr)',
@@ -212,7 +212,7 @@ export default function CareerClassPage() {
         </SSelect>
       </div>
 
-      {/* ── results count + sibling class links ── */}
+      {/* â”€â”€ results count + sibling class links â”€â”€ */}
       <div className="s-anim-up s-d2" style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', gap: 12,
@@ -220,25 +220,25 @@ export default function CareerClassPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--s-text2)', fontWeight: 700 }}>
           <FiStar size={15} color={accent} />
-          {loading ? 'Loading…' : `Showing ${filteredCareers.length} career path${filteredCareers.length === 1 ? '' : 's'}`}
+          {loading ? 'Loadingâ€¦' : `Showing ${filteredCareers.length} career path${filteredCareers.length === 1 ? '' : 's'}`}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {CAREER_CLASS_CONFIGS.filter((c) => c.key !== config.key).map((c) => (
-            <Link key={c.key} to={`/student/careers/class/${c.key}`} style={{ textDecoration: 'none' }}>
+            <Link key={c.key} to={`/careers/class/${c.key}`} style={{ textDecoration: 'none' }}>
               <SBtn variant="ghost" size="sm">{c.title}</SBtn>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* ── career grid ── */}
+      {/* â”€â”€ career grid â”€â”€ */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
           <SLoader />
         </div>
       ) : filteredCareers.length === 0 ? (
         <SEmpty
-          icon="🛤️"
+          icon="ðŸ›¤ï¸"
           title={`No career paths found for ${config.title}`}
           desc={search || interestFilter !== 'All'
             ? 'Try clearing your search or changing the interest filter.'

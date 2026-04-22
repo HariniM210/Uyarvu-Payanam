@@ -17,6 +17,7 @@ export const notificationService = {
 export const collegeService = {
   getAll:  (params) => studentApi.get('/colleges', { params }).then(r => r.data),
   getById: (id)     => studentApi.get(`/colleges/${id}`).then(r => r.data),
+  getOfferedCourses: (id) => studentApi.get(`/colleges/${id}/offered-courses`).then(r => r.data),
 }
 
 export const careerService = {
@@ -36,5 +37,5 @@ export const examService = {
 }
 
 export const scholarshipService = {
-  getAll: () => studentApi.get('/scholarships').then(r => r.data),
+  getAll: (params) => studentApi.get('/scholarships', { params }).then(r => r.data),
 }

@@ -5,6 +5,7 @@ const upload = multer({ dest: 'uploads/' });
 const Scholarship = require('../models/Scholarship');
 
 const { 
+  getAllScholarships,
   applyForScholarship, 
   addScholarship, 
   uploadScholarshipsCSV, 
@@ -14,15 +15,7 @@ const {
 const verifyAdmin = require('../middleware/verifyAdmin');
 
 // GET /api/scholarships
-router.get('/', async (req, res) => {
-  try {
-    const scholarships = await Scholarship.find({});
-    res.json(scholarships);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.get('/', getAllScholarships);
 
 router.post('/add-scholarship', verifyAdmin, addScholarship);
 router.post('/apply', applyForScholarship);

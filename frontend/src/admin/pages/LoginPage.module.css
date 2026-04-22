@@ -47,7 +47,7 @@
 .leftPanel {
   width: 42%;
   min-height: 100vh;
-  background: linear-gradient(160deg, var(--primary) 0%, var(--primary-d) 60%, #145c35 100%);
+  background: linear-gradient(160deg, var(--bg) 0%, var(--primary-l) 60%, var(--accent-l) 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -55,6 +55,10 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+[data-theme="dark"] .leftPanel {
+  background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%);
 }
 
 /* decorative dots */
@@ -63,7 +67,7 @@
   position: absolute;
   width: 300px; height: 300px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.04);
+  background: var(--primary-glow);
   top: -80px; right: -80px;
 }
 .leftPanel::after {
@@ -71,72 +75,84 @@
   position: absolute;
   width: 200px; height: 200px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.04);
+  background: rgba(232, 137, 26, 0.05); /* Accent Orange subtle glow */
   bottom: -60px; left: -60px;
 }
 
-.brandWrap { margin-bottom: 40px; animation: fadeUp 0.6s ease both; }
+.brandWrap { margin-bottom: 32px; animation: fadeUp 0.6s ease both; }
 
-.brandLogo {
-  width: 64px; height: 64px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  margin-bottom: 14px;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
+.brandLogoImg {
+  width: auto;
+  height: 160px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.06));
 }
 
 .brandName {
   font-family: 'Nunito', sans-serif;
   font-size: 32px;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--primary-d);
   letter-spacing: -0.5px;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .brandTag {
   font-size: 13px;
-  color: rgba(255,255,255,0.65);
+  color: var(--accent);
   margin-top: 5px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-/* Book stack illustration */
+/* Illustration Box */
 .illustrationBox {
   margin-bottom: 36px;
   animation: fadeUp 0.6s 0.1s ease both;
 }
 
-.bookStack {
+.introMessage {
+  font-size: 14.5px;
+  color: var(--text3);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  max-width: 95%;
+  font-weight: 500;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.featureItem {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.book {
-  padding: 12px 18px;
-  border-radius: 10px;
+  align-items: center;
+  gap: 10px;
   font-size: 13px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.95);
-  transform: rotate(var(--r, 0deg));
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  border-left: 4px solid rgba(255,255,255,0.3);
-  transition: transform 0.3s ease;
+  font-weight: 700;
+  color: var(--text2);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.book:hover { transform: rotate(0deg) translateX(4px); }
 
-.illustrationTag {
-  font-size: 12px;
-  color: rgba(255,255,255,0.55);
-  text-align: center;
-  font-style: italic;
+.featureItem:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary2);
+}
+
+.featureIcon {
+  font-size: 18px;
+  background: var(--primary-l);
+  padding: 6px;
+  border-radius: 8px;
 }
 
 .statsRow {
@@ -147,23 +163,23 @@
 }
 
 .statPill {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px 16px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
 }
 
 .statVal {
   font-family: 'Nunito', sans-serif;
   font-weight: 900;
   font-size: 20px;
-  color: #ffffff;
+  color: var(--primary);
 }
-.statLbl { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 0.5px; }
+.statLbl { font-size: 10px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 800; }
 
 /* ── Right Panel ── */
 .rightPanel {

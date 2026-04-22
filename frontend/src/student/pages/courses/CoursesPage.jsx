@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiSearch, FiChevronLeft } from 'react-icons/fi'
 import { SBadge, SCard, SInput, SLoader } from '../../components/ui'
@@ -82,8 +82,8 @@ export default function CoursesPage() {
         {step === 1 && (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:24 }}>
             {[
-              { id: 'After 10th', title: 'I have completed Class 10', desc: 'Explore polytechnic diplomas, vocational training, and early professional certifications.', icon: '🎓' },
-              { id: 'After 12th', title: 'I have completed Class 12', desc: 'Highly specialized degrees in Engineering, Medicine, Arts, Science, and Professional fields.', icon: '🏛️' }
+              { id: 'After 10th', title: 'I have completed Class 10', desc: 'Explore polytechnic diplomas, vocational training, and early professional certifications.', icon: 'ðŸŽ“' },
+              { id: 'After 12th', title: 'I have completed Class 12', desc: 'Highly specialized degrees in Engineering, Medicine, Arts, Science, and Professional fields.', icon: 'ðŸ›ï¸' }
             ].map(item => (
               <SCard key={item.id} hover onClick={() => handleTrajectorySelect(item.id)} style={{ padding:40, textAlign:'center', cursor:'pointer', border:'2px solid transparent', transition:'all 0.3s' }}>
                 <div style={{ fontSize:56, marginBottom:20 }}>{item.icon}</div>
@@ -140,7 +140,7 @@ export default function CoursesPage() {
                      <div style={{ background:'var(--s-bg)', padding:'12px 16px', borderRadius:12, fontSize:13.5 }}>
                         <strong style={{ color:'var(--s-text)' }}>Eligibility:</strong> {course.eligibility}
                      </div>
-                     <Link to={`/student/course/${course.slug}`} style={{ textDecoration:'none', marginTop:16 }}>
+                     <Link to={`/course/${course.slug}`} style={{ textDecoration:'none', marginTop:16 }}>
                         <SBtn fullWidth style={{ borderRadius:12, fontWeight:850 }}>View Program Details</SBtn>
                      </Link>
                   </SCard>

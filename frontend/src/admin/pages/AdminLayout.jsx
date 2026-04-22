@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import styles from './AdminLayout.module.css'
 import NotificationBell from '../components/NotificationBell'
+import uyarvuLogo from '../../uyarvu-logo.png'
 
 // Pages
 import Dashboard from './admin/Dashboard'
@@ -21,10 +22,11 @@ import ReportsPage from './admin/ReportsPage'
 import SettingsPage from './admin/SettingsPage'
 import CareerDetailsPage from './admin/CareerDetailsPage'
 import CourseDetailsEditPage from './admin/CourseDetailsEditPage'
+import CollegeCourseMappingPage from './admin/CollegeCourseMappingPage'
 
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
-  { id: 'users', icon: '👥', label: 'User Management', path: 'users', badge: 7 },
+  { id: 'users', icon: '👥', label: 'User Management', path: 'users' },
   { id: 'careers', icon: '🎯', label: 'Career Paths', path: 'careers' },
   { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
   { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
@@ -33,6 +35,7 @@ const NAV = [
   { id: 'cutoff', icon: '📈', label: 'Cutoff Management', path: 'cutoff' },
   { id: 'notifications', icon: '🔔', label: 'Notifications', path: 'notifications' },
   { id: 'reports', icon: '📉', label: 'Reports & Analytics', path: 'reports' },
+  { id: 'mapping', icon: '🔗', label: 'Course offered colleges', path: 'mapping' },
   { id: 'settings', icon: '⚙️', label: 'Settings', path: 'settings' },
 ]
 
@@ -47,6 +50,7 @@ const PAGE_META = {
   'cutoff': { title: 'Cutoff Management', sub: 'Year-wise cutoff data' },
   'notifications': { title: 'Notifications', sub: 'Send alerts to students' },
   'reports': { title: 'Reports & Analytics', sub: 'Data export & trends' },
+  'mapping': { title: 'College-Course Mapping', sub: 'Connect courses to colleges' },
   'settings': { title: 'Settings', sub: 'System configuration' },
 }
 
@@ -71,10 +75,10 @@ export default function AdminLayout() {
       <aside className={styles.sidebar}>
         {/* Logo */}
         <div className={styles.sidebarLogo}>
-          <div className={styles.logoIcon}>🎓</div>
+          <img src={uyarvuLogo} alt="Logo" className={styles.sidebarLogoImg} />
           {sidebarOpen && (
             <div className={styles.logoText}>
-              <span className={styles.logoName}>CareerMap</span>
+              <span className={styles.logoName}>UYARVU PAYANAM</span>
               <span className={styles.logoSub}>Admin Panel</span>
             </div>
           )}
@@ -125,7 +129,7 @@ export default function AdminLayout() {
           </button>
           <div>
             <h2 className={styles.topTitle}>{meta.title || 'Career Guidance'}</h2>
-            <p className={styles.topSub}>CareerMap / {meta.sub || 'Level Management'}</p>
+            <p className={styles.topSub}>UYARVU PAYANAM / {meta.sub || 'Level Management'}</p>
           </div>
           <div className={styles.topRight}>
             <button className={styles.topBtn} onClick={toggle}>
@@ -157,6 +161,7 @@ export default function AdminLayout() {
             <Route path="cutoff" element={<CutoffPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="mapping" element={<CollegeCourseMappingPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Routes>
         </main>
