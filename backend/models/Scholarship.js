@@ -4,6 +4,7 @@ const scholarshipSchema = new mongoose.Schema(
   {
     scholarshipName: { 
       type: String, 
+      alias: "name",
       required: [true, "Scholarship name is required"],
       trim: true,
       minlength: [2, "Scholarship name must be at least 2 characters"],
@@ -43,6 +44,7 @@ const scholarshipSchema = new mongoose.Schema(
     },
     applicationLink: { 
       type: String, 
+      alias: "link",
       trim: true,
       maxlength: [1000, "Application link must be at most 1000 characters"]
     },
@@ -50,12 +52,13 @@ const scholarshipSchema = new mongoose.Schema(
       type: [String],
       default: []
     },
-    deadline: {
+    image: {
       type: String,
       default: ""
     },
-    image: {
+    deadline: {
       type: String,
+      trim: true,
       default: ""
     },
     status: {
@@ -64,7 +67,12 @@ const scholarshipSchema = new mongoose.Schema(
       default: "published"
     }
   },
-  { collection: "scholarships", timestamps: true }
+  {
+    collection: "scholarships",
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 // Explicit index to guarantee uniqueness at DB level for (name + provider)

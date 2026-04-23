@@ -14,6 +14,8 @@ const PUBLIC_NAV_LINKS = [
   { to: '/class8',  label: 'Class 8',  end: false },
   { to: '/class10', label: 'Class 10', end: false },
   { to: '/class12', label: 'Class 12', end: false },
+  { to: '/courses', label: 'Courses',  end: false },
+  { to: '/scholarships', label: 'Scholarships', end: false },
 ]
 
 export default function StudentNavbar() {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
-import { courseService } from '../../../services/courseService'
+import { courseService } from '../../services'
 import {
   FiArrowRight, FiBookOpen, FiSearch, FiBell,
   FiAward, FiVolume2, FiVolumeX, FiPlus, FiMinus, FiType,
