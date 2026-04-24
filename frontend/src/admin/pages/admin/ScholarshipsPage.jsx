@@ -13,6 +13,21 @@ import {
 // Base route string
 const API_ROUTE = "/scholarships";
 
+export const formatGrade = (grade) => {
+  if (!grade) return '';
+  const numMatches = String(grade).match(/\d+/);
+  if (!numMatches) return grade; // Return original if no digits found
+
+  const num = parseInt(numMatches[0], 10);
+  const j = num % 10;
+  const k = num % 100;
+  
+  if (j === 1 && k !== 11) return num + "st";
+  if (j === 2 && k !== 12) return num + "nd";
+  if (j === 3 && k !== 13) return num + "rd";
+  return num + "th";
+};
+
 export default function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +141,7 @@ export default function ScholarshipsPage() {
           'Content-Type': 'multipart/form-data'
         }
       });
+
       setUploadMessage(`Success: ${res.data.inserted} added.`);
       fetchScholarships();
     } catch (err) {
@@ -191,13 +207,14 @@ export default function ScholarshipsPage() {
                 <TD style={{ fontWeight: 800, color: 'var(--text)', fontSize:15 }}>
                   {(s.scholarshipName || '').toUpperCase()}
                 </TD>
-                <TD>
+                 <TD>
                    <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                      {(s.grades || []).map(c => (
-                        <SBadge key={c} color="blue">{c}</SBadge>
+                      {(s.targetClass || []).map(c => (
+                        <SBadge key={c} color="blue">{formatGrade(c)}</SBadge>
                       ))}
+
                    </div>
-                </TD>
+                 </TD>
                 <TD>{s.provider || 'N/A'}</TD>
                 <TD style={{ fontWeight: 600, color: 'var(--primary)' }}>{s.benefit || 'N/A'}</TD>
                 <TD>
@@ -251,7 +268,7 @@ export default function ScholarshipsPage() {
                             color: formData.grades.includes(cls) ? '#3b82f6' : '#64748b',
                             fontWeight: 800, cursor:'pointer', transition:'0.2s'
                          }}
-                      >Class {cls}</button>
+                      >Class {formatGrade(cls)}</button>
                     ))}
                  </div>
               </FormGroup>

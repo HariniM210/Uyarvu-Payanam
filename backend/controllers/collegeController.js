@@ -1,5 +1,9 @@
 const College = require("../models/College");
+const Course = require("../models/Course");
+const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const CollegeFetchedCourse = require("../models/CollegeFetchedCourse");
+const { parseTneaPdf } = require("../utils/pdfParser");
+const path = require("path");
 
 // @desc    Create new college
 // @route   POST /api/colleges
@@ -87,7 +91,9 @@ exports.getAllColleges = async (req, res) => {
       ];
     }
 
-    const colleges = await College.find(filter).sort({ createdAt: -1 });
+    const colleges = await College.find(filter)
+      .populate("coursesOffered", "courseName branchCode")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -109,7 +115,7 @@ exports.getAllColleges = async (req, res) => {
 // @access  Public
 exports.getCollegeById = async (req, res) => {
   try {
-    const college = await College.findById(req.params.id);
+    const college = await College.findById(req.params.id).populate("coursesOffered");
 
     if (!college) {
       return res.status(404).json({
@@ -299,6 +305,152 @@ exports.bulkInsertColleges = async (req, res) => {
       success: false,
       message: "Failed to bulk insert colleges",
       error: error.message,
+    });
+  }
+};
+
+// @desc    Import colleges and courses from TNEA PDF
+// @route   POST /api/colleges/import-courses-from-pdf
+// @access  Admin
+exports.importCoursesFromPdf = async (req, res) => {
+  try {
+    const pdfPath = path.join(__dirname, "../tnea_collegeandtheircourses.pdf");
+    
+    console.log("Starting PDF extraction from:", pdfPath);
+    const extractedData = await parseTneaPdf(pdfPath);
+    console.log(`Extracted ${extractedData.length} colleges from PDF.`);
+
+    let updatedCount = 0;
+    let newCount = 0;
+    const processedCollegeIds = [];
+    const batchId = `TNEA-PDF-${Date.now()}`;
+
+    for (const collegeData of extractedData) {
+      const { collegeName, collegeCode, district, courses } = collegeData;
+
+      // 1. Process Courses first to get their IDs
+      const courseIds = [];
+      for (const c of courses) {
+        let course = await Course.findOne({ 
+          courseName: new RegExp(`^${c.full}$`, 'i') 
+        });
+        
+        if (!course) {
+          course = await Course.create({
+            courseName: c.full,
+            branchCode: c.short, // Now storing the actual TNEA code (e.g. ME, CS)
+            level: "after12th",
+            category: "Engineering",
+            duration: "4 Years",
+            eligibility: "12th Standard with Physics, Chemistry, and Mathematics",
+            shortDescription: `Bachelor of Engineering in ${c.full}`,
+            isImported: true
+          });
+        } else if (!course.branchCode) {
+           // Update code if missing
+           course.branchCode = c.short;
+           await course.save();
+        }
+        courseIds.push(course._id);
+      }
+
+      // 2. Find or Create College
+      let college = await College.findOne({ 
+        $or: [
+          { collegeCode: collegeCode },
+          { collegeName: collegeName }
+        ]
+      });
+
+      if (college) {
+        // Update existing college
+        college.collegeCode = collegeCode;
+        if (district && !college.district) college.district = district;
+        
+        // Add new courses without duplicates
+        const currentCourseIds = college.coursesOffered.map(id => id.toString());
+        courseIds.forEach(id => {
+          if (!currentCourseIds.includes(id.toString())) {
+            college.coursesOffered.push(id);
+          }
+        });
+        
+        await college.save();
+        
+        // 2.5 Sync with CollegeCourseMapping table
+        for (const cId of courseIds) {
+          await CollegeCourseMapping.findOneAndUpdate(
+            { collegeId: college._id, courseId: cId },
+            { 
+              source: "Import", 
+              sourceFileName: "tnea_collegeandtheircourses.pdf",
+              importBatchId: batchId,
+              isVerified: true, // Mark as verified since it's from official PDF
+              isActive: true 
+            },
+            { upsert: true }
+          );
+        }
+
+        processedCollegeIds.push(college._id);
+        updatedCount++;
+      } else {
+        // Create new college
+        const newCollege = await College.create({
+          collegeName,
+          collegeCode,
+          district,
+          stream: "Engineering",
+          category: "Engineering",
+          type: "Engineering College",
+          coursesOffered: courseIds,
+          location: district,
+          state: "Tamil Nadu"
+        });
+
+        // Sync with CollegeCourseMapping table
+        for (const cId of courseIds) {
+          await CollegeCourseMapping.create({
+            collegeId: newCollege._id,
+            courseId: cId,
+            source: "Import",
+            sourceFileName: "tnea_collegeandtheircourses.pdf",
+            importBatchId: batchId,
+            isVerified: true,
+            isActive: true
+          });
+        }
+
+        processedCollegeIds.push(newCollege._id);
+        newCount++;
+      }
+    }
+
+    // 3. Remove colleges NOT in PDF (only for Engineering stream)
+    console.log("Cleaning up outdated Engineering colleges...");
+    const deleteResult = await College.deleteMany({
+      stream: "Engineering",
+      _id: { $nin: processedCollegeIds }
+    });
+    console.log(`Removed ${deleteResult.deletedCount} outdated colleges.`);
+
+    res.status(200).json({
+      success: true,
+      message: "PDF import completed successfully",
+      stats: {
+        totalCollegesParsed: extractedData.length,
+        updatedColleges: updatedCount,
+        newCollegesCreated: newCount,
+        removedColleges: deleteResult.deletedCount
+      }
+    });
+
+  } catch (error) {
+    console.error("PDF Import error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to import courses from PDF",
+      error: error.message
     });
   }
 };

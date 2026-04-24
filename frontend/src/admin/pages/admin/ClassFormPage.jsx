@@ -10,7 +10,7 @@ import { SCard, SBtn, SBadge, SLoader, FormGrid, FormGroup, FormInput, ActivityD
 
 const SECTION_OPTIONS = [
   "Basics", "Exams", "Fun", "Skills", "Games", "Careers", "Videos", "Habits",
-  "Streams", "Scholarships", "Entrance Exams", "Resources", "FAQs"
+  "Streams", "Entrance Exams", "Resources", "FAQs"
 ]
 
 const TARGET_CLASSES = ["5", "8", "10", "12"]

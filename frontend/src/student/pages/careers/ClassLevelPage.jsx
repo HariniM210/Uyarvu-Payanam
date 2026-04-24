@@ -11,6 +11,7 @@ import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
 import { scholarshipService, careerService } from '../../services'
+import { examService } from '../../../services/examService'
 import AuthModal from '../../components/ui/AuthModal'
 import { courseService } from '../../../services/courseService'
 import { collegeService } from '../../services/index'
@@ -24,14 +25,12 @@ const CLASS_SECTIONS = {
     { id: 'Fun', label: 'Fun', icon: FiActivity, color: '#ec4899' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#10b981' },
     { id: 'Games', label: 'Games', icon: FiStar, color: '#8b5cf6' },
-    { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
-    { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Videos', label: 'Videos', icon: FiVideo, color: '#ef4444' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
   "5": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
-    { id: 'Exams', label: 'Exams', icon: FiAward, color: '#f59e0b' },
+    { id: 'Entrance Exams', label: 'Exams', icon: FiAward, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Fun', label: 'Fun', icon: FiActivity, color: '#ec4899' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#10b981' },
@@ -39,7 +38,7 @@ const CLASS_SECTIONS = {
   ],
   "8": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
-    { id: 'Entrance Exams', label: 'Exams', icon: FiFileText, color: '#8b5cf6' },
+    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Fun', label: 'Fun', icon: FiActivity, color: '#ec4899' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
@@ -47,17 +46,9 @@ const CLASS_SECTIONS = {
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
   "10": [
-    { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
     { id: 'Streams', label: 'Streams', icon: FiLayers, color: '#f59e0b' },
-    { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
-    { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
-    { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
-    { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
-    { id: 'Resources', label: 'Resources', icon: FiLink, color: '#64748b' },
-    { id: 'FAQs', label: 'FAQs', icon: FiHelpCircle, color: '#334155' },
-    { id: 'College Mapping', label: 'College Map', icon: FiLink, color: '#f97316' },
   ],
   "12": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
@@ -67,8 +58,7 @@ const CLASS_SECTIONS = {
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
-    { id: 'FAQs', label: 'FAQs', icon: FiHelpCircle, color: '#334155' },
-    { id: 'College Mapping', label: 'College Map', icon: FiLink, color: '#f97316' },
+    { id: 'FAQs', label: 'FAQs', icon: FiHelpCircle, color: '#334155' }
   ]
 }
 
@@ -76,10 +66,55 @@ const STREAM_TABS = ["Science", "Commerce", "Arts", "Diploma"];
 const SCHOLARSHIP_TABS = ["Government", "State Schemes", "Merit", "NSP", "Process", "Tips"];
 const COLLEGE_TABS = ['Engineering', 'Medical', 'Arts & Science', 'Law', 'Polytechnic', 'Agriculture', 'Others'];
 const EXAM_TABS = {
-  "8": ["Scholarship Exam", "Olympiad", "Innovation"],
-  "10": ["Science", "Diploma", "Scholarship", "Skill Exams", "Job Path"],
-  "12": ["Engineering", "Medical", "Law", "Design", "Management", "Science", "Defence", "Commerce", "Architecture", "Arts & Commerce"],
+  "5": ["Science", "Mathematics", "English", "GK", "Multiple", "Defence"],
+  "8": ["Scholarship", "Mathematics", "Science", "English", "Defence"],
+  "10": ["Engineering", "Diploma", "Skill", "Defence", "School", "Science", "Mathematics"],
+  "12": ["Engineering", "Medical", "Law", "Commerce", "Science", "Design", "Defence", "Multiple", "Others"],
   "default": ["Scholarship Exam", "Skill Exams", "Government Job", "Defence Career", "Future Goals"]
+};
+
+const ExamCardDetails = ({ exam }) => {
+  const [tab, setTab] = useState('Prep');
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
+        {['Prep', 'Careers', 'Resources'].map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{ 
+            background: 'none', border: 'none', padding: '4px 8px', cursor: 'pointer',
+            fontSize: 13, fontWeight: 700, color: tab === t ? '#3b82f6' : '#94a3b8',
+            borderBottom: tab === t ? '2px solid #3b82f6' : '2px solid transparent'
+          }}>
+            {t}
+          </button>
+        ))}
+      </div>
+      <div style={{ fontSize: 13, color: '#334155', minHeight: 120 }}>
+        {tab === 'Prep' && (
+           <div>
+             <strong style={{ color:'#1e293b' }}>Strategy:</strong> <p style={{ margin: '4px 0 8px', whiteSpace: 'pre-line' }}>{exam.preparation?.strategy || 'N/A'}</p>
+             <strong style={{ color:'#1e293b' }}>Timeline:</strong> <p style={{ margin: '4px 0' }}>{exam.preparation?.timeline || 'N/A'}</p>
+           </div>
+        )}
+        {tab === 'Careers' && (
+           <ul style={{ margin: 0, paddingLeft: 20 }}>
+             {exam.careerOptions?.length > 0 ? exam.careerOptions.map((c, i) => <li key={i} style={{ marginBottom: 4 }}>{c}</li>) : <li>N/A</li>}
+           </ul>
+        )}
+        {tab === 'Resources' && (
+           <div>
+             <strong style={{ color:'#1e293b' }}>Recommended Books:</strong>
+             <ul style={{ margin: '4px 0 8px', paddingLeft: 20 }}>
+               {exam.preparation?.books?.length > 0 ? exam.preparation.books.map((b, i) => <li key={i}>{b}</li>) : <li>N/A</li>}
+             </ul>
+             <strong style={{ color:'#1e293b' }}>Other Resources:</strong>
+             <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+               {exam.preparation?.resources?.length > 0 ? exam.preparation.resources.map((r, i) => <li key={i}>{r}</li>) : <li>N/A</li>}
+             </ul>
+           </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default function ClassLevelPage(props) {
@@ -101,6 +136,7 @@ export default function ClassLevelPage(props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [courses, setCourses] = useState([])
   const [colleges, setColleges] = useState([]) 
+  const [exams, setExams] = useState([]) 
   const [explorerData, setExplorerData] = useState([])
   const [explorerLoading, setExplorerLoading] = useState(false)
   const [expandedCourseCat, setExpandedCourseCat] = useState(null)
@@ -118,22 +154,62 @@ export default function ClassLevelPage(props) {
   }, [cleanLevel]);
 
   useEffect(() => {
-    if (!['Careers', 'Colleges'].includes(activeSec)) return;
+    if (!['Careers', 'Colleges', 'Streams'].includes(activeSec)) return;
     
     const fetchExplorerData = async () => {
+      // Explorer data (Engineering, Medical, etc.) is only for 12th or 10th Streams
+      if (!(['12', '10'].includes(cleanLevel))) {
+        setExplorerData([]);
+        return;
+      }
+      if (cleanLevel === '10' && activeSec !== 'Streams') {
+        setExplorerData([]);
+        return;
+      }
+
       setExplorerLoading(true)
       try {
-        const query = { 
-          search: searchQuery.trim(),
-          level: cleanLevel
-        }
-        if (activeSubTab !== 'All') query.category = activeSubTab
-        
-        const res = await courseService.getExplorerData(query)
-        if (res.success) {
-           setExplorerData(res.data)
-           if (activeSec === 'Colleges') setColleges(res.data)
-           if (activeSec === 'Careers') setCourses(res.data)
+        if (activeSec === 'Streams' && cleanLevel === '10') {
+           const res = await courseService.getAll();
+           if (res.success || Array.isArray(res.data) || Array.isArray(res)) {
+             let rawCourses = res.data || res;
+             if (!Array.isArray(rawCourses)) rawCourses = [];
+             
+             let streamCourses = rawCourses.filter(c => {
+               const lvl = (c.level || c.eligibility || '').toLowerCase().replace(/\s/g, '');
+               const cat = (c.category || '').toLowerCase();
+               return lvl.includes('after10') || cat.includes('diploma') || lvl.includes('diploma');
+             });
+
+             if (activeSubTab !== 'All') {
+                if (activeSubTab === 'Diploma') {
+                   streamCourses = streamCourses.filter(c => (c.category || '').toLowerCase().includes('diploma') || (c.level || '').toLowerCase().includes('diploma'));
+                } else {
+                   streamCourses = streamCourses.filter(c => (c.category || '').toLowerCase() === activeSubTab.toLowerCase());
+                }
+             }
+
+             setExplorerData([{
+               categoryName: activeSubTab === 'All' ? 'Available Courses After 10th' : `${activeSubTab} Courses`,
+               courseCount: streamCourses.length,
+               collegeCount: 0,
+               courses: streamCourses,
+               colleges: []
+             }]);
+           }
+        } else if (cleanLevel === '12') {
+          const query = { 
+            search: searchQuery.trim(),
+            level: cleanLevel
+          }
+          if (activeSubTab !== 'All') query.category = activeSubTab
+          
+          const res = await courseService.getExplorerData(query)
+          if (res.success) {
+             setExplorerData(res.data)
+             if (activeSec === 'Colleges') setColleges(res.data)
+             if (activeSec === 'Careers') setCourses(res.data)
+          }
         }
       } catch (err) {
         console.error('Error fetching explorer data', err)
@@ -179,17 +255,22 @@ export default function ClassLevelPage(props) {
     try {
       setLoading(true)
 
-      const [contentRes, scholarshipRes, careerRes] = await Promise.all([
+      const [contentRes, scholarshipRes, careerRes, examRes] = await Promise.all([
         classContentService.getPublicList({ targetClass: cleanLevel }).catch(() => null),
         axiosInstance.get(`/scholarships`, { 
           params: { grade: `${cleanLevel}th`, userSide: true } 
         }).catch(() => null),
-        careerService.getAll({ level: cleanLevel }).catch(() => null)
+        careerService.getAll({ level: cleanLevel }).catch(() => null),
+        examService.getAllExams().catch(() => null)
       ])
 
       const contentList = contentRes?.data || (Array.isArray(contentRes) ? contentRes : [])
       const scholarshipList = scholarshipRes?.data?.data || (Array.isArray(scholarshipRes?.data) ? scholarshipRes.data : [])
       const careerList = careerRes?.data || (Array.isArray(careerRes) ? careerRes : [])
+      
+      if (examRes && examRes.success) {
+        setExams(examRes.data || [])
+      }
 
       // Merge curated content and career paths
       const allFetchedContent = [
@@ -264,6 +345,21 @@ export default function ClassLevelPage(props) {
     }
   }
 
+  const availableSections = useMemo(() => {
+    if (loading) return sections;
+    return sections.filter(s => {
+      if (s.id === 'Colleges' || s.id === 'College Mapping') return true;
+      const allItems = [...(contents || []), ...(scholarships || [])];
+      return allItems.some(c => c.sectionType === s.id);
+    });
+  }, [sections, contents, scholarships, loading]);
+
+  useEffect(() => {
+    if (!loading && availableSections.length > 0 && !availableSections.find(s => s.id === activeSec)) {
+      setActiveSec(availableSections[0].id);
+    }
+  }, [loading, availableSections, activeSec]);
+
   const filteredContent = useMemo(() => {
     const allItems = [...(contents || []), ...(scholarships || [])]
 
@@ -285,6 +381,22 @@ export default function ClassLevelPage(props) {
     })
   }, [contents, scholarships, activeSec, searchQuery, activeSubTab])
 
+  const filteredExams = useMemo(() => {
+    return exams.filter(e => {
+      const matchesSearch = e.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            e.conductingBody.toLowerCase().includes(searchQuery.toLowerCase());
+      let matchesSubTab = true;
+      if (activeSubTab !== 'All') {
+         matchesSubTab = e.category === activeSubTab;
+      }
+      return matchesSearch && matchesSubTab;
+    }).sort((a, b) => {
+       if (a.name === 'TNEA') return -1;
+       if (b.name === 'TNEA') return 1;
+       return 0;
+    });
+  }, [exams, searchQuery, activeSubTab])
+
   const handleCardClick = (item) => {
     if (item.isDirect) {
       if (item.applicationLink) window.open(item.applicationLink, '_blank');
@@ -296,39 +408,19 @@ export default function ClassLevelPage(props) {
 
   return (
     <div className="student-root" style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 100 }}>
-      {/* Hero */}
+      {/* Header Section */}
       <section style={{ 
-        padding: '100px 24px', textAlign: 'center', 
-        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', 
-        color: '#fff', borderRadius: '0 0 80px 80px', marginBottom: 60,
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        position: 'relative', overflow: 'hidden'
+        padding: '50px 24px', textAlign: 'center', 
+        background: '#fff', 
+        borderBottom: '1px solid #f1f5f9', marginBottom: 40,
       }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 99, background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 20, border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-            Empowering Your Future
-          </div>
-          <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 'clamp(40px, 7vw, 64px)', margin: '0 0 24px', letterSpacing: '-0.05em', lineHeight: 1 }}>
-            Class {cleanLevel}th <span style={{ background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Success Compass</span>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 'clamp(32px, 5vw, 48px)', margin: '0 0 16px', color: '#1e293b', letterSpacing: '-0.02em' }}>
+            Class {cleanLevel} Guidance
           </h1>
-          <p style={{ fontSize: 20, maxWidth: 650, margin: '0 auto 48px', opacity: 0.8, lineHeight: 1.6, fontWeight: 500 }}>
-            Navigate your options with confidence. We've curated the best {cleanLevel === '12' ? 'universities' : 'vocational paths'} and courses for you.
+          <p style={{ fontSize: 18, color: '#64748b', maxWidth: 650, margin: '0 auto' }}>
+            Explore scholarships, skills, exams, habits, and future opportunities.
           </p>
-          
-          <div style={{ maxWidth: 600, margin: '0 auto', position:'relative' }}>
-             <FiSearch style={{ position:'absolute', left:20, top:'50%', transform:'translateY(-50%)', color:'#94a3b8' }} size={20} />
-             <input 
-                type="text" 
-                placeholder="Search for guides, exams, or skills..." 
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{ 
-                   width:'100%', padding:'18px 24px 18px 56px', borderRadius:20, 
-                   background:'rgba(255,255,255,0.1)', backdropFilter:'blur(10px)', color:'#fff',
-                   fontSize:16, border:'1px solid rgba(255,255,255,0.1)'
-                }}
-             />
-          </div>
         </div>
       </section>
 
@@ -341,7 +433,7 @@ export default function ClassLevelPage(props) {
           backgroundColor:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px)', borderRadius:24, boxShadow:'0 20px 25px -5px rgba(0,0,0,0.05)',
           marginBottom: activeSec === 'Streams' ? 20 : 50, border:'1px solid rgba(255,255,255,0.5)', position:'sticky', top:20, zIndex:100
         }}>
-          {sections.map(s => (
+          {availableSections.map(s => (
             <button
               key={s.id}
               onClick={() => { setActiveSec(s.id); setActiveSubTab('All'); }}
@@ -393,13 +485,29 @@ export default function ClassLevelPage(props) {
         ) : (
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
-               <h2 style={{ fontSize:28, fontWeight:900 }}>{activeSec} Insight</h2>
-               <span style={{ color:'#94a3b8', fontSize:14, fontWeight:600 }}>
-                 {(activeSec === 'Colleges' || activeSec === 'Careers') ? (filteredContent.length + explorerData.length) : filteredContent.length} items found
-               </span>
+               <div>
+                 <h2 style={{ fontSize:28, fontWeight:900 }}>
+                   {activeSec === 'Scholarships' ? `Scholarships for Class ${cleanLevel} Students` :
+                    activeSec === 'Exams' ? `Exams for Class ${cleanLevel} Students` :
+                    activeSec === 'Fun' ? `Fun Learning Activities` : 
+                    activeSec === 'Skills' ? `Skills to Build in Class ${cleanLevel}` : `${activeSec} Insight`}
+                 </h2>
+                 {activeSec === 'Scholarships' && (
+                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Explore available scholarships you are eligible for.</p>
+                 )}
+                 {activeSec === 'Exams' && (
+                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Explore useful exams, learn what to study, and prepare in a simple way.</p>
+                 )}
+                 {activeSec === 'Fun' && (
+                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Learn with fun and creativity!</p>
+                 )}
+                 {activeSec === 'Skills' && (
+                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Grow your abilities step by step!</p>
+                 )}
+               </div>
             </div>
 
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(340px, 1fr))' : '1fr', gap: 32 }}>
                 {activeSec === 'Careers' && filteredContent.length > 0 && (
                    <div style={{ marginBottom: 40 }}>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:32 }}>
@@ -414,7 +522,7 @@ export default function ClassLevelPage(props) {
                       </div>
                    </div>
                 )}
-               {activeSec === 'Careers' || activeSec === 'Colleges' ? (
+               {((activeSec === 'Careers' || activeSec === 'Colleges') && cleanLevel === '12') || (activeSec === 'Streams' && cleanLevel === '10') ? (
                   explorerLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
                   ) : explorerData.length === 0 ? (
@@ -566,6 +674,103 @@ export default function ClassLevelPage(props) {
                       </div>
                     ))
                   )
+                ) : activeSec === 'Entrance Exams' && cleanLevel === '12' ? (
+                  <div style={{ gridColumn: '1/-1' }}>
+                     {/* Stream Mapping */}
+                     <div style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', padding: 32, borderRadius: 24, color: '#fff', marginBottom: 32 }}>
+                        <h3 style={{ fontSize: 24, fontWeight: 900, margin: '0 0 20px' }}>🎓 Stream → Career Mapping</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
+                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#93c5fd' }}>Science (PCM)</strong>
+                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>Engineering, Architecture, Defence, Data Science</span>
+                           </div>
+                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
+                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#86efac' }}>Science (PCB)</strong>
+                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>Medical, Pharmacy, Nursing, Biotechnology</span>
+                           </div>
+                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
+                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#fcd34d' }}>Commerce</strong>
+                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>CA, CS, B.Com, BBA, Banking & Finance</span>
+                           </div>
+                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
+                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#fbcfe8' }}>Arts & Humanities</strong>
+                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>Law, Civil Services, Design, Journalism, Teaching</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Decision Support & TN Info */}
+                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 40 }}>
+                        <div style={{ background: '#eff6ff', padding: 24, borderRadius: 24 }}>
+                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e3a8a', marginBottom: 12 }}>💡 Smart Decision Support</h3>
+                          <ul style={{ margin: 0, paddingLeft: 20, color: '#1e40af', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
+                            <li><strong>Like Maths?</strong> Engineering / Data fields.</li>
+                            <li><strong>Like Biology?</strong> Medical / Pharma fields.</li>
+                            <li><strong>Like Business?</strong> Commerce / Management paths.</li>
+                            <li><strong>Creative?</strong> Design / Architecture / Arts.</li>
+                          </ul>
+                        </div>
+                        <div style={{ background: '#fef2f2', padding: 24, borderRadius: 24 }}>
+                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#991b1b', marginBottom: 12 }}>❌ Common Mistakes to Avoid</h3>
+                          <ul style={{ margin: 0, paddingLeft: 20, color: '#b91c1c', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
+                            <li>Choosing a course based on others' opinions.</li>
+                            <li>Ignoring your own interests.</li>
+                            <li>Not checking eligibility criteria early.</li>
+                            <li>Late preparation & lack of mock tests.</li>
+                          </ul>
+                        </div>
+                     </div>
+
+                     {/* Tamil Nadu Priority Info */}
+                     <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 24, borderRadius: 24, marginBottom: 40 }}>
+                        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#166534', marginBottom: 12 }}>📍 Tamil Nadu Important Info</h3>
+                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                           <SBadge color="green"><strong>Engineering:</strong> TNEA (No entrance, marks based)</SBadge>
+                           <SBadge color="green"><strong>Medical:</strong> NEET is compulsory</SBadge>
+                           <SBadge color="green"><strong>Arts & Science:</strong> Merit or CUET</SBadge>
+                        </div>
+                     </div>
+
+                     {/* Exams List */}
+                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 32 }}>
+                        {filteredExams.length === 0 ? (
+                           <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'50px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                             <SEmpty title="No exams found" desc="We couldn't find any exams matching your criteria." />
+                           </div>
+                        ) : (
+                           filteredExams.map(exam => (
+                             <div key={exam._id} style={{ background: '#fff', padding: 24, borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }} className="hover-lift">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                                   <div>
+                                     <SBadge color="blue">{exam.category}</SBadge>
+                                     <h3 style={{ fontSize: 20, fontWeight: 900, marginTop: 12, color: '#0f172a', lineHeight: 1.2 }}>{exam.name}</h3>
+                                     <p style={{ color: '#64748b', fontSize: 13, margin: '6px 0 0 0', fontWeight: 600 }}>Conducted by {exam.conductingBody}</p>
+                                   </div>
+                                   <SBadge color={exam.difficulty === 'Hard' || exam.difficulty === 'Very Hard' ? 'red' : exam.difficulty === 'Moderate' ? 'yellow' : 'green'}>
+                                      {exam.difficulty}
+                                   </SBadge>
+                                </div>
+
+                                <div style={{ background: '#f8fafc', padding: 16, borderRadius: 16, marginBottom: 20, fontSize: 13 }}>
+                                   <div style={{ display: 'flex', marginBottom: 6 }}><strong style={{ width: 85, color: '#475569', flexShrink: 0 }}>Eligibility:</strong> <span>{exam.eligibility}</span></div>
+                                   <div style={{ display: 'flex', marginBottom: 6 }}><strong style={{ width: 85, color: '#475569', flexShrink: 0 }}>Subjects:</strong> <span>{exam.subjects?.join(', ')}</span></div>
+                                   <div style={{ display: 'flex', marginBottom: 6 }}><strong style={{ width: 85, color: '#475569', flexShrink: 0 }}>Pattern:</strong> <span>{exam.pattern}</span></div>
+                                   <div style={{ display: 'flex' }}><strong style={{ width: 85, color: '#475569', flexShrink: 0 }}>Dates:</strong> <span style={{ color: '#ea580c', fontWeight: 700 }}>{exam.importantDates}</span></div>
+                                </div>
+
+                                {/* Tabs inside Card: Preparation | Careers | Resources */}
+                                <div style={{ flex: 1 }}>
+                                   <ExamCardDetails exam={exam} />
+                                </div>
+                                
+                                <SBtn variant="outline" style={{ width: '100%', marginTop: 20, borderRadius: 12 }} onClick={() => window.open(exam.officialWebsite, '_blank')}>
+                                   Official Website ↗
+                                </SBtn>
+                             </div>
+                           ))
+                        )}
+                     </div>
+                  </div>
                 ) : filteredContent.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
                   <SEmpty title="Nothing found yet" desc={`We haven't added items to ${activeSec} for Class ${cleanLevel} yet.`} />

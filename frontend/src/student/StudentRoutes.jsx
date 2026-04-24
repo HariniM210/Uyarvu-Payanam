@@ -17,11 +17,13 @@ import CoursesPage from './pages/courses/CoursesPage'
 import CourseCategoryPage from './pages/courses/CourseCategoryPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 import ProfilePage from './pages/profile/ProfilePage'
+import ScholarshipsPage from './pages/scholarships/ScholarshipsPage'
 import ClassLandingPage from './pages/careers/ClassLandingPage'
 import ClassLevelPage from './pages/careers/ClassLevelPage'
 import ContentDetailPage from './pages/careers/ContentDetailPage'
 import CourseDetailPage from './pages/courses/CourseDetailPage'
 import CollegeCourseExplorer from './pages/colleges/CollegeCourseExplorer'
+import TneaCutoffPage from './pages/colleges/TneaCutoffPage'
 import './student.css'
 
 export default function StudentRoutes() {
@@ -30,7 +32,7 @@ export default function StudentRoutes() {
       <Routes>
         <Route element={<StudentLayout />}>
           {/* Redirect root → /home */}
-          <Route index element={<Navigate to="/home" replace />} />
+          <Route index element={<Navigate to="home" replace />} />
 
           {/* Home page at /home */}
           <Route path="home" element={<LandingPage />} />
@@ -56,11 +58,16 @@ export default function StudentRoutes() {
           <Route path="careers/class/:classKey" element={<CareerClassPage />} />
           <Route path="careers/path/:id" element={<CareerDetailPage />} />
 
+
+          {/* 
           <Route path="colleges" element={<CollegesPage />} />
           <Route path="colleges/explorer" element={<CollegeCourseExplorer />} />
+          <Route path="colleges/cutoff" element={<TneaCutoffPage />} />
+          <Route path="scholarships" element={<ScholarshipsPage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="courses/:categoryKey" element={<CourseCategoryPage />} />
           <Route path="course/:slug" element={<CourseDetailPage />} />
+          */}
 
           <Route
             path="dashboard"
@@ -93,7 +100,7 @@ export default function StudentRoutes() {
           <Route path="student/signup" element={<Navigate to="/signup" replace />} />
 
           {/* Catch-all → home */}
-          <Route path="*" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="home" replace />} />
         </Route>
       </Routes>
     </StudentAuthProvider>

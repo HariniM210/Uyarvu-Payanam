@@ -65,7 +65,17 @@ function CollegeCard({ college }) {
       {college.coursesOffered?.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {college.coursesOffered.slice(0, 3).map((c, i) => (
-            <span key={i} style={{ fontSize: 11.5, background: sc.bg, color: sc.color, padding: '3px 9px', borderRadius: 6, fontWeight: 600 }}>{c}</span>
+            <span key={i} style={{ 
+              fontSize: 10.5, 
+              background: sc.bg, 
+              color: sc.color, 
+              padding: '3px 8px', 
+              borderRadius: 6, 
+              fontWeight: 700,
+              border: `1px solid ${sc.color}22`
+            }}>
+              {typeof c === 'object' ? (c.branchCode || c.courseName) : c}
+            </span>
           ))}
           {college.coursesOffered.length > 3 && (
             <span style={{ fontSize: 11.5, color: 'var(--s-text3)', padding: '3px' }}>+{college.coursesOffered.length - 3}</span>

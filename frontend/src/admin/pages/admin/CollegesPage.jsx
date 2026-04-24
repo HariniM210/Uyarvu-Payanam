@@ -296,8 +296,23 @@ export default function CollegesPage() {
                 <TD><LevelBadge level={c.stream} /></TD>
                 <TD style={{ color: 'var(--text2)' }}>{c.district || '\u2014'}</TD>
                 <TD style={{ color: 'var(--text3)' }}>{c.location || '\u2014'}</TD>
-                <TD style={{ color: 'var(--primary)', fontWeight: 800 }}>
-                  {(c.coursesOffered || []).length} Verified
+                <TD>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 300 }}>
+                    {(c.coursesOffered || []).slice(0, 10).map((course, idx) => (
+                      <span key={idx} style={{ 
+                        fontSize: 10, background: 'var(--primary-l)', color: 'var(--primary)', 
+                        padding: '2px 8px', borderRadius: 6, fontWeight: 700 
+                      }}>
+                        {typeof course === 'object' ? (course.branchCode || course.courseName) : 'Course'}
+                      </span>
+                    ))}
+                    {(c.coursesOffered || []).length > 10 && (
+                      <span style={{ fontSize: 10, color: 'var(--text3)' }}>+{(c.coursesOffered || []).length - 10} more</span>
+                    )}
+                    {(c.coursesOffered || []).length === 0 && (
+                      <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>⚠️ No Courses Linked</span>
+                    )}
+                  </div>
                 </TD>
                 <TD>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

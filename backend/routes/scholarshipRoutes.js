@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
-const Scholarship = require('../models/Scholarship');
 
 const { 
   getAllScholarships,
   applyForScholarship, 
   addScholarship, 
+  importScholarshipsCSV,
+  importScholarshipsFromLocalCSV,
   uploadScholarshipsCSV, 
   updateScholarship, 
   deleteScholarship 
@@ -18,8 +19,10 @@ const verifyAdmin = require('../middleware/verifyAdmin');
 router.get('/', getAllScholarships);
 
 router.post('/add-scholarship', verifyAdmin, addScholarship);
+router.post('/import', verifyAdmin, upload.single('file'), importScholarshipsCSV);
+router.post('/import-csv', importScholarshipsFromLocalCSV);
 router.post('/apply', applyForScholarship);
-router.post('/upload', verifyAdmin, upload.single('file'), uploadScholarshipsCSV);
+router.post('/upload', upload.single('file'), uploadScholarshipsCSV);
 router.put('/:id', verifyAdmin, updateScholarship);
 router.delete('/:id', verifyAdmin, deleteScholarship);
 

@@ -11,8 +11,6 @@ const EXPLORE = [
 ]
 
 const QUICK = [
-  { to: '/colleges',      label: 'College Finder' },
-  { to: '/courses',       label: 'Courses'        },
   { to: '/notifications', label: 'Notifications'  },
   { to: '/signin',        label: 'Student Login'  },
 ]

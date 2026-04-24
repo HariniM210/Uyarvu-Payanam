@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
-import { courseService } from '../../../services/courseService'
+import { courseService } from '../../services'
 import {
   FiArrowRight, FiBookOpen, FiSearch, FiBell,
   FiAward, FiVolume2, FiVolumeX, FiPlus, FiMinus, FiType,
@@ -59,13 +59,6 @@ const STATS = [
 
 const FEATURES = [
   {
-    icon: FiSearch,
-    title: 'College Finder',
-    desc: 'Filter Tamil Nadu colleges by stream, district, fees and placement rates.',
-    color: '#1e40af',
-    bg: '#dbeafe',
-  },
-  {
     icon: FiBell,
     title: 'Exam Alerts',
     desc: 'Never miss deadlines — real-time notifications for exams, cutoffs and applications.',
@@ -78,13 +71,6 @@ const FEATURES = [
     desc: 'Real-world data on salary ranges, growth trends and job market outlook.',
     color: '#047857',
     bg: '#d1fae5',
-  },
-  {
-    icon: FiAward,
-    title: 'Scholarships',
-    desc: 'Discover government and private scholarships that match your eligibility.',
-    color: '#6d28d9',
-    bg: '#ede9fe',
   },
 ]
 
@@ -295,7 +281,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── TOP COURSES DYNAMIC SECTION ── */}
-        <TopCoursesSection />
+        {/* <TopCoursesSection /> */}
 
         {/* ── Features ── */}
         <section className="s-section" style={{ background: 'var(--s-surface)' }}>
