@@ -17,7 +17,7 @@ studentApi.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('studentToken')
       localStorage.removeItem('studentData')
-      window.location.href = '/signin'
+      window.location.href = '/student/signin'
     }
     return Promise.reject(err)
   }

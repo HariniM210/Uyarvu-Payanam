@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi'
 import { SBadge, SCard, SBtn, SLoader, SEmpty } from '../../components/ui'
 import { courseService } from '../../../services/courseService'
+import { userActionService } from '../../../services/userActionService'
 import { adminService } from '../../../services/adminService'
 import { cutoffService } from '../../../services/cutoffService'
 
@@ -32,6 +33,8 @@ export default function CourseDetailPage() {
   const [cutoffs, setCutoffs] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('Overview')
+  const [isSaved, setIsSaved] = useState(false)
+  const [saving, setIsSaving] = useState(false)
 
   const isEngineering = course?.category?.toLowerCase().includes('engineering') ||
     course?.category?.toLowerCase().includes('it') ||
@@ -62,6 +65,11 @@ export default function CourseDetailPage() {
         const ctRes = await cutoffService.getCutoffs({ courseId: courseData._id })
         setCutoffs(ctRes.data || [])
       }
+
+      // Check if already saved
+      const savedList = await userActionService.getSavedList('Course')
+      const alreadySaved = savedList.data?.some(item => (item.contentId?._id || item.contentId) === courseData._id)
+      setIsSaved(alreadySaved)
     } catch (err) {
       console.error('Fetch error:', err)
     } finally {
@@ -72,6 +80,24 @@ export default function CourseDetailPage() {
   useEffect(() => {
     fetchDetails()
   }, [fetchDetails])
+
+  const handleSave = async () => {
+    if (saving) return
+    try {
+      setIsSaving(true)
+      if (isSaved) {
+        await userActionService.unsaveItem(course._id)
+        setIsSaved(false)
+      } else {
+        await userActionService.saveItem(course._id, 'Course')
+        setIsSaved(true)
+      }
+    } catch (err) {
+      console.error('Error toggling save:', err)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   // Tabs depend on whether this is engineering (cutoffs + colleges) or not (colleges only)
   const getTabs = (cat) => {
@@ -119,9 +145,19 @@ export default function CourseDetailPage() {
                 {course.shortDescription}
               </p>
             </div>
-            <SBtn variant="white" style={{ borderRadius: 14, padding: '16px 32px', flexShrink: 0 }} onClick={() => window.print()}>
-              <FiDownload style={{ marginRight: 8 }} /> Download Guide
-            </SBtn>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <SBtn 
+                variant={isSaved ? 'white' : 'outline'} 
+                style={{ borderRadius: 14, padding: '16px 24px', background: isSaved ? '#fff' : 'rgba(255,255,255,0.1)', color: isSaved ? 'var(--s-primary)' : '#fff', border: '1px solid rgba(255,255,255,0.2)' }} 
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {isSaved ? '🔖 Saved' : '🔖 Bookmark Course'}
+              </SBtn>
+              <SBtn variant="white" style={{ borderRadius: 14, padding: '16px 32px', flexShrink: 0 }} onClick={() => window.print()}>
+                <FiDownload style={{ marginRight: 8 }} /> Download Guide
+              </SBtn>
+            </div>
           </div>
         </div>
       </section>
@@ -233,7 +269,7 @@ export default function CourseDetailPage() {
                   ))}
                 </div>
                 <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid var(--s-border)' }} />
-                <SBtn fullWidth>Check My Eligibility</SBtn>
+                <SBtn fullWidth onClick={() => alert('Eligibility assessment tool coming soon! Currently, please refer to the criteria listed below.')}>Check My Eligibility</SBtn>
               </SCard>
             </aside>
           </div>

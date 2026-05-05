@@ -4,8 +4,9 @@ const College = require("../models/College");
 const Course = require("../models/Course");
 const Cutoff = require("../models/Cutoff");
 const dotenv = require("dotenv");
+const path = require("path");
 
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const DATA_URLS = {
     2022: "https://www.tneacutoff.com/api/c2.json",
@@ -14,7 +15,7 @@ const DATA_URLS = {
     2025: "https://www.tneacutoff.com/api/c5.json",
 };
 
-const MONGO_URI = "mongodb+srv://uyarvupayanam_db_user:UyarvuPayanam1234@cluster0.i0sep1t.mongodb.net/uyarvuPayanam?retryWrites=true&w=majority";
+const MONGO_URI = process.env.MONGO_URI;
 
 async function fastImport() {
     await mongoose.connect(MONGO_URI);

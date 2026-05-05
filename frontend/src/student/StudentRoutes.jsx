@@ -22,17 +22,25 @@ import ClassLandingPage from './pages/careers/ClassLandingPage'
 import ClassLevelPage from './pages/careers/ClassLevelPage'
 import ContentDetailPage from './pages/careers/ContentDetailPage'
 import CourseDetailPage from './pages/courses/CourseDetailPage'
+import BookmarksPage from './pages/bookmarks/BookmarksPage'
 import CollegeCourseExplorer from './pages/colleges/CollegeCourseExplorer'
 import TneaCutoffPage from './pages/colleges/TneaCutoffPage'
+import CollegeDetailPage from './pages/colleges/CollegeDetailPage'
+import CollegeCategoryPage from './pages/colleges/CollegeCategoryPage'
+import ScholarshipDetailPage from './pages/scholarships/ScholarshipDetailPage'
+import OnboardingPage from './pages/onboarding/OnboardingPage'
+import RecommendationResultPage from './pages/onboarding/RecommendationResultPage'
+import MaintenanceGuard from './components/common/MaintenanceGuard'
 import './student.css'
 
 export default function StudentRoutes() {
   return (
     <StudentAuthProvider>
-      <Routes>
+      <MaintenanceGuard>
+        <Routes>
         <Route element={<StudentLayout />}>
           {/* Redirect root → /home */}
-          <Route index element={<Navigate to="home" replace />} />
+          <Route index element={<Navigate to="/student/home" replace />} />
 
           {/* Home page at /home */}
           <Route path="home" element={<LandingPage />} />
@@ -53,27 +61,43 @@ export default function StudentRoutes() {
           <Route path="class12" element={<ClassLevelPage level="12" />} />
           <Route path="class12/content/:slug" element={<ContentDetailPage />} />
 
+          {/* New Descriptive Career Path Routes */}
+          <Route path="career-path/class-5/:slug" element={<ContentDetailPage />} />
+          <Route path="career-path/class-8/:slug" element={<ContentDetailPage />} />
+          <Route path="career-path/class-10/:slug" element={<ContentDetailPage />} />
+          <Route path="career-path/class-12/:slug" element={<ContentDetailPage />} />
+
           {/* Career routes */}
           <Route path="careers" element={<CareersPage />} />
           <Route path="careers/class/:classKey" element={<CareerClassPage />} />
           <Route path="careers/path/:id" element={<CareerDetailPage />} />
 
 
-          {/* 
+          {/* Exploration Routes */}
           <Route path="colleges" element={<CollegesPage />} />
+          <Route path="colleges/:id" element={<CollegeDetailPage />} />
+          <Route path="colleges/category/:categoryName" element={<CollegeCategoryPage />} />
           <Route path="colleges/explorer" element={<CollegeCourseExplorer />} />
           <Route path="colleges/cutoff" element={<TneaCutoffPage />} />
           <Route path="scholarships" element={<ScholarshipsPage />} />
+          <Route path="scholarships/:id" element={<ScholarshipDetailPage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="courses/:categoryKey" element={<CourseCategoryPage />} />
           <Route path="course/:slug" element={<CourseDetailPage />} />
-          */}
 
           <Route
             path="dashboard"
             element={
               <StudentProtectedRoute>
                 <DashboardPage />
+              </StudentProtectedRoute>
+            }
+          />
+          <Route
+            path="bookmarks"
+            element={
+              <StudentProtectedRoute>
+                <BookmarksPage />
               </StudentProtectedRoute>
             }
           />
@@ -94,15 +118,33 @@ export default function StudentRoutes() {
             }
           />
 
+          <Route
+            path="onboarding"
+            element={
+              <StudentProtectedRoute>
+                <OnboardingPage />
+              </StudentProtectedRoute>
+            }
+          />
+          <Route
+            path="onboarding/result"
+            element={
+              <StudentProtectedRoute>
+                <RecommendationResultPage />
+              </StudentProtectedRoute>
+            }
+          />
+
           {/* Legacy redirects — old /student/* paths to new paths */}
-          <Route path="student" element={<Navigate to="/home" replace />} />
-          <Route path="student/login" element={<Navigate to="/signin" replace />} />
-          <Route path="student/signup" element={<Navigate to="/signup" replace />} />
+          <Route path="student" element={<Navigate to="/student/home" replace />} />
+          <Route path="login" element={<Navigate to="/student/signin" replace />} />
+          <Route path="signup" element={<Navigate to="/student/signup" replace />} />
 
           {/* Catch-all → home */}
-          <Route path="*" element={<Navigate to="home" replace />} />
+          <Route path="*" element={<Navigate to="/student/home" replace />} />
         </Route>
       </Routes>
+      </MaintenanceGuard>
     </StudentAuthProvider>
   )
 }

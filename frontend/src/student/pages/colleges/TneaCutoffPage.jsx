@@ -48,8 +48,8 @@ export default function TneaCutoffPage() {
 
   const filteredData = useMemo(() => {
     return cutoffs.filter(c => {
-      const colName = (c.collegeId?.collegeName || c.collegeName || '').toLowerCase()
-      const crsName = (c.courseId?.courseName || c.course || '').toLowerCase()
+      const colName = (c.collegeId?.collegeName || c.collegeName || c.college || '').toLowerCase()
+      const crsName = (c.courseId?.courseName || c.department || c.course || '').toLowerCase()
       const crsId = c.courseId?._id?.toString() || ''
       const searchMatch = colName.includes(search.toLowerCase()) || crsName.includes(search.toLowerCase())
       const courseMatch = selectedCourse === 'All' || crsId === selectedCourse
@@ -65,9 +65,9 @@ export default function TneaCutoffPage() {
         return found ? found.score : (r[cat.toLowerCase()] || '-');
       }
       return [
-        r.collegeId?.collegeCode || r.collegeCode || '',
-        r.collegeId?.collegeName || r.collegeName || '',
-        r.courseId?.courseName || r.course || '',
+        r.collegeId?.collegeCode || r.collegeCode || r.coc || '',
+        r.collegeId?.collegeName || r.collegeName || r.college || '',
+        r.courseId?.courseName || r.department || r.course || '',
         ...CATEGORIES.map(cat => getScore(cat))
       ]
     });
@@ -179,12 +179,12 @@ export default function TneaCutoffPage() {
                     <td style={{ padding: '24px' }}>
                       <div>
                         <div style={{ fontWeight: 800, color: 'var(--s-text)', fontSize: 15, marginBottom: 4 }}>
-                          {item.collegeId?.collegeName || item.collegeName}
+                          {item.collegeId?.collegeName || item.collegeName || item.college || 'N/A'}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                           <SBadge color="gray" style={{ fontSize: 10 }}>{item.collegeId?.collegeCode || item.collegeCode || 'CODE N/A'}</SBadge>
+                           <SBadge color="gray" style={{ fontSize: 10 }}>{item.collegeId?.collegeCode || item.collegeCode || item.coc || 'CODE N/A'}</SBadge>
                            <span style={{ fontSize: 13, color: 'var(--s-primary)', fontWeight: 700 }}>
-                             {item.courseId?.courseName || item.course}
+                             {item.courseId?.courseName || item.department || item.course || 'N/A'}
                            </span>
                         </div>
                       </div>

@@ -92,8 +92,9 @@ exports.getAllColleges = async (req, res) => {
     }
 
     const colleges = await College.find(filter)
-      .populate("coursesOffered", "courseName branchCode")
-      .sort({ createdAt: -1 });
+      .select("collegeName stream category type district location state feesPerYear rank accreditation website collegeCode fetchStatus totalCoursesFound createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,

@@ -58,7 +58,7 @@ export default function StudentNavbar() {
 
   const handleLogout = () => {
     logout()
-    navigate('/signin')
+    navigate('/student/signin')
   }
 
   return (
@@ -93,14 +93,14 @@ export default function StudentNavbar() {
           {isAuthenticated && (
             <>
               <NavLink
-                to="/dashboard"
+                to="/student/dashboard"
                 end
                 className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
               >
                 Dashboard
               </NavLink>
               <NavLink
-                to="/notifications"
+                to="/student/notifications"
                 end
                 className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
                 style={{ position: 'relative' }}
@@ -132,7 +132,7 @@ export default function StudentNavbar() {
 
               {profileOpen && (
                 <div className="s-profile-dropdown s-anim-down">
-                  <Link to="/profile">
+                  <Link to="/student/profile">
                     <FiUser size={15} /> My Profile
                   </Link>
                   <Link to="/student/dashboard">
@@ -146,9 +146,9 @@ export default function StudentNavbar() {
               )}
             </div>
           ) : (
-            <div className="s-nav-desktop-auth" style={{ display: 'flex', gap: 8 }}>
-              <Link to="/signin" className="s-nav-auth-btn login">Sign In</Link>
-              <Link to="/signup" className="s-nav-auth-btn signup" style={{ background: 'var(--s-primary)' }}>Get Started</Link>
+            <div className="s-nav-desktop-auth" style={{ display: 'flex', gap: 16 }}>
+              <Link to="/student/signin" className="s-nav-auth-btn login">Sign In</Link>
+              <Link to="/student/signup" className="s-nav-auth-btn signup">Get Started</Link>
             </div>
           )}
 
@@ -207,7 +207,7 @@ export default function StudentNavbar() {
           ) : (
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               <Link to="/student/signin" className="s-nav-auth-btn login" style={{ flex: 1, justifyContent: 'center' }}>Sign In</Link>
-              <Link to="/student/signup" className="s-nav-auth-btn signup" style={{ flex: 1, justifyContent: 'center', background: 'var(--s-primary)' }}>Get Started</Link>
+              <Link to="/student/signup" className="s-nav-auth-btn signup" style={{ flex: 1, justifyContent: 'center' }}>Get Started</Link>
             </div>
           )}
         </div>

@@ -5,7 +5,6 @@ const ALLOWED_SETTING_FIELDS = [
   "maintenanceMode",
   "studentRegistration",
   "pushNotifications",
-  "analyticsTracking",
 ];
 
 const getOrCreateSettings = async () => {
@@ -56,5 +55,17 @@ exports.updateSettings = async (req, res) => {
   } catch (error) {
     console.error("Update settings error:", error);
     return res.status(500).json({ message: "Failed to update settings" });
+  }
+};
+
+exports.getPublicSettings = async (req, res) => {
+  try {
+    const settings = await getOrCreateSettings();
+    return res.json({
+      maintenanceMode: settings.maintenanceMode,
+      studentRegistration: settings.studentRegistration,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch public settings" });
   }
 };

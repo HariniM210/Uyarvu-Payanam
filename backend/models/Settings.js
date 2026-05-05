@@ -6,7 +6,13 @@ const settingsSchema = new mongoose.Schema(
     maintenanceMode: { type: Boolean, default: false },
     studentRegistration: { type: Boolean, default: true },
     pushNotifications: { type: Boolean, default: true },
-    analyticsTracking: { type: Boolean, default: true },
+    subAdmins: [
+      {
+        name: { type: String, required: true },
+        email: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ],
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",

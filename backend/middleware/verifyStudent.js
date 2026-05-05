@@ -1,7 +1,21 @@
 const jwt = require("jsonwebtoken");
-const Student = require("../models/Student");
+const User = require("../models/User");
+const Settings = require("../models/Settings");
 
 const verifyStudent = async (req, res, next) => {
+    try {
+        const settings = await Settings.findOne();
+        if (settings && settings.maintenanceMode) {
+            return res.status(503).json({ 
+                success: false, 
+                maintenance: true, 
+                message: "Platform is under maintenance. Please try again later." 
+            });
+        }
+    } catch (e) {
+        // Continue if settings fetch fails
+    }
+
     let token;
 
     if (
@@ -16,17 +30,18 @@ const verifyStudent = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret");
-        req.student = await Student.findById(decoded.id).select("-password");
+        const secret = process.env.JWT_SECRET || "fallback_secret";
+        const decoded = jwt.verify(token, secret);
+        req.student = await User.findById(decoded.id).select("-password");
 
         if (!req.student) {
-            return res.status(401).json({ message: "Not authorized, student not found" });
+            return res.status(401).json({ success: false, message: "Student not found" });
         }
 
         next();
     } catch (error) {
-        console.error("Token verification failed:", error);
-        res.status(401).json({ message: "Not authorized, token failed" });
+        console.error("Student Token verification failed:", error.message);
+        res.status(401).json({ success: false, message: "Invalid or expired token" });
     }
 };
 

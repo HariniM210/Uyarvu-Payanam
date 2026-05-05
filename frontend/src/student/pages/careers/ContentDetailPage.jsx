@@ -10,6 +10,7 @@ import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SLoader, SBtn, SBadge, SAlert } from '../../components/ui'
 import AuthModal from '../../components/ui/AuthModal'
+import MentorRequestModal from '../../components/mentor/MentorRequestModal'
 
 export default function ContentDetailPage() {
   const { slug } = useParams()
@@ -22,6 +23,7 @@ export default function ContentDetailPage() {
   const [related, setRelated] = useState([])
   const [alert, setAlert] = useState({ type: '', text: '' })
   const [authData, setAuthData] = useState({ isOpen: false, message: '' })
+  const [isMentorModalOpen, setIsMentorModalOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -298,7 +300,7 @@ export default function ContentDetailPage() {
                 {related.length === 0 ? (
                   <p style={{ color: '#94a3b8', fontSize: 14 }}>Explore other sections for more guides.</p>
                 ) : related.map(item => (
-                  <Link key={item._id} to={`/${item.targetClass.startsWith('class') ? item.targetClass : 'class'+item.targetClass}/content/${item.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: 15 }}>
+                  <Link key={item._id} to={`/student/career-path/class-${item.targetClass}/${item.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: 15 }}>
                     <div style={{ width: 80, height: 80, borderRadius: 16, background: '#f1f5f9', flexShrink:0, display:'grid', placeItems:'center' }}>
                        {item.coverImage ? <img src={item.coverImage} style={{ width: '100%', height: '100%', borderRadius: 16, objectFit: 'cover' }} /> : <FiBookOpen color="#3b82f6" />}
                     </div>
@@ -316,7 +318,7 @@ export default function ContentDetailPage() {
                 </div>
                 <h5 style={{ fontWeight: 900, fontSize: 17, marginBottom: 10 }}>Need Guidance?</h5>
                 <p style={{ fontSize: 13, color: '#64748b', marginBottom: 24, lineHeight: 1.6 }}>Talk to our experts for personalized career roadmap.</p>
-                <SBtn variant="primary" style={{ width: '100%', borderRadius:14 }}>Talk to Mentor</SBtn>
+                <SBtn variant="primary" style={{ width: '100%', borderRadius:14 }} onClick={() => setIsMentorModalOpen(true)}>Talk to Mentor</SBtn>
              </div>
           </div>
         </aside>
@@ -324,6 +326,7 @@ export default function ContentDetailPage() {
       </div>
 
       <AuthModal isOpen={authData.isOpen} onClose={() => setAuthData({...authData, isOpen:false})} message={authData.message} onLoginSuccess={() => fetchData()} />
+      <MentorRequestModal isOpen={isMentorModalOpen} onClose={() => setIsMentorModalOpen(false)} initialInterest={content?.title || ''} />
       {alert.text && <div style={{ position:'fixed', bottom:30, right:30, zIndex:1000 }}><SAlert type={alert.type} onClose={() => setAlert({ type:'', text:'' })}>{alert.text}</SAlert></div>}
     </div>
   )

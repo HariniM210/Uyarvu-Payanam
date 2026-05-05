@@ -59,6 +59,38 @@ export default function Class12Section() {
                     </div>
                 </div>
             </div>
+
+            {/* Explore Career Streams */}
+            <div className="s-anim-up s-d3" style={{ marginTop: 60 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 30 }}>
+                    <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, margin: 0 }}>Explore Career Streams</h3>
+                    <div style={{ height: 1, background: 'var(--s-border)', flex: 1 }} />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+                    {[
+                        { title: 'Engineering', icon: 'E', color: '#6366f1', courses: '400+', colleges: '420+' },
+                        { title: 'Medical', icon: 'M', color: '#ef4444', courses: '50+', colleges: '30+' },
+                        { title: 'Arts & Science', icon: 'A', color: '#8b5cf6', courses: '150+', colleges: '60+' },
+                        { title: 'Law', icon: 'L', color: '#f59e0b', courses: '15+', colleges: '10+' }
+                    ].map((cat, i) => (
+                        <SCard key={i} hover style={{ padding: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <div style={{ 
+                                width: 48, height: 48, borderRadius: 12, background: cat.color, color: '#fff',
+                                display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 18
+                            }}>
+                                {cat.icon}
+                            </div>
+                            <div>
+                                <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{cat.title}</h4>
+                                <div style={{ fontSize: 12, color: 'var(--s-text3)', fontWeight: 600, marginTop: 4 }}>
+                                    {cat.courses} Courses • {cat.colleges} Colleges
+                                </div>
+                            </div>
+                        </SCard>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }

@@ -23,10 +23,16 @@ import SettingsPage from './admin/SettingsPage'
 import CareerDetailsPage from './admin/CareerDetailsPage'
 import CourseDetailsEditPage from './admin/CourseDetailsEditPage'
 import CollegeCourseMappingPage from './admin/CollegeCourseMappingPage'
+import MentorRequestsPage from './admin/MentorRequestsPage'
+import OnboardingManagementPage from './admin/OnboardingManagementPage'
+import AssessmentManagementPage from './admin/AssessmentManagementPage'
+import AdmissionHelpRequestsPage from './admin/AdmissionHelpRequestsPage'
 
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
   { id: 'users', icon: '👥', label: 'User Management', path: 'users' },
+  { id: 'admission-help', icon: '🎓', label: 'Admission Help', path: 'admission-help' },
+  { id: 'mentor', icon: '🤝', label: 'Guidance Requests', path: 'mentor-requests' },
   { id: 'careers', icon: '🎯', label: 'Career Paths', path: 'careers' },
   { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
   { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
@@ -36,12 +42,16 @@ const NAV = [
   { id: 'notifications', icon: '🔔', label: 'Notifications', path: 'notifications' },
   { id: 'reports', icon: '📉', label: 'Reports & Analytics', path: 'reports' },
   { id: 'mapping', icon: '🔗', label: 'Course offered colleges', path: 'mapping' },
+  { id: 'assessment', icon: '🧠', label: 'Assessment Management', path: 'assessment' },
+  { id: 'onboarding', icon: '📝', label: 'Onboarding Management', path: 'onboarding' },
   { id: 'settings', icon: '⚙️', label: 'Settings', path: 'settings' },
 ]
 
 const PAGE_META = {
   '': { title: 'Dashboard', sub: 'Overview & Analytics' },
   'users': { title: 'User Management', sub: 'Manage student accounts' },
+  'admission-help': { title: 'Admission Help Requests', sub: 'Manage college admission assistance' },
+  'mentor-requests': { title: 'Guidance Requests', sub: 'Manage student-mentor interactions' },
   'careers': { title: 'Career Paths', sub: 'Hub for academic roadmaps' },
   'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
   'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
@@ -51,6 +61,8 @@ const PAGE_META = {
   'notifications': { title: 'Notifications', sub: 'Send alerts to students' },
   'reports': { title: 'Reports & Analytics', sub: 'Data export & trends' },
   'mapping': { title: 'College-Course Mapping', sub: 'Connect courses to colleges' },
+  'assessment': { title: 'Assessment Management', sub: 'Psychometric test questions' },
+  'onboarding': { title: 'Onboarding Management', sub: 'Initial setup questions' },
   'settings': { title: 'Settings', sub: 'System configuration' },
 }
 
@@ -145,6 +157,8 @@ export default function AdminLayout() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="users" element={<UsersPage />} />
+            <Route path="admission-help" element={<AdmissionHelpRequestsPage />} />
+            <Route path="mentor-requests" element={<MentorRequestsPage />} />
             
             {/* Career Path Module */}
             <Route path="careers" element={<CareersPage />} />
@@ -162,6 +176,8 @@ export default function AdminLayout() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="mapping" element={<CollegeCourseMappingPage />} />
+            <Route path="assessment" element={<AssessmentManagementPage />} />
+            <Route path="onboarding" element={<OnboardingManagementPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Routes>
         </main>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import {
-  FiArrowLeft, FiHeart, FiFlag, FiTarget, FiStar,
+  FiArrowLeft, FiArrowRight, FiHeart, FiFlag, FiTarget, FiStar,
   FiAward, FiActivity, FiVideo, FiBriefcase, FiInfo,
   FiBookmark, FiCompass, FiSearch, FiLayers, FiDollarSign,
   FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin
@@ -63,14 +63,38 @@ const CLASS_SECTIONS = {
 }
 
 const STREAM_TABS = ["Science", "Commerce", "Arts", "Diploma"];
-const SCHOLARSHIP_TABS = ["Government", "State Schemes", "Merit", "NSP", "Process", "Tips"];
-const COLLEGE_TABS = ['Engineering', 'Medical', 'Arts & Science', 'Law', 'Polytechnic', 'Agriculture', 'Others'];
+const SCHOLARSHIP_TABS = ["Merit", "NSP"];
+const CATEGORY_TABS = [
+  "Engineering", "Medical", "Arts & Science", "Law", "Commerce", "Management",
+  "IT & Computer", "Agriculture", "Architecture", "Design", "Hotel Management", 
+  "ITI", "Polytechnic", "Media & Journalism", "Others"
+];
+const COLLEGE_TABS = CATEGORY_TABS;
 const EXAM_TABS = {
   "5": ["Science", "Mathematics", "English", "GK", "Multiple", "Defence"],
   "8": ["Scholarship", "Mathematics", "Science", "English", "Defence"],
-  "10": ["Engineering", "Diploma", "Skill", "Defence", "School", "Science", "Mathematics"],
-  "12": ["Engineering", "Medical", "Law", "Commerce", "Science", "Design", "Defence", "Multiple", "Others"],
+  "10": [],
+  "12": CATEGORY_TABS,
   "default": ["Scholarship Exam", "Skill Exams", "Government Job", "Defence Career", "Future Goals"]
+};
+
+const CLASS_10_STREAMS_DATA = {
+    Science: [
+        { title: "1️⃣ Maths + Biology (PCMB)", subjects: ["Physics", "Chemistry", "Maths", "Biology"], bestFor: "Students who want both Engineering + Medical options", warning: "Heavy workload" },
+        { title: "2️⃣ Maths + Computer Science (PCM + CS)", subjects: ["Physics", "Chemistry", "Maths", "Computer Science"], bestFor: "Engineering, IT / Software, Coding careers" },
+        { title: "3️⃣ Biology + Nursing Track (PCB)", subjects: ["Physics", "Chemistry", "Biology"], bestFor: "Nursing, Medical field, Paramedical courses", note: "“Nursing” is not always a subject in school, but a career path after PCB" },
+        { title: "4️⃣ Maths + Business Maths", subjects: ["Maths / Applied Maths", "Commerce OR Science mix"], bestFor: "Data analysis, Finance + Tech careers" }
+    ],
+    Commerce: [
+        { title: "5️⃣ Accountancy + Business Studies + Economics", subjects: ["Accountancy", "Business Studies", "Economics", "Maths (optional)"], bestFor: "CA / CMA / CS, Business, Banking" },
+        { title: "6️⃣ Commerce + Computer Science", subjects: ["Accountancy", "Business Studies", "Computer Science", "Economics"], bestFor: "FinTech, Business + IT combination" },
+        { title: "7️⃣ Commerce + Business Maths", subjects: ["Accountancy", "Economics", "Business Maths"], bestFor: "Finance, Analytics, Banking exams" }
+    ],
+    Arts: [
+        { title: "8️⃣ History + Political Science + Geography", subjects: [], bestFor: "Government exams, UPSC / TNPSC, Teaching" },
+        { title: "9️⃣ Psychology + Sociology + English", subjects: [], bestFor: "Psychology, HR, Social work" },
+        { title: "🔟 Arts + Computer Applications", subjects: [], bestFor: "Media, Digital careers, Design" }
+    ]
 };
 
 const ExamCardDetails = ({ exam }) => {
@@ -206,9 +230,10 @@ export default function ClassLevelPage(props) {
           
           const res = await courseService.getExplorerData(query)
           if (res.success) {
-             setExplorerData(res.data)
-             if (activeSec === 'Colleges') setColleges(res.data)
-             if (activeSec === 'Careers') setCourses(res.data)
+             const data = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : [])
+             setExplorerData(data)
+             if (activeSec === 'Colleges') setColleges(data)
+             if (activeSec === 'Careers') setCourses(data)
           }
         }
       } catch (err) {
@@ -249,7 +274,7 @@ export default function ClassLevelPage(props) {
       }
     }
     fetchMapping()
-  }, [activeSec, cleanLevel])
+  }, [activeSec, cleanLevel, activeSubTab, searchQuery])
 
   const fetchContent = async () => {
     try {
@@ -328,6 +353,14 @@ export default function ClassLevelPage(props) {
     }
 
     try {
+      // Determine contentType
+      let contentType = 'ClassContent';
+      if (item.isDirect) contentType = 'Scholarship';
+      else if (item.conductingBody) contentType = 'Exam';
+      else if (item.courseName) contentType = 'Course';
+      else if (item.careerName) contentType = 'CareerPath';
+      else if (item.sectionType === 'Careers') contentType = 'CareerPath';
+
       if (savedIds.has(item._id)) {
         await userActionService.unsaveItem(item._id)
         const newSet = new Set(savedIds)
@@ -335,9 +368,9 @@ export default function ClassLevelPage(props) {
         setSavedIds(newSet)
         setAlert({ type: 'info', text: 'Removed from your library' })
       } else {
-        await userActionService.saveItem(item._id, 'ClassContent')
+        await userActionService.saveItem(item._id, contentType)
         setSavedIds(new Set([...savedIds, item._id]))
-        setAlert({ type: 'success', text: 'Saved to success path! âœ¨' })
+        setAlert({ type: 'success', text: 'Saved to success path! ✨' })
       }
       setTimeout(() => setAlert({ type: '', text: '' }), 3000)
     } catch (err) {
@@ -372,7 +405,7 @@ export default function ClassLevelPage(props) {
       
       let matchesSubTab = true;
       if (activeSubTab !== 'All') {
-        if (activeSec === 'Streams' || activeSec === 'Scholarships' || activeSec === 'Entrance Exams') {
+        if (['Streams', 'Scholarships', 'Entrance Exams', 'Careers'].includes(activeSec)) {
            matchesSubTab = c.category === activeSubTab || c.subCategoryLabel === activeSubTab;
         }
       }
@@ -402,7 +435,7 @@ export default function ClassLevelPage(props) {
       if (item.applicationLink) window.open(item.applicationLink, '_blank');
       else alert("No direct application link provided for this item.");
     } else {
-      navigate(`/class${cleanLevel}/content/${item.slug}`);
+      navigate(`/student/career-path/class-${cleanLevel}/${item.slug}`);
     }
   }
 
@@ -411,16 +444,26 @@ export default function ClassLevelPage(props) {
       {/* Header Section */}
       <section style={{ 
         padding: '50px 24px', textAlign: 'center', 
-        background: '#fff', 
+        background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', color: '#fff',
         borderBottom: '1px solid #f1f5f9', marginBottom: 40,
       }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 'clamp(32px, 5vw, 48px)', margin: '0 0 16px', color: '#1e293b', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 'clamp(32px, 5vw, 48px)', margin: '0 0 16px', color: '#fff', letterSpacing: '-0.02em' }}>
             Class {cleanLevel} Guidance
           </h1>
-          <p style={{ fontSize: 18, color: '#64748b', maxWidth: 650, margin: '0 auto' }}>
+          <p style={{ fontSize: 18, color: '#e0e7ff', maxWidth: 650, margin: '0 auto 24px' }}>
             Explore scholarships, skills, exams, habits, and future opportunities.
           </p>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+            {Number(cleanLevel) === 12 && (
+              <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
+                 🏫 Explore Colleges
+              </SBtn>
+            )}
+            <SBtn variant="white" onClick={() => document.getElementById('explorer-start')?.scrollIntoView({ behavior: 'smooth' })} style={{ borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
+               🚀 Start Exploring
+            </SBtn>
+          </div>
         </div>
       </section>
 
@@ -453,17 +496,18 @@ export default function ClassLevelPage(props) {
         </div>
 
         {/* Sub-Tabs for Targeted Sections */}
-        {['Streams', 'Scholarships', 'Entrance Exams', 'Colleges'].includes(activeSec) && (
+        {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && (
           <div style={{ 
             display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 10px 30px', 
             marginBottom: 30, justifyContent:'center', flexWrap:'wrap'
           }}>
-            {['All', ...(
+            {(activeSec === 'Scholarships' ? [] : ['All']).concat(
                activeSec === 'Streams' ? STREAM_TABS : 
                activeSec === 'Scholarships' ? SCHOLARSHIP_TABS : 
                activeSec === 'Colleges' ? COLLEGE_TABS :
+               activeSec === 'Careers' ? CATEGORY_TABS :
                (EXAM_TABS[cleanLevel] || EXAM_TABS.default)
-            )].map(tab => (
+            ).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveSubTab(tab)}
@@ -508,21 +552,83 @@ export default function ClassLevelPage(props) {
             </div>
 
              <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(340px, 1fr))' : '1fr', gap: 32 }}>
-                {activeSec === 'Careers' && filteredContent.length > 0 && (
+                {activeSec === 'Careers' && cleanLevel !== '12' && filteredContent.length > 0 && (
                    <div style={{ marginBottom: 40 }}>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:32 }}>
                          {filteredContent.map(item => (
-                            <div key={item._id} style={{ background:'#fff', padding:32, borderRadius:32, border:'1px solid #f1f5f9' }}>
+                            <div key={item._id} style={{ background:'#fff', padding:32, borderRadius:32, border:'1px solid #f1f5f9', position: 'relative' }}>
+                               <button 
+                                 onClick={() => handleSaveAction(item)} 
+                                 style={{ 
+                                   position:'absolute', top:24, right:24, width:44, height:44, 
+                                   borderRadius:99, background:'#f8fafc', border:'1px solid #e2e8f0', cursor:'pointer', 
+                                   display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
+                                   transition: 'all 0.2s'
+                                 }}
+                               >
+                                 {savedIds.has(item._id) ? <FiHeart size={20} fill="#ef4444" /> : <FiBookmark size={20} />}
+                               </button>
                                <SBadge color="blue">{item.category}</SBadge>
                                <h3 style={{ fontSize:22, fontWeight:900, marginTop:16 }}>{item.title}</h3>
                                <p style={{ color:'#64748b', margin:'12px 0 20px' }}>{item.shortDescription}</p>
-                               <SBtn variant="outline" onClick={() => navigate(`/class${cleanLevel}/content/${item.slug || item._id}`)}>View Guidance</SBtn>
+                               <SBtn variant="outline" onClick={() => navigate(`/student/career-path/class-${cleanLevel}/${item.slug || item._id}`)}>View Guidance</SBtn>
                             </div>
                          ))}
                       </div>
                    </div>
                 )}
-               {((activeSec === 'Careers' || activeSec === 'Colleges') && cleanLevel === '12') || (activeSec === 'Streams' && cleanLevel === '10') ? (
+               {/* --- CLASS 10 STREAMS LOGIC (STATIC CONTENT) --- */}
+               {activeSec === 'Streams' && cleanLevel === '10' && activeSubTab !== 'Diploma' && (
+                  <div style={{ gridColumn: '1/-1', marginBottom: 40 }}>
+                    {Object.entries(CLASS_10_STREAMS_DATA)
+                       .filter(([groupName]) => activeSubTab === 'All' || groupName === activeSubTab)
+                       .map(([groupName, courses]) => (
+                         <div key={groupName} style={{ marginBottom: 40 }}>
+                            <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: groupName === 'Science' ? 'var(--s-blue)' : groupName === 'Commerce' ? 'var(--s-green)' : groupName === 'Arts' ? 'var(--s-purple)' : 'var(--s-orange)', marginBottom: 20, borderBottom: `2px solid ${groupName === 'Science' ? 'var(--s-blue-l)' : groupName === 'Commerce' ? 'var(--s-green-l)' : groupName === 'Arts' ? 'var(--s-purple-l)' : 'var(--s-orange-l)'}`, paddingBottom: 10 }}>
+                                {groupName === 'Science' ? "🔬 SCIENCE GROUP COURSES" : groupName === 'Commerce' ? "💼 COMMERCE GROUP COURSES" : groupName === 'Arts' ? "🎨 ARTS / HUMANITIES COURSES" : "🔧 VOCATIONAL / DIPLOMA COURSES"}
+                            </h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+                                {courses.map((course, cIdx) => (
+                                    <div key={cIdx} style={{ background: '#fff', borderRadius: 24, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, borderTop: `4px solid ${groupName === 'Science' ? 'var(--s-blue)' : groupName === 'Commerce' ? 'var(--s-green)' : groupName === 'Arts' ? 'var(--s-purple)' : 'var(--s-orange)'}`, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+                                        <h4 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 18, margin: 0 }}>{course.title}</h4>
+                                        
+                                        {course.subjects.length > 0 && (
+                                            <div>
+                                                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1 }}>👉 Subjects</span>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                                                    {course.subjects.map((sub, i) => <SBadge key={i} color="gray">{sub}</SBadge>)}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div style={{ background: 'var(--s-surface2)', padding: '12px 16px', borderRadius: 12 }}>
+                                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-primary)', textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <FiActivity /> Best For
+                                            </span>
+                                            <p style={{ fontSize: 14, fontWeight: 600, margin: '6px 0 0', color: 'var(--s-text)' }}>{course.bestFor}</p>
+                                        </div>
+
+                                        {course.warning && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#d97706', fontSize: 13, fontWeight: 600, background: '#fef3c7', padding: '8px 12px', borderRadius: 8 }}>
+                                                ⚠️ {course.warning}
+                                            </div>
+                                        )}
+
+                                        {course.note && (
+                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, color: 'var(--s-text2)', fontSize: 13, background: 'var(--s-surface2)', padding: '8px 12px', borderRadius: 8 }}>
+                                                💡 {course.note}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                         </div>
+                    ))}
+                  </div>
+               )}
+
+               {/* --- CLASS 12 & DIPLOMA LOGIC (uses explorerData) --- */}
+               {((activeSec === 'Careers' || activeSec === 'Colleges') && cleanLevel === '12') || (activeSec === 'Streams' && cleanLevel === '10' && (activeSubTab === 'All' || activeSubTab === 'Diploma')) ? (
                   explorerLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
                   ) : explorerData.length === 0 ? (
@@ -530,115 +636,47 @@ export default function ClassLevelPage(props) {
                       <SEmpty icon={activeSec === 'Careers' ? <FiBriefcase size={48} /> : <FiMapPin size={48} />} title={`No ${activeSec.toLowerCase()} found`} desc="We couldn't find matching data for this category." />
                     </div>
                   ) : (
-                    explorerData.map(group => (
-                       <div key={group.categoryName} style={{ 
-                         background:'#fff', borderRadius:28, border:'1px solid #f1f5f9', 
-                         overflow:'hidden', boxShadow:'0 4px 6px -1px rgba(0,0,0,0.02), 0 10px 15px -3px rgba(0,0,0,0.03)', 
-                         gridColumn: '1/-1', marginBottom: 20
-                       }}>
-                          <div 
-                            onClick={() => setExpandedCourseCat(expandedCourseCat === group.categoryName ? null : group.categoryName)}
-                            style={{ padding:'28px 32px', display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer', background: expandedCourseCat === group.categoryName ? '#f8fafc' : '#fff', transition:'all 0.2s' }}
-                          >
-                             <div style={{ display:'flex', alignItems:'center', gap:20 }}>
-                                <div style={{ 
-                                  width:56, height:56, borderRadius:16, 
-                                  background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)', 
-                                  color:'#fff', display:'grid', placeItems:'center', fontWeight:900, fontSize:20,
-                                  boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)'
-                                }}>
-                                   {group.categoryName.substring(0, 1).toUpperCase()}
-                                </div>
-                                <div>
-                                   <h3 style={{ margin:0, fontSize:24, fontWeight:900, color:'#1e293b' }}>{group.categoryName}</h3>
-                                   <div style={{ display:'flex', gap:20, marginTop:8 }}>
-                                      <span style={{ fontSize:14, color:'#64748b', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}>
-                                         <FiBookOpen size={16} color="#6366f1" /> {group.courseCount} Courses
-                                      </span>
-                                      <span style={{ fontSize:14, color:'#64748b', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}>
-                                         <FiMapPin size={16} color="#f59e0b" /> {group.collegeCount} Colleges
-                                      </span>
-                                   </div>
-                                 </div>
-                             </div>
+                    <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                      {explorerData.map(group => (
+                        <div 
+                          key={group.categoryName} 
+                          onClick={() => navigate(`/student/colleges/category/${group.categoryName}`)}
+                          style={{ 
+                            background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', 
+                            padding: '32px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            boxShadow:'0 10px 15px -3px rgba(0,0,0,0.04)', cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          className="insight-header-hover hover-lift"
+                        >
+                          <div style={{ display:'flex', alignItems:'center', gap:24 }}>
                              <div style={{ 
-                               background:'#f1f5f9', width:44, height:44, borderRadius:12, 
-                               display:'grid', placeItems:'center', color:'#64748b', transition:'0.3s'
+                               width:64, height:64, borderRadius:20, 
+                               background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', 
+                               color:'#fff', display:'grid', placeItems:'center', fontWeight:900, fontSize:24,
+                               boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)'
                              }}>
-                                {expandedCourseCat === group.categoryName ? <FiChevronUp size={24} /> : <FiChevronDown size={24} />}
+                                {group.categoryName.substring(0, 1).toUpperCase()}
                              </div>
+                             <div>
+                                <h3 style={{ margin:0, fontSize:24, fontWeight:900, color:'#1e293b', letterSpacing: '-0.02em' }}>{group.categoryName} Insight</h3>
+                                <div style={{ display:'flex', gap:24, marginTop:8 }}>
+                                   <span style={{ fontSize:14, color:'#64748b', fontWeight:700, display:'flex', alignItems:'center', gap:8 }}>
+                                      <FiBookOpen size={16} color="#6366f1" /> {group.courseCount} Specialized Courses
+                                   </span>
+                                   <span style={{ fontSize:14, color:'#64748b', fontWeight:700, display:'flex', alignItems:'center', gap:8 }}>
+                                      <FiMapPin size={16} color="#f59e0b" /> {group.collegeCount} Recognized Colleges
+                                   </span>
+                                </div>
+                              </div>
                           </div>
-                          
-                          {expandedCourseCat === group.categoryName && (
-                             <div style={{ padding: '0 32px 32px', borderTop:'1px solid #f1f5f9' }}>
-                                {/* COURSES SECTION */}
-                                {group.courses.length > 0 && (
-                                   <div style={{ marginTop: 32, marginBottom: 40 }}>
-                                      <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24 }}>
-                                         <h4 style={{ fontSize:12, fontWeight:900, color:'#94a3b8', textTransform:'uppercase', letterSpacing:2, whiteSpace:'nowrap' }}>Recommended Courses</h4>
-                                         <div style={{ height:1, background:'#f1f5f9', flex:1 }} />
-                                      </div>
-                                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))', gap:24 }}>
-                                         {group.courses.map(c => (
-                                           <div key={c._id} style={{ 
-                                             border:'1px solid #f1f5f9', borderRadius:24, padding:24, 
-                                             display:'flex', flexDirection:'column', background:'#fafafa',
-                                             transition: 'all 0.2s'
-                                           }} className="hover-lift">
-                                              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:16 }}>
-                                                 <SBadge color="blue">{c.duration || 'N/A'}</SBadge>
-                                                 <span style={{ fontSize:11, fontWeight:800, color:'#94a3b8', textTransform:'uppercase' }}>{c.sourceName}</span>
-                                              </div>
-                                              <h4 style={{ margin:'0 0 12px', fontSize:19, fontWeight:900, color:'#1e293b', lineHeight:1.3 }}>{c.courseName}</h4>
-                                              <div style={{ marginTop:'auto', display:'flex', justifyContent:'space-between', alignItems:'center', paddingTop:12 }}>
-                                                 <span style={{ fontSize:12, fontWeight:800, color:'#6366f1', background:'#eef2ff', padding:'4px 10px', borderRadius:8 }}>{c.level}</span>
-                                                 <SBtn variant="primary" size="sm" style={{ borderRadius:12, padding:'8px 16px' }} onClick={() => navigate(`/course/${c._id}`)}>
-                                                    Full Syllabus
-                                                 </SBtn>
-                                              </div>
-                                           </div>
-                                         ))}
-                                      </div>
-                                   </div>
-                                )}
- 
-                                {/* COLLEGES SECTION */}
-                                {group.colleges.length > 0 && (
-                                   <div>
-                                      <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24 }}>
-                                         <h4 style={{ fontSize:12, fontWeight:900, color:'#94a3b8', textTransform:'uppercase', letterSpacing:2, whiteSpace:'nowrap' }}>Available at Top Institutions</h4>
-                                         <div style={{ height:1, background:'#f1f5f9', flex:1 }} />
-                                      </div>
-                                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:24 }}>
-                                         {group.colleges.map(clg => (
-                                            <div key={clg._id} style={{ 
-                                              background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', padding:28,
-                                              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)'
-                                            }} className="hover-lift">
-                                               <div style={{ display:'flex', gap:16, alignItems:'center', marginBottom:16 }}>
-                                                  <div style={{ width:48, height:48, borderRadius:14, background:'#f0f9ff', color:'#0ea5e9', display:'grid', placeItems:'center' }}>
-                                                     <FiMapPin size={22} />
-                                                  </div>
-                                                  <h4 style={{ margin:0, fontSize:17, fontWeight:900, color:'#1e293b', lineHeight:1.3 }}>{clg.collegeName}</h4>
-                                               </div>
-                                               <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:14, color:'#64748b', marginBottom:24, fontWeight:500 }}>
-                                                  {clg.district}, {clg.location}
-                                               </div>
-                                               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', borderTop:'1px solid #f8fafc', paddingTop:20 }}>
-                                                  <span style={{ fontSize:12, fontWeight:800, color:'#0891b2', background:'#ecfeff', padding:'4px 12px', borderRadius:8 }}>{clg.stream}</span>
-                                                  <SBtn variant="outline" size="sm" style={{ borderRadius:12, fontWeight:700 }} onClick={() => navigate(`/colleges/${clg._id}`)}>
-                                                     Explore Campus
-                                                  </SBtn>
-                                               </div>
-                                            </div>
-                                         ))}
-                                      </div>
-                                   </div>
-                                )}
-                             </div>
-                          )}
-                       </div>
-                    )))
+                          <div style={{ background: '#f8fafc', width: 48, height: 48, borderRadius: 12, display: 'grid', placeItems: 'center', color: '#64748b' }}>
+                             <FiArrowRight size={22} />
+                          </div>
+                        </div>
+                      ))}
+                     </div>
+                   )
                 ) : activeSec === 'College Mapping' ? (
                   mappingLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
@@ -669,7 +707,7 @@ export default function ClassLevelPage(props) {
                         </div>
                         
                         <div style={{ marginTop:20, display:'flex', justifyContent:'flex-end' }}>
-                          <SBtn variant="outline" size="sm" onClick={() => navigate(`/colleges/${clg._id}`)}>View College Details</SBtn>
+                          <SBtn variant="outline" size="sm" onClick={() => navigate(`/student/colleges/${clg._id}`)}>View College Details</SBtn>
                         </div>
                       </div>
                     ))
@@ -723,7 +761,7 @@ export default function ClassLevelPage(props) {
 
                      {/* Tamil Nadu Priority Info */}
                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 24, borderRadius: 24, marginBottom: 40 }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#166534', marginBottom: 12 }}>📍 Tamil Nadu Important Info</h3>
+                        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#166534', marginBottom: 12 }}>🗺️ Tamil Nadu Important Info</h3>
                         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                            <SBadge color="green"><strong>Engineering:</strong> TNEA (No entrance, marks based)</SBadge>
                            <SBadge color="green"><strong>Medical:</strong> NEET is compulsory</SBadge>
@@ -798,8 +836,8 @@ export default function ClassLevelPage(props) {
                           </button>
 
                           <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', paddingRight: 50 }}>
-                             <SBadge color="green">SCHOLARSHIP</SBadge>
-                             {item.category && <SBadge color="blue">{item.category}</SBadge>}
+                             <SBadge color="green">Scholarship</SBadge>
+
                              {(item.grades || []).map(g => <SBadge key={g} color="purple">{g}</SBadge>)}
                           </div>
                           
@@ -834,7 +872,7 @@ export default function ClassLevelPage(props) {
                              style={{ width:'100%', borderRadius:16, padding:'14px 0', border: '2px solid #3b82f6', color: '#3b82f6' }} 
                              onClick={() => handleCardClick(item)}
                           >
-                             Apply / View Details Ã¢â€ â€”
+                             Apply / View Details ↗
                           </SBtn>
                         </div>
                       </div>
