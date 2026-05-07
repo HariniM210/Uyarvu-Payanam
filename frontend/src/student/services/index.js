@@ -38,4 +38,7 @@ export const examService = {
 
 export const scholarshipService = {
   getAll: (params) => studentApi.get('/scholarships', { params }).then(r => r.data),
+  getById: (id) => studentApi.get(`/scholarships/${id}`).then(r => r.data),
 }
+
+export { mentorRequestService } from './mentorRequestService'

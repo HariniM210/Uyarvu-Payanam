@@ -3,7 +3,7 @@ import { Card, LevelBadge, DataTable, TR, TD, ActionBtn, FiltersRow, SearchInput
 import { adminService } from '../../../services/adminService'
 import { courseService } from '../../../services/courseService'
 
-const STREAMS = ['All', 'Engineering', 'Medical', 'Arts & Science', 'Law', 'Polytechnic', 'Agriculture', 'Others']
+const STREAMS = ['All', 'Engineering', 'Medical', 'Arts & Science', 'Law', 'Commerce', 'Management', 'IT & Computer', 'Agriculture', 'Architecture', 'Design', 'Hotel Management', 'ITI', 'Polytechnic', 'Media & Journalism', 'Others']
 
 const TN_DISTRICTS = [
   'All', 'Ariyalur', 'Chengalpattu', 'Chennai', 'Coimbatore', 'Cuddalore',
@@ -285,7 +285,7 @@ export default function CollegesPage() {
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--text3)' }}>No colleges found</div>
         ) : (
           <DataTable
-            columns={['College Name', 'Stream', 'District', 'Location', 'Courses (Verified)', 'Auto Fetch', 'Actions']}
+            columns={['College Name', 'Stream', 'District', 'Location', 'Auto Fetch', 'Actions']}
             data={colleges}
             renderRow={(c) => (
               <TR key={c._id}>
@@ -296,9 +296,6 @@ export default function CollegesPage() {
                 <TD><LevelBadge level={c.stream} /></TD>
                 <TD style={{ color: 'var(--text2)' }}>{c.district || '\u2014'}</TD>
                 <TD style={{ color: 'var(--text3)' }}>{c.location || '\u2014'}</TD>
-                <TD style={{ color: 'var(--primary)', fontWeight: 800 }}>
-                  {(c.coursesOffered || []).length} Verified
-                </TD>
                 <TD>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div style={{ display: 'flex', gap: 4 }}>

@@ -7,6 +7,7 @@ const {
   deleteCollege,
   bulkInsertColleges,
   getOfferedCourses,
+  importCoursesFromPdf,
 } = require("../controllers/collegeController");
 const {
   fetchCollegeCourses,
@@ -28,6 +29,7 @@ router.post("/", verifyAdmin, createCollege);
 router.post("/bulk", verifyAdmin, bulkInsertColleges);
 router.put("/:id", verifyAdmin, updateCollege);
 router.delete("/:id", verifyAdmin, deleteCollege);
+router.post("/import-courses-from-pdf", verifyAdmin, importCoursesFromPdf);
 
 // Automated Course Fetching Routes
 router.post("/bulk/fetch-all-courses", verifyAdmin, bulkFetchAllCourses);

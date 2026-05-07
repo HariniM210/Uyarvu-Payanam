@@ -20,7 +20,6 @@ const SECTION_ICONS = {
   'Videos': FiVideo,
   'Habits': FiHeart,
   'Streams': FiLayout,
-  'Scholarships': FiAward,
   'Entrance Exams': FiFileText,
   'Resources': FiAnchor,
   'FAQs': FiInfo

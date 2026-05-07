@@ -8,16 +8,16 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi'
 const API_BASE = 'http://localhost:5000/api'
 
 export default function LoginPage() {
-  const { login, isAuthenticated }  = useStudentAuth()
+  const { login, isAuthenticated, student }  = useStudentAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
-  let from       = location.state?.from?.pathname || '/dashboard'
-  if (from === '/signin' || from === '/signup') from = '/dashboard'
+  let from       = location.state?.from?.pathname || '/student/dashboard'
+  if (from === '/signin' || from === '/signup') from = '/student/dashboard'
 
   // If already authenticated, redirect to dashboard
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+      navigate('/student/dashboard', { replace: true })
     }
   }, [isAuthenticated, navigate])
 
@@ -68,7 +68,7 @@ export default function LoginPage() {
     }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link to="/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <Link to="/student/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             <img
               src="/logo.png"
               alt="Uyarvu Payanam"
@@ -124,7 +124,7 @@ export default function LoginPage() {
             {/* Forgot Password Link */}
             <div style={{ textAlign: 'right', marginTop: -10 }}>
               <Link
-                to="/forgot-password"
+                to="/student/forgot-password"
                 style={{
                   fontSize: 13, fontWeight: 600, color: 'var(--s-primary)',
                   textDecoration: 'none', fontFamily: 'var(--s-font-display)',
@@ -144,14 +144,14 @@ export default function LoginPage() {
           <SDivider label="or" />
           <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--s-text3)' }}>
             Don't have an account?{' '}
-            <Link to="/signup" style={{ color: 'var(--s-primary)', fontWeight: 700, textDecoration: 'none' }}>
+            <Link to="/student/signup" style={{ color: 'var(--s-primary)', fontWeight: 700, textDecoration: 'none' }}>
               Create one free →
             </Link>
           </p>
         </SCard>
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Link to="/home" style={{
+          <Link to="/student/home" style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             fontSize: 14, fontWeight: 600, color: 'var(--s-text3)',
             textDecoration: 'none', fontFamily: 'var(--s-font-display)',

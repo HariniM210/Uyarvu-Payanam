@@ -97,7 +97,7 @@ export default function AddCourseModal({ onClose, onCourseAdded }) {
              onChange={handleInputChange}
              style={{ background:'var(--surface2)', border:'1.5px solid var(--border)', color:'var(--text)', borderRadius:10, padding:'9px 12px', fontSize:13.5, fontFamily:'Outfit', outline:'none', width:'100%' }}
            >
-             {["Agriculture", "Architecture", "Arts", "Commerce", "Design", "Diploma", "Engineering", "Hotel Management", "IT & Computer", "ITI", "Law", "Media & Journalism", "Medical", "Polytechnic", "Science"].map(cat => (
+             {["Engineering", "Medical", "Arts & Science", "Law", "Commerce", "Management", "IT & Computer", "Agriculture", "Architecture", "Design", "Hotel Management", "ITI", "Polytechnic", "Media & Journalism", "Others"].map(cat => (
                <option key={cat} value={cat}>{cat}</option>
              ))}
            </select>

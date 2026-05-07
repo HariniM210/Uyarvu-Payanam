@@ -26,6 +26,8 @@ export default function CollegeCourseMappingPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [alert, setAlert] = useState({ type: '', text: '' })
+  const [collegeSearch, setCollegeSearch] = useState('')
+  const [showCollegeDropdown, setShowCollegeDropdown] = useState(false)
   const [suggestedCourses, setSuggestedCourses] = useState([])
   const [showBulkModal, setShowBulkModal] = useState(false)
   const [collegeDetails, setCollegeDetails] = useState(null)
@@ -57,6 +59,11 @@ export default function CollegeCourseMappingPage() {
         return c.stream === selectedStream || (c.streamsOffered && c.streamsOffered.includes(selectedStream));
       })
     : colleges
+
+  const filteredCollegesBySearch = filteredColleges.filter(c => 
+    c.collegeName.toLowerCase().includes(collegeSearch.toLowerCase()) || 
+    (c.collegeCode && c.collegeCode.includes(collegeSearch))
+  )
 
   const handleCollegeChange = async (id) => {
     setSelectedCollege(id)
@@ -166,6 +173,26 @@ export default function CollegeCourseMappingPage() {
     }
   }
 
+  const handlePdfImport = async () => {
+    if (!window.confirm("This will scan the TNEA PDF and update all Engineering colleges. It may take a minute. Proceed?")) return
+    
+    try {
+      setLoading(true)
+      setAlert({ type: 'info', text: 'Starting PDF deep-scan... 📄' })
+      const res = await axiosInstance.post('/colleges/import-courses-from-pdf')
+      if (res.data.success) {
+        setAlert({ type: 'success', text: `Sync complete! Parsed: ${res.data.stats.totalCollegesParsed}, Updated: ${res.data.stats.updatedColleges}, Removed: ${res.data.stats.removedColleges}` })
+        fetchInitialData()
+      }
+    } catch (err) {
+      console.error('PDF Import failed:', err)
+      setAlert({ type: 'error', text: 'PDF Import failed. Ensure the file exists on server.' })
+    } finally {
+      setLoading(false)
+      setTimeout(() => setAlert({ type: '', text: '' }), 6000)
+    }
+  }
+
   const getSourceBadge = (source) => {
     switch(source) {
       case 'verified_mapping':
@@ -195,13 +222,22 @@ export default function CollegeCourseMappingPage() {
         <CardHeader 
           title="⚡ Actual College-Course Mapping Engine" 
           extra={
-            <SBtn 
-              variant="primary" 
-              onClick={() => setShowBulkModal(true)}
-              style={{ padding: '8px 20px', borderRadius: 12, fontSize: 12 }}
-            >
-              🚀 Bulk Auto-Map Engine
-            </SBtn>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <SBtn 
+                variant="outline" 
+                onClick={handlePdfImport}
+                style={{ padding: '8px 20px', borderRadius: 12, fontSize: 12, borderColor: 'var(--primary)', color: 'var(--primary)' }}
+              >
+                📄 Sync from TNEA PDF
+              </SBtn>
+              <SBtn 
+                variant="primary" 
+                onClick={() => setShowBulkModal(true)}
+                style={{ padding: '8px 20px', borderRadius: 12, fontSize: 12 }}
+              >
+                🚀 Bulk Auto-Map Engine
+              </SBtn>
+            </div>
           }
         />
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -239,22 +275,53 @@ export default function CollegeCourseMappingPage() {
 
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: 'var(--text3)', marginBottom: 12, letterSpacing: '0.05em' }}>
-                  STEP 2: SELECT COLLEGE
+                  STEP 2: SEARCH INSTITUTION
                 </label>
                 <div style={{ position: 'relative', marginBottom: 12 }}>
-                  <select 
-                    value={selectedCollege}
-                    onChange={e => handleCollegeChange(e.target.value)}
-                    style={{ width: '100%', padding: '14px', borderRadius: 12, border: '2px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14, fontWeight: 600, appearance: 'none' }}
-                  >
-                    <option value="">-- Select Institution --</option>
-                    {filteredColleges.map(c => (
-                      <option key={c._id} value={c._id}>{c.collegeName}</option>
-                    ))}
-                  </select>
-                  {actionLoading && (
-                    <div style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--primary)', fontWeight: 900 }}>
-                      ⚡ ANALYZING...
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="text"
+                      placeholder="Type college name (e.g. CEG)..."
+                      value={collegeSearch}
+                      onChange={e => setCollegeSearch(e.target.value)}
+                      onFocus={() => setShowCollegeDropdown(true)}
+                      style={{ width: '100%', padding: '14px 18px', borderRadius: 12, border: '2px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14, fontWeight: 600 }}
+                    />
+                    {actionLoading && (
+                      <div style={{ position: 'absolute', right: 15, top: '50%', transform: 'translateY(-50%)' }}>
+                        <div className="spinner-small" style={{ width: 16, height: 16 }}></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {showCollegeDropdown && collegeSearch.trim() && (
+                    <div style={{ 
+                      position: 'absolute', top: '110%', left: 0, right: 0, 
+                      background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.15)', 
+                      border: '1px solid var(--border)', overflowY: 'auto', maxHeight: 300, zIndex: 1000 
+                    }}>
+                      {filteredCollegesBySearch.length === 0 ? (
+                        <div style={{ padding: 16, textAlign: 'center', color: 'var(--text3)', fontSize: 12 }}>No colleges found</div>
+                      ) : (
+                        filteredCollegesBySearch.map(c => (
+                          <div 
+                            key={c._id} 
+                            onClick={() => {
+                              handleCollegeChange(c._id);
+                              setCollegeSearch(c.collegeName);
+                              setShowCollegeDropdown(false);
+                            }}
+                            style={{ 
+                              padding: '12px 16px', cursor: 'pointer', transition: '0.15s',
+                              borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10
+                            }}
+                            className="dropdown-item-hover"
+                          >
+                             <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{c.collegeName}</div>
+                             <div style={{ fontSize: 10, color: 'var(--text3)' }}>{c.collegeCode || c.district}</div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>
@@ -301,12 +368,35 @@ export default function CollegeCourseMappingPage() {
               <div style={{ animation: 'fadeIn 0.4s ease both' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: 'var(--text3)', letterSpacing: '0.05em' }}>
-                      STEP 3: VERIFY & FINALIZE ACTUAL OFFERINGS
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: 'var(--text3)', letterSpacing: '0.05em', marginBottom: 12 }}>
+                      ✅ OFFICIAL BRANCHES IDENTIFIED FROM PDF
                     </label>
-                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>
-                      Identified <b>{suggestedCourses.filter(c => c.checked).length}</b> actual courses from datasets.
-                    </p>
+                    <div style={{ 
+                      background: 'var(--surface2)', borderRadius: 16, padding: 20, 
+                      border: '1.5px solid var(--primary)', marginBottom: 24,
+                      display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 12
+                    }}>
+                      {suggestedCourses.filter(c => c.checked).length === 0 ? (
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--text3)', fontSize: 12, padding: 20 }}>
+                          No official PDF branches matched for this college yet. Run "Sync from TNEA PDF" to populate.
+                        </div>
+                      ) : (
+                        suggestedCourses.filter(c => c.checked).map(c => (
+                          <div key={c._id} style={{ 
+                            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', 
+                            background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                          }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }}></div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{c.courseName}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: 'var(--text3)', letterSpacing: '0.05em' }}>
+                      STEP 3: VERIFY & EDIT MAPPING
+                    </label>
                   </div>
                   <div style={{ display: 'flex', gap: 12 }}>
                     <button 
@@ -416,6 +506,27 @@ export default function CollegeCourseMappingPage() {
         />
       )}
 
+      <style>{`
+        .course-card-hover:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px -10px rgba(0,0,0,0.1);
+          border-color: var(--s-primary);
+        }
+        .dropdown-item-hover:hover {
+          background: #f8fafc;
+        }
+        .spinner-small {
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(var(--primary-rgb), 0.1);
+          border-left-color: var(--primary);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       {alert.text && (
         <div style={{ position: 'fixed', bottom: 40, right: 40, zIndex: 1000, padding: '16px 24px', borderRadius: 16, background: alert.type === 'success' ? '#10b981' : '#ef4444', color: '#fff', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', fontWeight: 700, animation: 'fadeUp 0.3s ease' }}>
           {alert.text}

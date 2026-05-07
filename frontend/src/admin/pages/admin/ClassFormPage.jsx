@@ -10,7 +10,7 @@ import { SCard, SBtn, SBadge, SLoader, FormGrid, FormGroup, FormInput, ActivityD
 
 const SECTION_OPTIONS = [
   "Basics", "Exams", "Fun", "Skills", "Games", "Careers", "Videos", "Habits",
-  "Streams", "Scholarships", "Entrance Exams", "Resources", "FAQs"
+  "Streams", "Entrance Exams", "Resources", "FAQs"
 ]
 
 const TARGET_CLASSES = ["5", "8", "10", "12"]
@@ -203,7 +203,24 @@ export default function ClassFormPage() {
                       </select>
                     </FormGroup>
                  </FormGrid>
-                 <FormGroup label="Category Label" full><FormInput name="category" value={formData.category} onChange={handleChange} placeholder="e.g. Science, Tamil Nadu Scholarships" required /></FormGroup>
+                 {formData.targetClass === '10' && formData.sectionType === 'Streams' ? (
+                   <FormGroup label="Stream Category" full>
+                     <select name="category" value={formData.category} onChange={handleChange} style={{ width:'100%', padding:'11px 16px', borderRadius:14, border:'1.5px solid var(--border)', fontFamily:'inherit', background:'#fff' }} required>
+                       <option value="">Select Stream</option>
+                       <option value="Maths Biology (PCMB)">Maths Biology (PCMB)</option>
+                       <option value="Maths Computer Science (PCM-CS)">Maths Computer Science (PCM-CS)</option>
+                       <option value="Biology (PCB)">Biology (PCB)</option>
+                       <option value="Commerce with Accountancy">Commerce with Accountancy</option>
+                       <option value="Commerce with Business Maths">Commerce with Business Maths</option>
+                       <option value="Commerce with Computer Science">Commerce with Computer Science</option>
+                       <option value="Arts with Humanities subjects">Arts with Humanities subjects</option>
+                       <option value="Diploma / Polytechnic">Diploma / Polytechnic</option>
+                       <option value="ITI / Vocational">ITI / Vocational</option>
+                     </select>
+                   </FormGroup>
+                 ) : (
+                   <FormGroup label="Category Label" full><FormInput name="category" value={formData.category} onChange={handleChange} placeholder="e.g. Science, Tamil Nadu Scholarships" required /></FormGroup>
+                 )}
                  <FormGroup label="Sub-Category (Badge)" full><FormInput name="subCategoryLabel" value={formData.subCategoryLabel} onChange={handleChange} placeholder="e.g. Scholarship, Soft Skills" /></FormGroup>
                  <FormGroup label="Short Card Description" full><FormInput as="textarea" name="shortDescription" value={formData.shortDescription} onChange={handleChange} required style={{ minHeight:80 }} /></FormGroup>
                  <FormGroup label="Promotional Tags (comma separated)" full><FormInput value={tagsLabel} onChange={handleTagsChange} placeholder="e.g. nmms, merit, class8" /></FormGroup>

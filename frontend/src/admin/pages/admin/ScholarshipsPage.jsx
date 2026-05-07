@@ -141,6 +141,7 @@ export default function ScholarshipsPage() {
           'Content-Type': 'multipart/form-data'
         }
       });
+
       setUploadMessage(`Success: ${res.data.inserted} added.`);
       fetchScholarships();
     } catch (err) {
@@ -208,9 +209,14 @@ export default function ScholarshipsPage() {
                 </TD>
                  <TD>
                    <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+
                       {(s.targetClass || s.grades || []).map(c => (
+
+                      {(s.targetClass || []).map(c => (
+
                         <SBadge key={c} color="blue">{formatGrade(c)}</SBadge>
                       ))}
+
                    </div>
                  </TD>
                 <TD>{s.provider || 'N/A'}</TD>

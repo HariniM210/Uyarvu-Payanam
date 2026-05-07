@@ -146,19 +146,24 @@ exports.addScholarship = async (req, res) => {
 // @route   GET /api/scholarships
 exports.getAllScholarships = async (req, res) => {
   try {
-<<<<<<< HEAD
     const { grade, category, status } = req.query;
     
+
+    const { search, category, grade, status } = req.query;
+
     let filter = {};
-    
-    // For user side, usually only show active/published
+
+    if (category && category !== "All") {
+      filter.category = category;
+    }
+
     if (status) {
       filter.status = status;
     } else if (req.query.userSide === 'true' || req.query.userSide === true) {
       filter.status = { $in: ['active', 'published'] };
     }
 
-    if (grade) {
+    if (grade && grade !== "all") {
       const numMatch = grade.match(/\d+/);
       const gradeNum = numMatch ? numMatch[0] : grade;
       const cleanGrade = gradeNum.toString();
@@ -172,19 +177,32 @@ exports.getAllScholarships = async (req, res) => {
       ];
 
       filter.$or = [
-        { grades: { $in: searchStrings } },
         { targetClass: { $in: searchStrings } },
-        { grades: new RegExp(`\\b${cleanGrade}(th)?\\b`, 'i') },
         { targetClass: new RegExp(`\\b${cleanGrade}(th)?\\b`, 'i') }
       ];
     }
-    
-    if (category && category !== 'All') {
-      filter.category = category;
+
+    if (search && normalizeString(search)) {
+      const searchRegex = new RegExp(normalizeString(search), "i");
+      if (filter.$or) {
+        // If $or already exists for grade, we should probably wrap it or append to it
+        // But usually search is separate. Let's merge them carefully.
+        const searchFilters = [
+          { scholarshipName: searchRegex },
+          { provider: searchRegex }
+        ];
+        // Complex merge of $or conditions
+        filter = { $and: [ filter, { $or: searchFilters } ] };
+      } else {
+        filter.$or = [
+          { scholarshipName: searchRegex },
+          { provider: searchRegex }
+        ];
+      }
     }
 
     const scholarships = await Scholarship.find(filter).sort({ createdAt: -1 });
-=======
+
     const { search, category, grade } = req.query;
     const filter = {};
 
@@ -206,7 +224,8 @@ exports.getAllScholarships = async (req, res) => {
     // Add Console Log for Debugging
     console.log(`[Backend] GET /api/scholarships - Fetched ${scholarships.length} scholarships from MongoDB`);
 
->>>>>>> 6339e7c (Scholarship Data)
+    console.log(`[Backend] GET /api/scholarships - Fetched ${scholarships.length} scholarships`);
+
     return res.status(200).json({
       success: true,
       count: scholarships.length,
@@ -585,55 +604,25 @@ exports.uploadScholarshipsCSV = async (req, res) => {
     
     const existingKeys = new Set(existing.map(d => `${d.scholarshipName}::${d.provider || ""}`));
 
-<<<<<<< HEAD
     for (const row of results) {
       try {
         console.log("Row:", row); // DEBUGGING: Log each raw row
 
-        const name = normalizeString(findVal(row, ["name", "scholarship"]));
-        const provider = normalizeString(findVal(row, ["provider"]));
-        const amount = normalizeString(findVal(row, ["amount"]));
-        const eligibility = normalizeString(findVal(row, ["eligibility", "level", "class"]));
-        const link = normalizeString(findVal(row, ["link", "url", "apply"]));
+
 
         // If any important field is missing -> skip row
-        if (!name || name.trim() === "") {
-          console.log("Skipping row: Missing Name");
-          skipped++;
-          continue; 
-        }
+
 
         // Format for uniqueness
-        const normalizedName = name.trim().toLowerCase();
-        const normalizedProvider = provider ? provider.trim().toLowerCase() : "";
+
 
         // Detect grades from eligibility or other fields
-        let detectedGrades = [];
-        const classNames = ["5th", "8th", "10th", "12th"];
-        const searchPool = (name + " " + eligibility + " " + provider).toLowerCase();
-        
-        classNames.forEach(cls => {
-          const num = cls.replace('th', '');
-          if (searchPool.includes(cls.toLowerCase()) || searchPool.includes(`class ${num}`) || searchPool.includes(`grade ${num}`)) {
-            detectedGrades.push(cls);
-          }
-        });
+
 
         // If no grade detected, default based on common patterns or 10th/12th
-        if (detectedGrades.length === 0) {
-           if (searchPool.includes("college") || searchPool.includes("degree") || searchPool.includes("university")) {
-              detectedGrades = ["12th"];
-           } else {
-              detectedGrades = ["10th"]; // Default fallback
-           }
-        }
+
 
         // Check Duplicate
-        const existing = await Scholarship.findOne({
-          scholarshipName: normalizedName,
-          provider: normalizedProvider
-        });
-
         if (existing) {
           console.log("Skipping row: Duplicate found ->", name);
           skipped++;
@@ -654,7 +643,9 @@ exports.uploadScholarshipsCSV = async (req, res) => {
       } catch (rowError) {
         console.error("Error inserting row:", row, "->", rowError.message);
         skipped++; // Skip if validation fails (e.g. length limits)
-=======
+
+
+
     const docsToInsert = [];
     const seen = new Set();
     
@@ -663,7 +654,8 @@ exports.uploadScholarshipsCSV = async (req, res) => {
       if (!existingKeys.has(key) && !seen.has(key)) {
         seen.add(key);
         docsToInsert.push(doc);
->>>>>>> 6339e7c (Scholarship Data)
+
+
       }
     }
 

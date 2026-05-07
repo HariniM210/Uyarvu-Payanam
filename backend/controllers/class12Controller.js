@@ -14,20 +14,24 @@ const College = require("../models/College");
  * Polytechnic -> Polytechnic
  */
 const CATEGORY_MAP = {
-  "Architecture": "Engineering",
-  "IT & Computer": "Engineering",
-  "Arts": "Arts & Science",
-  "Commerce": "Arts & Science",
-  "Science": "Arts & Science",
-  "Design": "Arts & Science",
-  "Media & Journalism": "Arts & Science",
-  "Hotel Management": "Others",
-  "ITI": "Polytechnic",
-  "Agriculture": "Agriculture",
+  // Parent mapping (Raw Category -> Master Category)
   "Engineering": "Engineering",
   "Medical": "Medical",
+  "Arts": "Arts & Science",
+  "Science": "Arts & Science",
+  "Arts & Science": "Arts & Science",
   "Law": "Law",
+  "Commerce": "Commerce",
+  "Management": "Management",
+  "IT & Computer": "IT & Computer",
+  "Agriculture": "Agriculture",
+  "Architecture": "Architecture",
+  "Design": "Design",
+  "Hotel Management": "Hotel Management",
+  "ITI": "ITI",
   "Polytechnic": "Polytechnic",
+  "Media & Journalism": "Media & Journalism",
+  "Certificate": "Others",
   "Others": "Others"
 };
 
@@ -36,38 +40,47 @@ const MASTER_CATEGORIES = [
   "Medical",
   "Arts & Science",
   "Law",
-  "Polytechnic",
+  "Commerce",
+  "Management",
+  "IT & Computer",
   "Agriculture",
+  "Architecture",
+  "Design",
+  "Hotel Management",
+  "ITI",
+  "Polytechnic",
+  "Media & Journalism",
   "Others"
 ];
 
 exports.getClass12Categories = async (req, res) => {
   try {
     const { level } = req.query;
-    // Map class level to course level
-    let targetLevel = ["After 12th", "Diploma"];
-    if (level === "10") targetLevel = ["After 10th", "Diploma"];
-    
-    const courses = await Course.find({ 
-      isPublished: true, 
-      status: "active",
-      level: { $in: targetLevel } 
-    }).select("category");
 
-    const colleges = await College.find().select("stream");
+    // Course model stores level as: "after12th", "after10th", "diploma"
+    // Support both old ("After 12th") and new ("after12th") formats
+    let targetLevels;
+    if (level === "10") {
+      targetLevels = ["after10th", "After 10th", "diploma", "Diploma"];
+    } else {
+      targetLevels = ["after12th", "After 12th", "diploma", "Diploma"];
+    }
+
+    const courses = await Course.find({
+      level: { $in: targetLevels }
+    }).select("category").lean();
+
+    const colleges = await College.find().select("stream").lean();
 
     const stats = MASTER_CATEGORIES.map(cat => {
       const courseCount = courses.filter(c => CATEGORY_MAP[c.category] === cat).length;
       const collegeCount = colleges.filter(clg => clg.stream === cat).length;
-      return {
-        categoryName: cat,
-        courseCount,
-        collegeCount
-      };
+      return { categoryName: cat, courseCount, collegeCount };
     });
 
     res.json({ success: true, data: stats });
   } catch (error) {
+    console.error("getClass12Categories error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -76,15 +89,23 @@ exports.getClass12Content = async (req, res) => {
   try {
     const { category, search, level } = req.query;
 
-    // Map class level to course level
-    let targetLevel = ["After 12th", "Diploma"];
-    if (level === "10") targetLevel = ["After 10th", "Diploma"];
+    // Course model stores level as: "after12th", "after10th", "diploma"
+    // Support both old ("After 12th") and new ("after12th") formats
+    let targetLevels;
+    if (level === "10") {
+      targetLevels = ["after10th", "After 10th", "diploma", "Diploma"];
+    } else {
+      targetLevels = ["after12th", "After 12th", "diploma", "Diploma"];
+    }
 
-    let courseQuery = { isPublished: true, status: "active", level: { $in: targetLevel } };
+    let courseQuery = { level: { $in: targetLevels } };
     let collegeQuery = {};
 
     if (search) {
-      courseQuery.courseName = { $regex: search, $options: "i" };
+      courseQuery.$or = [
+        { courseName: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } }
+      ];
       collegeQuery.$or = [
         { collegeName: { $regex: search, $options: "i" } },
         { location: { $regex: search, $options: "i" } },
@@ -92,15 +113,44 @@ exports.getClass12Content = async (req, res) => {
       ];
     }
 
-    const allCourses = await Course.find(courseQuery).select("courseName level category duration sourceName slug status isPublished");
-    const allColleges = await College.find(collegeQuery).select("collegeName stream district location coursesOffered slug");
+    // If specific category requested, filter server-side for performance
+    if (category) {
+      // Map category name back to DB values
+      const matchingCats = Object.entries(CATEGORY_MAP)
+        .filter(([, v]) => v.toLowerCase() === category.toLowerCase())
+        .map(([k]) => k);
+      if (matchingCats.length > 0) courseQuery.category = { $in: matchingCats };
+      collegeQuery.stream = category;
+    }
+
+    const [allCourses, allColleges] = await Promise.all([
+      Course.find(courseQuery)
+        .select("courseName level category duration sourceName slug status isPublished")
+        .lean(),
+      College.find(collegeQuery)
+        .select("collegeName stream district location website collegeCode")
+        .lean()
+    ]);
+
+    if (category) {
+      // Return single category result
+      const catCourses = allCourses.filter(c => CATEGORY_MAP[c.category] === category);
+      const catColleges = allColleges; // already filtered by stream
+      return res.json({
+        success: true,
+        data: {
+          categoryName: category,
+          courseCount: catCourses.length,
+          collegeCount: catColleges.length,
+          courses: catCourses,
+          colleges: catColleges
+        }
+      });
+    }
 
     const result = MASTER_CATEGORIES.map(cat => {
-      // Filter courses that map to this parent category
       const catCourses = allCourses.filter(c => CATEGORY_MAP[c.category] === cat);
-      // Filter colleges that match this stream
       const catColleges = allColleges.filter(clg => clg.stream === cat);
-
       return {
         categoryName: cat,
         courseCount: catCourses.length,
@@ -110,14 +160,9 @@ exports.getClass12Content = async (req, res) => {
       };
     });
 
-    // If a specific category was requested, only return that one
-    if (category) {
-      const filtered = result.find(r => r.categoryName.toLowerCase() === category.toLowerCase());
-      return res.json({ success: true, data: filtered || null });
-    }
-
     res.json({ success: true, data: result });
   } catch (error) {
+    console.error("getClass12Content error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

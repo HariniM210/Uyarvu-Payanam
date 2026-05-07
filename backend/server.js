@@ -84,6 +84,10 @@ app.use("/api/class-content", require("./routes/classContentRoutes"));
 app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
 app.use("/api/user-actions", require("./routes/userActionRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
+app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
+app.use("/api/assessment", require("./routes/assessmentRoutes"));
+app.use("/api/onboarding", require("./routes/onboardingRoutes"));
+app.use("/api/admission-help", require("./routes/admissionHelpRoutes"));
 
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;

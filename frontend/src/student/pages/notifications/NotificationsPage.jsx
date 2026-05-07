@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { notificationService } from '../../services'
+import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SCard, SBtn, SBadge, SLoader, SEmpty, SAlert } from '../../components/ui'
 import { FiCheckCircle, FiCheck } from 'react-icons/fi'
 
@@ -25,6 +26,7 @@ function TimeAgo({ date }) {
 }
 
 export default function NotificationsPage() {
+  const { student } = useStudentAuth()
   const [notifications, setNotifications] = useState([])
   const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState('')
@@ -33,10 +35,11 @@ export default function NotificationsPage() {
   useEffect(() => { fetchAll() }, [])
 
   const fetchAll = async () => {
+    if (!student?._id) return
     try {
       setLoading(true)
-      const res = await notificationService.getAll()
-      setNotifications(Array.isArray(res) ? res : (res.data || []))
+      const res = await notificationService.getUserNotifications(student._id)
+      setNotifications(Array.isArray(res) ? res : (res.notifications || res.data || []))
     } catch {
       setError('Failed to load notifications')
     } finally {
@@ -52,9 +55,10 @@ export default function NotificationsPage() {
   }
 
   const handleMarkAllRead = async () => {
+    if (!student?._id) return
     setMarkingAll(true)
     try {
-      await notificationService.markAllRead()
+      await notificationService.markAllRead(student._id)
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
     } catch {
       setError('Failed to mark all as read')

@@ -2,13 +2,13 @@ const SavedItem = require("../models/SavedItem");
 
 exports.saveItem = async (req, res) => {
   try {
-    const { contentId, contentType } = req.body;
+    const { contentId, contentType, metadata } = req.body;
     const userId = req.student?._id || req.user?._id; // student/user id from auth middleaware
 
     if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
 
     // Try to create saved item
-    const saved = await SavedItem.create({ userId, contentId, contentType });
+    const saved = await SavedItem.create({ userId, contentId, contentType, metadata });
 
     res.status(201).json({ success: true, message: "Item saved to your profile", data: saved });
   } catch (error) {

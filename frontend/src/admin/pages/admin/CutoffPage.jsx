@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Card, DataTable, TR, TD, ActionBtn, FiltersRow, FilterSelect, PrimaryBtn, Modal, FormGrid, FormGroup, FormInput, FormActions, SBtn, SearchInput, SLoader } from '../../components/UI'
+import { Card, DataTable, TR, TD, ActionBtn, FiltersRow, FilterSelect, PrimaryBtn, Modal, FormGrid, FormGroup, FormInput, FormActions, SBtn, SearchInput, SLoader, SBadge } from '../../components/UI'
 import { cutoffService } from '../../../services/cutoffService'
 import { courseService } from '../../../services/courseService'
 import { adminService } from '../../../services/adminService'
-import { FiDownload, FiTrash2, FiChevronDown } from 'react-icons/fi'
+import { FiDownload, FiTrash2, FiChevronDown, FiRefreshCw } from 'react-icons/fi'
+import axiosInstance from '../../../config/axios'
 
 export default function CutoffPage() {
   const [cutoffs, setCutoffs] = useState([])
@@ -17,10 +18,17 @@ export default function CutoffPage() {
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [collegeSearch, setCollegeSearch] = useState('')
+  const [syncing, setSyncing] = useState(false)
   
   const [form, setForm] = useState({
-    courseId: '', collegeId: '', year: 2024, round: 'Round 1',
-    cutoffData: [{ category: 'OC', score: '' }, { category: 'BC', score: '' }],
+    courseId: '', collegeId: '', year: 2025, round: 'Round 1',
+    cutoffData: [
+      { category: 'OC', score: '' }, { category: 'BC', score: '' },
+      { category: 'BCM', score: '' }, { category: 'MBC', score: '' },
+      { category: 'SC', score: '' }, { category: 'SCA', score: '' },
+      { category: 'ST', score: '' }
+    ],
     downloadUrl: ''
   })
 
@@ -59,8 +67,6 @@ export default function CutoffPage() {
 
   const [sortField, setSortField] = useState('collegeId.collegeName')
   const [sortDir, setSortDir] = useState('asc')
-  
-  // ... dependencies and cutoffs search ...
 
   const filteredCutoffs = useMemo(() => {
     let list = [...cutoffs].filter(c => {
@@ -70,7 +76,6 @@ export default function CutoffPage() {
       return colName.includes(searchLower) || crsName.includes(searchLower)
     })
 
-    // Sort Logic
     return list.sort((a,b) => {
       const getVal = (obj, field) => {
         if(field.includes('.')) return field.split('.').reduce((o,i)=>o?.[i], obj) || ''
@@ -106,12 +111,16 @@ export default function CutoffPage() {
       setModal(false)
       setEditing(null)
       setForm({
-        courseId: '', collegeId: '', year: 2024, round: 'Round 1',
-        cutoffData: [{ category: 'OC', score: '' }, { category: 'BC', score: '' }],
+        courseId: '', collegeId: '', year: 2025, round: 'Round 1',
+        cutoffData: [
+            { category: 'OC', score: '' }, { category: 'BC', score: '' },
+            { category: 'BCM', score: '' }, { category: 'MBC', score: '' },
+            { category: 'SC', score: '' }, { category: 'SCA', score: '' },
+            { category: 'ST', score: '' }
+        ],
         downloadUrl: ''
       })
     } catch (err) {
-      console.error('Save error:', err)
       alert('Failed to save cutoff data')
     } finally {
       setSaving(false)
@@ -128,6 +137,27 @@ export default function CutoffPage() {
     }
   }
 
+  const handleSync = async () => {
+    try {
+      setSyncing(true)
+      const res = await axiosInstance.post('/cutoffs/sync-orphans')
+      alert(`Successfully synced ${res.data.count || 0} records!`)
+      fetchCutoffs()
+    } catch (err) {
+      alert('Failed to sync records')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const filteredModalColleges = useMemo(() => {
+    if (!collegeSearch) return colleges.slice(0, 50)
+    return colleges.filter(c => 
+      c.collegeName.toLowerCase().includes(collegeSearch.toLowerCase()) || 
+      c.collegeCode?.includes(collegeSearch)
+    ).slice(0, 50)
+  }, [colleges, collegeSearch])
+
   const handleExport = () => {
     const headers = ['College', 'Course', 'Year', 'OC', 'BC', 'BCM', 'MBC', 'SC', 'SCA', 'ST'];
     const rows = filteredCutoffs.map(r => {
@@ -136,7 +166,7 @@ export default function CutoffPage() {
         return found ? found.score : (r[cat.toLowerCase()] || '-');
       }
       return [
-        r.collegeId?.collegeName || r.college || '',
+        r.collegeId?.collegeName || r.collegeName || r.college || '',
         r.courseId?.courseName || r.course || '',
         r.year,
         getScore('OC'), getScore('BC'), getScore('BCM'), getScore('MBC'), getScore('SC'), getScore('SCA'), getScore('ST')
@@ -161,7 +191,6 @@ export default function CutoffPage() {
   return (
     <div style={{ animation:'fadeUp 0.4s ease both', padding: '0 10px' }}>
       
-      {/* PROFESSIONAL HEADER (Matches Screenshot) */}
       <FiltersRow style={{ background: '#fff', padding: '16px 24px', borderRadius: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.03)', marginBottom: 24, border: '1px solid var(--border)' }}>
         <div style={{ flex: 1 }}>
            <SearchInput 
@@ -181,11 +210,11 @@ export default function CutoffPage() {
               <option value="2023">2023</option>
               <option value="2022">2022</option>
            </FilterSelect>
-           <SBtn variant="outline" onClick={() => window.open(`/cutoffs/college-list-c${selectedYear.slice(-1)}.pdf`, '_blank')} style={{ borderRadius: 99, background: '#fff', color: 'var(--primary)' }}>
-              📄 View Official PDF
-           </SBtn>
            <SBtn variant="outline" onClick={handleExport} style={{ borderRadius: 99, background: '#fff' }}>
               <FiDownload /> Export
+           </SBtn>
+           <SBtn variant="outline" onClick={handleSync} loading={syncing} style={{ borderRadius: 99, background: '#fff' }}>
+              <FiRefreshCw className={syncing ? 's-anim-spin' : ''} /> Sync Records
            </SBtn>
            <PrimaryBtn onClick={()=>{ setEditing(null); setModal(true); }} style={{ borderRadius: 99 }}>
               + Add Cutoff Entry
@@ -218,9 +247,8 @@ export default function CutoffPage() {
                   <tr key={r._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="admin-table-row">
                     <td style={{ padding: '24px' }}>
                       <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                        <input type="checkbox" style={{ marginTop: 4 }} />
                         <div style={{ textAlign:'left' }}>
-                          <span style={{ fontWeight: 800, color: 'var(--text)', display: 'block', marginBottom: 4, lineHeight: 1.4 }}>
+                           <span style={{ fontWeight: 800, color: 'var(--text)', display: 'block', marginBottom: 4, lineHeight: 1.4 }}>
                             {r.collegeId?.collegeName || r.collegeName || r.college || 'N/A'}
                           </span>
                           <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>
@@ -251,11 +279,6 @@ export default function CutoffPage() {
                 ))}
               </tbody>
             </table>
-            {filteredCutoffs.length === 0 && (
-               <div style={{ padding: 80, textAlign: 'center', color: 'var(--text3)' }}>
-                  No matching cutoff records found for the selected year.
-               </div>
-            )}
           </div>
         )}
       </Card>
@@ -263,10 +286,24 @@ export default function CutoffPage() {
       {modal && (
         <Modal title={editing ? 'Edit Cutoff' : 'Add Cutoff Entry'} onClose={()=>setModal(false)}>
            <FormGrid>
-              <FormGroup label="Select College" full>
+              <FormGroup label="Search & Select College" full>
+                 <div style={{ position: 'relative' }}>
+                   <FormInput 
+                      placeholder="Type name or code to find college..." 
+                      value={collegeSearch} 
+                      onChange={e => setCollegeSearch(e.target.value)} 
+                      style={{ marginBottom: 8, paddingLeft: 40 }}
+                   />
+                   <span style={{ position:'absolute', left:14, top:12, opacity:0.5 }}>🔍</span>
+                 </div>
                  <FilterSelect value={form.collegeId} onChange={e=>setForm({...form, collegeId: e.target.value})} style={{ width:'100%' }}>
-                    <option value="">Choose College...</option>
-                    {colleges.map(c => <option key={c._id} value={c._id}>{c.collegeName} ({c.collegeCode || c.district})</option>)}
+                    <option value="">{filteredModalColleges.length > 0 ? 'Choose from results...' : 'No colleges found'}</option>
+                    {filteredModalColleges.map(c => <option key={c._id} value={c._id}>{c.collegeName} ({c.collegeCode})</option>)}
+                    {form.collegeId && !filteredModalColleges.find(c => c._id === form.collegeId) && (
+                      <option value={form.collegeId}>
+                         {colleges.find(c => c._id === form.collegeId)?.collegeName || 'Selected College'} 
+                      </option>
+                    )}
                  </FilterSelect>
               </FormGroup>
               <FormGroup label="Select Course" full>
@@ -275,12 +312,14 @@ export default function CutoffPage() {
                     {courses.map(c => <option key={c._id} value={c._id}>{c.courseName} ({c.branchCode || 'No Code'})</option>)}
                  </FilterSelect>
               </FormGroup>
-              <FormGroup label="Year">
-                 <FormInput type="number" value={form.year} onChange={e=>setForm({...form, year: e.target.value})}/>
-              </FormGroup>
-              <FormGroup label="Round / Notes">
-                 <FormInput value={form.round} onChange={e=>setForm({...form, round: e.target.value})} placeholder="Round 1, Final, etc." />
-              </FormGroup>
+              <FormGrid>
+                <FormGroup label="Year">
+                    <FormInput type="number" value={form.year} onChange={e=>setForm({...form, year: e.target.value})}/>
+                </FormGroup>
+                <FormGroup label="Round / Notes">
+                    <FormInput value={form.round} onChange={e=>setForm({...form, round: e.target.value})} placeholder="Round 1, Final, etc." />
+                </FormGroup>
+              </FormGrid>
               
               <FormGroup label="Category Marks Configuration" full>
                  <div style={{ background:'var(--surface2)', padding:20, borderRadius:16, border:'1px solid var(--border)' }}>
@@ -314,16 +353,9 @@ export default function CutoffPage() {
       )}
 
       <style>{`
-        .admin-table-row:hover {
-          background: #f1f5f980;
-        }
-        .admin-table-row input[type="checkbox"] {
-          width: 17px;
-          height: 17px;
-          border-radius: 4px;
-          border: 1px solid var(--border);
-          cursor: pointer;
-        }
+        .admin-table-row:hover { background: #f1f5f980; }
+        .s-anim-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   )

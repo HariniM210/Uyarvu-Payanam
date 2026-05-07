@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
+
 import { FiSearch, FiFilter, FiCalendar, FiDollarSign, FiAward, FiExternalLink, FiUploadCloud, FiCheckCircle } from 'react-icons/fi';
 import { scholarshipService } from '../../services';
 import { adminService } from '../../../services/adminService';
+
+import { useNavigate } from 'react-router-dom';
+import { FiSearch, FiFilter, FiCalendar, FiDollarSign, FiAward, FiExternalLink, FiUploadCloud, FiCheckCircle, FiBookmark } from 'react-icons/fi';
+import { scholarshipService } from '../../services';
+import { userActionService } from '../../../services/userActionService';
+import { useStudentAuth } from '../../context/StudentAuthContext';
 import { SLoader, SBadge } from '../../components/ui';
 import axiosInstance from '../../../config/axios';
 
 export default function ScholarshipsPage() {
+
+  const navigate = useNavigate();
+
   const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedGrade, setSelectedGrade] = useState('All');
+
+  const [savedIds, setSavedIds] = useState(new Set());
+  const { isAuthenticated } = useStudentAuth();
+
 
   // For Admin/Bonus Import Feature
   const [file, setFile] = useState(null);
@@ -54,6 +68,34 @@ export default function ScholarshipsPage() {
     }
   };
 
+  const fetchSaved = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const res = await userActionService.getSavedList('Scholarship');
+      setSavedIds(new Set(res.data?.map(item => item.contentId?._id || item.contentId)));
+    } catch (err) {
+      console.error("Error fetching saved scholarships:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSaved();
+  }, [isAuthenticated]);
+
+  const handleToggleSave = async (id) => {
+    if (!isAuthenticated) return;
+    try {
+      if (savedIds.has(id)) {
+        await userActionService.unsaveItem(id);
+        setSavedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+      } else {
+        await userActionService.saveItem(id, 'Scholarship');
+        setSavedIds(prev => new Set([...prev, id]));
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+    }
+  };
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -91,7 +133,14 @@ export default function ScholarshipsPage() {
   };
 
   // Filter Logic
+
   const categories = ['All', ...new Set(scholarships.map(s => s.category || 'General'))];
+
+  const categories = ['All', ...new Set(scholarships
+    .map(s => s.category || 'General')
+    .filter(cat => !['Government', 'State Schemes'].includes(cat))
+  )];
+
   const grades = ['All', '5', '8', '10', '12', 'Graduate'];
   
   const filteredScholarships = scholarships.filter(s => {
@@ -206,8 +255,24 @@ export default function ScholarshipsPage() {
               flexDirection: 'column',
               gap: 16,
               transition: 'all 0.2s',
+
               boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
             }}>
+
+              boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+              position: 'relative'
+            }}>
+              <button 
+                onClick={() => handleToggleSave(scholarship._id)}
+                style={{ 
+                  position: 'absolute', top: 20, right: 20, background: savedIds.has(scholarship._id) ? 'var(--s-primary)' : 'var(--s-bg)', 
+                  border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', 
+                  justifyContent: 'center', cursor: 'pointer', color: savedIds.has(scholarship._id) ? '#fff' : 'var(--s-text3)', zIndex: 5 
+                }}
+              >
+                <FiBookmark fill={savedIds.has(scholarship._id) ? 'currentColor' : 'none'} />
+              </button>
+
               <div>
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                    <SBadge color="blue" style={{ fontSize: 11 }}>{scholarship.category || 'General'}</SBadge>
@@ -239,6 +304,28 @@ export default function ScholarshipsPage() {
               >
                 Apply Now <FiExternalLink />
               </a>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button 
+                  onClick={() => navigate(`/student/scholarships/${scholarship._id}`)}
+                  className="s-btn s-btn-primary" 
+                  style={{ flex: 1, padding: '10px 0', fontSize: 14 }}
+                >
+                  View Details
+                </button>
+                { (scholarship.link || scholarship.applicationLink) && (
+                  <a 
+                    href={scholarship.link || scholarship.applicationLink} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="s-btn s-btn-outline" 
+                    style={{ flex: 1, border: '1px solid var(--s-primary)', color: 'var(--s-primary)', padding: '10px 0', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    Apply <FiExternalLink size={12} />
+                  </a>
+                )}
+              </div>
+
             </div>
           ))}
         </div>

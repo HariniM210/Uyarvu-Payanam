@@ -15,7 +15,7 @@ const BTN_VARIANTS = {
   white:   { background: '#fff',              color: 'var(--s-primary)', border: 'none' },
 }
 
-export function SBtn({ children, variant = 'primary', size = 'md', style = {}, disabled, ...props }) {
+export function SBtn({ children, variant = 'primary', size = 'md', style = {}, disabled, fullWidth, ...props }) {
   const [hov, setHov] = useState(false)
   return (
     <button
@@ -23,7 +23,8 @@ export function SBtn({ children, variant = 'primary', size = 'md', style = {}, d
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        display: fullWidth ? 'flex' : 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: fullWidth ? '100%' : 'auto',
         gap: 7, cursor: disabled ? 'not-allowed' : 'pointer',
         fontFamily: 'var(--s-font-display)', fontWeight: 600,
         transition: 'all 0.2s ease', textDecoration: 'none',
@@ -42,7 +43,7 @@ export function SBtn({ children, variant = 'primary', size = 'md', style = {}, d
 }
 
 /* ── Card ────────────────────────────────────────────────── */
-export function SCard({ children, hover = false, style = {}, ...props }) {
+export function SCard({ children, hover = false, style = {}, fullWidth, ...props }) {
   const [hov, setHov] = useState(false)
   return (
     <div
@@ -56,6 +57,7 @@ export function SCard({ children, hover = false, style = {}, ...props }) {
         boxShadow: hov && hover ? 'var(--s-shadow-lg)' : 'var(--s-shadow)',
         transform: hov && hover ? 'translateY(-3px)' : 'none',
         transition: 'all 0.22s ease',
+        width: fullWidth ? '100%' : 'auto',
         ...style,
       }}
       {...props}

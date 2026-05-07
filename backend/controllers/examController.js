@@ -10,28 +10,27 @@ exports.createExam = async (req, res) => {
     console.log('🔵 [Backend] POST /api/exams - Request received');
     console.log('📦 Request Body:', req.body);
     
-    const { examName, conductingBody, level, importantDate, applicationLink, officialWebsite, description, stream } = req.body;
+    const { 
+      name, category, level, applicableClass, examType, conductingBody, 
+      eligibility, subjects, pattern, difficulty, importantDates, 
+      officialWebsite, preparation, careerOptions, isActive 
+    } = req.body;
 
     // Validation
-    if (!examName || !conductingBody || !level) {
+    if (!name || !category || !level) {
       console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({ 
         success: false,
-        message: "Exam Name, Conducting Body, and Level are required" 
+        message: "Name, Category, and Level are required" 
       });
     }
 
     // Create exam
     console.log('💾 Attempting to save to MongoDB...');
     const exam = await Exam.create({
-      examName,
-      conductingBody,
-      level,
-      importantDate,
-      applicationLink,
-      officialWebsite,
-      description,
-      stream,
+      name, category, level, applicableClass, examType, conductingBody,
+      eligibility, subjects, pattern, difficulty, importantDates,
+      officialWebsite, preparation, careerOptions, isActive
     });
 
     console.log('✅ Exam saved successfully:', exam._id);
@@ -56,14 +55,14 @@ exports.createExam = async (req, res) => {
 exports.getAllExams = async (req, res) => {
   try {
     console.log('🔵 [Backend] GET /api/exams - Fetching exams with filters:', req.query);
-    const { search, level, stream } = req.query;
+    const { search, category, level } = req.query;
     
     let query = {};
 
     // 1. Search filter
     if (search && search.trim() !== '') {
       query.$or = [
-        { examName: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
         { conductingBody: { $regex: search, $options: "i" } }
       ];
     }
@@ -73,9 +72,9 @@ exports.getAllExams = async (req, res) => {
       query.level = level;
     }
 
-    // 3. Stream filter
-    if (stream && stream !== "All Streams") {
-      query.stream = stream;
+    // 3. Category filter
+    if (category && category !== "All Categories") {
+      query.category = category;
     }
 
     const exams = await Exam.find(query).sort({ createdAt: -1 });
@@ -132,7 +131,11 @@ exports.updateExam = async (req, res) => {
     console.log('🔵 [Backend] PUT /api/exams/:id - Update request');
     console.log('📦 Request Body:', req.body);
     
-    const { examName, conductingBody, level, importantDate, applicationLink, officialWebsite, description, stream } = req.body;
+    const { 
+      name, category, level, applicableClass, examType, conductingBody, 
+      eligibility, subjects, pattern, difficulty, importantDates, 
+      officialWebsite, preparation, careerOptions, isActive 
+    } = req.body;
 
     // Find exam
     let exam = await Exam.findById(req.params.id);
@@ -145,14 +148,21 @@ exports.updateExam = async (req, res) => {
     }
 
     // Update fields
-    if (examName) exam.examName = examName;
-    if (conductingBody) exam.conductingBody = conductingBody;
+    if (name) exam.name = name;
+    if (category) exam.category = category;
     if (level) exam.level = level;
-    if (importantDate) exam.importantDate = importantDate;
-    if (applicationLink !== undefined) exam.applicationLink = applicationLink;
+    if (applicableClass) exam.applicableClass = applicableClass;
+    if (examType) exam.examType = examType;
+    if (conductingBody) exam.conductingBody = conductingBody;
+    if (eligibility !== undefined) exam.eligibility = eligibility;
+    if (subjects) exam.subjects = subjects;
+    if (pattern !== undefined) exam.pattern = pattern;
+    if (difficulty !== undefined) exam.difficulty = difficulty;
+    if (importantDates !== undefined) exam.importantDates = importantDates;
     if (officialWebsite !== undefined) exam.officialWebsite = officialWebsite;
-    if (description !== undefined) exam.description = description;
-    if (stream !== undefined) exam.stream = stream;
+    if (preparation) exam.preparation = preparation;
+    if (careerOptions) exam.careerOptions = careerOptions;
+    if (isActive !== undefined) exam.isActive = isActive;
 
     await exam.save();
 
@@ -223,30 +233,23 @@ exports.uploadCSV = async (req, res) => {
 
         for (const row of results) {
           // Normalize keys due to possible spaces or slight differences in CSV
-          const examName = row["Exam Name"] || row.examName || row.ExamName || row.name;
+          const name = row["Exam Name"] || row.examName || row.ExamName || row.name;
           
-          if (!examName) continue; // Skip empty rows
+          if (!name) continue; // Skip empty rows
 
+          const category = row["Category"] || row.category || "Others";
+          const level = row["Level"] || row.level || "Undergraduate";
           const conductingBody = row["Conducting Body"] || row.conductingBody || "Unknown";
-          const level = row["Level"] || row.level || "Unknown";
-          const importantDate = row["Important Date"] || row.importantDate || "TBA";
-          const applicationLink = row["Application Link"] || row.applicationLink || "";
+          const eligibility = row["Eligibility"] || row.eligibility || "";
+          const pattern = row["Pattern"] || row.pattern || "";
+          const importantDates = row["Important Dates"] || row.importantDates || "TBA";
           const officialWebsite = row["Official Website"] || row.officialWebsite || "";
-          const description = row["Description"] || row.description || "";
-          const stream = row["Stream"] || row.stream || "";
 
           // Check for duplicate
-          const existing = await Exam.findOne({ examName });
+          const existing = await Exam.findOne({ name });
           if (!existing) {
             await Exam.create({
-              examName,
-              conductingBody,
-              level,
-              importantDate,
-              applicationLink,
-              officialWebsite,
-              description,
-              stream,
+              name, category, level, conductingBody, eligibility, pattern, importantDates, officialWebsite
             });
             addedCount++;
           } else {

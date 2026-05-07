@@ -129,7 +129,7 @@ export default function ResetPasswordPage() {
               </p>
               <SBtn
                 variant="primary"
-                onClick={() => navigate('/signin')}
+                onClick={() => navigate('/student/signin')}
                 style={{ width: '100%', justifyContent: 'center' }}
                 id="goto-signin"
               >

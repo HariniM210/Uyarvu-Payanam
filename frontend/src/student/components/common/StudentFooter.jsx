@@ -3,18 +3,16 @@ import { Link } from 'react-router-dom'
 import { FiMail, FiPhone, FiMapPin, FiInstagram, FiTwitter, FiYoutube } from 'react-icons/fi'
 
 const EXPLORE = [
-  { to: '/class5',  label: 'Class 5'  },
-  { to: '/class8',  label: 'Class 8'  },
-  { to: '/class10', label: 'Class 10' },
-  { to: '/class12', label: 'Class 12' },
-  { to: '/careers',  label: 'All Paths' },
+  { to: '/student/class5',  label: 'Class 5'  },
+  { to: '/student/class8',  label: 'Class 8'  },
+  { to: '/student/class10', label: 'Class 10' },
+  { to: '/student/class12', label: 'Class 12' },
+  { to: '/student/careers', label: 'All Paths' },
 ]
 
 const QUICK = [
-  { to: '/colleges',      label: 'College Finder' },
-  { to: '/courses',       label: 'Courses'        },
-  { to: '/notifications', label: 'Notifications'  },
-  { to: '/signin',        label: 'Student Login'  },
+  { to: '/student/notifications', label: 'Notifications'  },
+  { to: '/student/signin',        label: 'Student Login'  },
 ]
 
 export default function StudentFooter() {
@@ -31,7 +29,7 @@ export default function StudentFooter() {
         }}>
           {/* Brand */}
           <div>
-            <Link to="/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <Link to="/student/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
                 <span style={{
                   fontFamily: 'var(--s-font-display)', fontWeight: 800,

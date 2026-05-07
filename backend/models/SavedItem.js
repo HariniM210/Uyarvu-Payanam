@@ -16,7 +16,11 @@ const savedItemSchema = new mongoose.Schema(
     contentType: {
       type: String,
       required: true,
-      enum: ["ClassContent", "CareerPath", "Scholarship", "Course"],
+      enum: ["ClassContent", "CareerPath", "Scholarship", "Course", "College", "Exam"],
+    },
+    metadata: {
+      type: Object,
+      default: {},
     },
     savedAt: {
       type: Date,

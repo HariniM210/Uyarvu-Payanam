@@ -1,4 +1,4 @@
-const Student = require("../models/Student");
+const User = require("../models/User");
 const AdminNotification = require("../models/AdminNotification");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -8,7 +8,7 @@ const registerStudent = async (req, res) => {
     const { name, email, password, classLevel, district } = req.body;
 
     // Check if student exists
-    const existingStudent = await Student.findOne({ email });
+    const existingStudent = await User.findOne({ email });
     if (existingStudent) {
       return res.status(409).json({ message: "Email already exists" });
     }
@@ -18,12 +18,14 @@ const registerStudent = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create student
-    const student = new Student({
+    const student = new User({
       name,
       email,
       password: hashedPassword,
       classLevel,
       district,
+      role: "student",
+      status: "active"
     });
 
     await student.save();
@@ -49,7 +51,15 @@ const registerStudent = async (req, res) => {
       console.warn("Failed to create admin notification:", notifErr.message);
     }
 
-    res.status(201).json({ message: "Student registered successfully" });
+    res.status(201).json({ 
+        message: "Student registered successfully",
+        user: {
+            id: student._id,
+            name: student.name,
+            email: student.email,
+            onboardingCompleted: student.onboardingCompleted
+        }
+    });
   } catch (error) {
     console.error("Error in student registration:", error);
     res.status(500).json({ message: "Server error" });
@@ -61,9 +71,13 @@ const loginStudent = async (req, res) => {
     const { email, password } = req.body;
 
     // Find student
-    const student = await Student.findOne({ email });
+    const student = await User.findOne({ email, role: "student" });
     if (!student) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (student.status === "blocked") {
+      return res.status(403).json({ message: "Your account has been blocked by admin" });
     }
 
     // Compare password
@@ -82,10 +96,12 @@ const loginStudent = async (req, res) => {
       token,
       student: {
         id: student._id,
+        _id: student._id,
         name: student.name,
         email: student.email,
         classLevel: student.classLevel,
         district: student.district,
+        onboardingCompleted: student.onboardingCompleted
       },
     });
   } catch (error) {

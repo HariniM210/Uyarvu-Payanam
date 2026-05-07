@@ -174,6 +174,10 @@ exports.getUserNotifications = async (req, res) => {
         const { userId } = req.params;
         const { page = 1, limit = 20 } = req.query;
 
+        if (!userId || userId === 'undefined' || !userId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
         // Validate: only students have notifications
         const user = await User.findById(userId).select("role classLevel").lean();
         if (!user) {

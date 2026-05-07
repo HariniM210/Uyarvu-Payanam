@@ -23,6 +23,7 @@ exports.loginAdmin = async (req, res) => {
 
     res.json({ token });
   } catch (error) {
+    console.error("Login Admin Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

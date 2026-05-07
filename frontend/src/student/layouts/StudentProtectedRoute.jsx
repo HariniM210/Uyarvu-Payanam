@@ -27,7 +27,17 @@ export default function StudentProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/signin" state={{ from: location }} replace />
+    return <Navigate to="/student/signin" state={{ from: location }} replace />
+  }
+
+  const { student } = useStudentAuth()
+  const isClass5 = student?.classLevel === '5th' || student?.classLevel === 'Class 5' || student?.classLevel === '5';
+  const isClass8 = student?.classLevel === '8th' || student?.classLevel === 'Class 8' || student?.classLevel === '8';
+  const isClass10 = student?.classLevel === '10th' || student?.classLevel === 'Class 10' || student?.classLevel === '10';
+  const isClass12 = student?.classLevel === '12th' || student?.classLevel === 'Class 12' || student?.classLevel === '12';
+  
+  if ((isClass5 || isClass8 || isClass10 || isClass12) && student?.onboardingCompleted === false && location.pathname !== '/student/onboarding') {
+    return <Navigate to="/student/onboarding" replace />
   }
 
   return children

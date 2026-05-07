@@ -21,6 +21,9 @@ export const notificationService = {
 
     // ── User: Get notifications for a specific user ───────────────────────
     getUserNotifications: async (userId, params = {}) => {
+        if (!userId || userId === 'undefined') {
+            return { total: 0, unreadCount: 0, page: 1, notifications: [] };
+        }
         const response = await axiosInstance.get(`/notifications/user/${userId}`, { params })
         return response.data
     },
@@ -37,8 +40,20 @@ export const notificationService = {
         return response.data
     },
 
+    // Alias for compatibility
+    markRead: async (id) => {
+        const response = await axiosInstance.put(`/notifications/${id}/read`)
+        return response.data
+    },
+
     // ── Mark all notifications as read for a user ───────────────────────
     markAllAsRead: async (userId) => {
+        const response = await axiosInstance.put(`/notifications/user/${userId}/read-all`)
+        return response.data
+    },
+
+    // Alias for compatibility
+    markAllRead: async (userId) => {
         const response = await axiosInstance.put(`/notifications/user/${userId}/read-all`)
         return response.data
     },

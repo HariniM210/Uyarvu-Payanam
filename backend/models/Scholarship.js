@@ -24,13 +24,10 @@ const scholarshipSchema = new mongoose.Schema(
       trim: true,
       default: ""
     },
-    grades: {
-      type: [String], // ["5th", "8th", "10th", "12th"]
-      default: ["10th"]
-    },
     targetClass: {
       type: [String], // ["5", "8", "10", "12"]
-      default: []
+      alias: "grades",
+      default: ["10"]
     },
     category: {
       type: String,
@@ -54,6 +51,7 @@ const scholarshipSchema = new mongoose.Schema(
     },
     image: {
       type: String,
+      trim: true,
       default: ""
     },
     deadline: {

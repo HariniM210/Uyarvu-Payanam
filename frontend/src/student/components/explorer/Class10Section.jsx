@@ -1,12 +1,96 @@
 import React, { useState } from 'react';
-import { SCard, SBtn } from '../../components/ui';
-import { FiActivity, FiMonitor, FiTrendingUp, FiTool } from 'react-icons/fi';
+import { SCard, SBtn, SBadge } from '../../components/ui';
+import { FiActivity, FiMonitor, FiTrendingUp, FiTool, FiBookOpen, FiAlertTriangle, FiInfo } from 'react-icons/fi';
 
-const STREAMS = [
-    { title: "Biology/Maths", icon: FiActivity, color: "green", desc: "Gateway to Medical, Engineering & Pure Sciences." },
-    { title: "Computer Science", icon: FiMonitor, color: "blue", desc: "Leads to IT, Software, AI & Electronics." },
-    { title: "Commerce", icon: FiTrendingUp, color: "orange", desc: "For CA, B.Com, Business Management & Finance." },
-    { title: "Vocational", icon: FiTool, color: "purple", desc: "Polytechnic, ITI & Direct Skill-Based paths." }
+const COURSES_AFTER_10TH = [
+    {
+        category: "🔬 SCIENCE GROUP COURSES",
+        color: "blue",
+        courses: [
+            {
+                title: "1️⃣ Maths + Biology (PCMB)",
+                subjects: ["Physics", "Chemistry", "Maths", "Biology"],
+                bestFor: "Students who want both Engineering + Medical options",
+                warning: "Heavy workload"
+            },
+            {
+                title: "2️⃣ Maths + Computer Science (PCM + CS)",
+                subjects: ["Physics", "Chemistry", "Maths", "Computer Science"],
+                bestFor: "Engineering, IT / Software, Coding careers"
+            },
+            {
+                title: "3️⃣ Biology + Nursing Track (PCB)",
+                subjects: ["Physics", "Chemistry", "Biology"],
+                bestFor: "Nursing, Medical field, Paramedical courses",
+                note: "“Nursing” is not always a subject in school, but a career path after PCB"
+            },
+            {
+                title: "4️⃣ Maths + Business Maths",
+                subjects: ["Maths / Applied Maths", "Commerce-related subjects OR Science mix"],
+                bestFor: "Data analysis, Finance + Tech careers"
+            }
+        ]
+    },
+    {
+        category: "💼 COMMERCE GROUP COURSES",
+        color: "green",
+        courses: [
+            {
+                title: "5️⃣ Accountancy + Business Studies + Economics",
+                subjects: ["Accountancy", "Business Studies", "Economics", "Maths (optional)"],
+                bestFor: "CA / CMA / CS, Business, Banking"
+            },
+            {
+                title: "6️⃣ Commerce + Computer Science",
+                subjects: ["Accountancy", "Business Studies", "Computer Science", "Economics"],
+                bestFor: "FinTech, Business + IT combination"
+            },
+            {
+                title: "7️⃣ Commerce + Business Maths",
+                subjects: ["Accountancy", "Economics", "Business Maths"],
+                bestFor: "Finance, Analytics, Banking exams"
+            }
+        ]
+    },
+    {
+        category: "🎨 ARTS / HUMANITIES COURSES",
+        color: "purple",
+        courses: [
+            {
+                title: "8️⃣ History + Political Science + Geography",
+                subjects: [],
+                bestFor: "Government exams, UPSC / TNPSC, Teaching"
+            },
+            {
+                title: "9️⃣ Psychology + Sociology + English",
+                subjects: [],
+                bestFor: "Psychology, HR, Social work"
+            },
+            {
+                title: "🔟 Arts + Computer Applications",
+                subjects: [],
+                bestFor: "Media, Digital careers, Design"
+            }
+        ]
+    },
+    {
+        category: "🔧 VOCATIONAL / DIPLOMA COURSES",
+        color: "orange",
+        courses: [
+            {
+                title: "1️⃣1️⃣ Polytechnic Diploma",
+                subjects: ["Mechanical", "Civil", "Computer", "Auto", "etc."],
+                bestFor: "Direct technical jobs, lateral entry to 2nd year B.E/B.Tech",
+                note: "3-year practical engineering course right after 10th."
+            },
+            {
+                title: "1️⃣2️⃣ ITI / Skill Certification",
+                subjects: ["Fitter", "Electrician", "Mechanic"],
+                bestFor: "Quick employment, skilled trades, railway jobs",
+                note: "1 to 2-year certification for core industrial skills."
+            }
+        ]
+    }
 ];
 
 export default function Class10Section() {
@@ -14,18 +98,53 @@ export default function Class10Section() {
 
     return (
         <div id="class-10" style={{ scrollMarginTop: '100px', marginBottom: '60px' }}>
-            <div className="s-anim-up" style={{ textAlign: 'center', marginBottom: 30 }}>
-                <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 28, color: 'var(--s-text)', marginBottom: 8 }}>Class 10: The Crossroads</h2>
-                <p style={{ fontSize: 15, color: 'var(--s-text3)' }}>Select your stream wisely for your future career.</p>
+            <div className="s-anim-up" style={{ textAlign: 'center', marginBottom: 40 }}>
+                <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 32, color: 'var(--s-text)', marginBottom: 12 }}>Courses Available After 10th</h2>
+                <p style={{ fontSize: 16, color: 'var(--s-text3)' }}>Specific 11th & 12th Subject Combinations to choose from</p>
             </div>
 
-            <div className="s-anim-up s-d1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 30 }}>
-                {STREAMS.map((s, idx) => (
-                    <SCard key={idx} hover style={{ textAlign: 'center', padding: '24px 16px' }}>
-                        <s.icon size={32} color={`var(--s-${s.color})`} style={{ margin: '0 auto 12px' }} />
-                        <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 16, marginBottom: 8 }}>{s.title}</h3>
-                        <p style={{ fontSize: 13, color: 'var(--s-text2)' }}>{s.desc}</p>
-                    </SCard>
+            <div className="s-anim-up s-d1" style={{ display: 'flex', flexDirection: 'column', gap: 40, marginBottom: 50 }}>
+                {COURSES_AFTER_10TH.map((group, gIdx) => (
+                    <div key={gIdx}>
+                        <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: `var(--s-${group.color})`, marginBottom: 20, borderBottom: `2px solid var(--s-${group.color}-l)`, paddingBottom: 10 }}>
+                            {group.category}
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+                            {group.courses.map((course, cIdx) => (
+                                <SCard key={cIdx} hover style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, borderTop: `4px solid var(--s-${group.color})` }}>
+                                    <h4 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 18, margin: 0 }}>{course.title}</h4>
+                                    
+                                    {course.subjects.length > 0 && (
+                                        <div>
+                                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1 }}>👉 Subjects</span>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                                                {course.subjects.map((sub, i) => <SBadge key={i} color="gray">{sub}</SBadge>)}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div style={{ background: 'var(--s-surface2)', padding: '12px 16px', borderRadius: 12 }}>
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-primary)', textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <FiActivity /> Best For
+                                        </span>
+                                        <p style={{ fontSize: 14, fontWeight: 600, margin: '6px 0 0', color: 'var(--s-text)' }}>{course.bestFor}</p>
+                                    </div>
+
+                                    {course.warning && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#d97706', fontSize: 13, fontWeight: 600, background: '#fef3c7', padding: '8px 12px', borderRadius: 8 }}>
+                                            <FiAlertTriangle /> ⚠️ {course.warning}
+                                        </div>
+                                    )}
+
+                                    {course.note && (
+                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, color: 'var(--s-text2)', fontSize: 13, background: 'var(--s-surface2)', padding: '8px 12px', borderRadius: 8 }}>
+                                            <FiInfo style={{ marginTop: 2, flexShrink: 0 }} /> 💡 {course.note}
+                                        </div>
+                                    )}
+                                </SCard>
+                            ))}
+                        </div>
+                    </div>
                 ))}
             </div>
 

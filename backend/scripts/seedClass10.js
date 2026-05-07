@@ -16,71 +16,50 @@ const slugify = (text) => {
 
 const class10SeedData = [
   {
-    title: "After 10th – Choosing the Right Path",
-    sectionType: "Basics",
-    category: "General",
-    shortDescription: "Class 10 is the start of stream and career direction planning.",
-    fullDescription: "After completing Class 10, students must decide their next pathway—Science, Commerce, Arts, or Diploma.",
-    coverImage: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200",
+    title: "Science Stream (PCM, PCB, PCMB)",
+    sectionType: "Streams",
+    category: "Science",
+    shortDescription: "The gateway to Engineering, Medicine, and Research careers.",
+    fullDescription: "Choosing Science opens doors to highly technical, scientific, and medical fields.\n\n📚 **Key Subjects:** Physics, Chemistry, Maths, Biology.\n🚀 **Future Careers:** Doctor, Engineer, Scientist, Architect, Data Analyst.\n💡 **Decision Tip:** Choose this if you genuinely enjoy problem-solving, math, and understanding how things work.",
+    benefitType: "Degree Paths",
+    coverImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1200",
     status: "published",
     featured: true,
     displayOrder: 1,
     targetClass: "10"
   },
   {
-    title: "Science Stream – PCM, PCB, and PCMB",
+    title: "Commerce Stream (Business & Finance)",
     sectionType: "Streams",
-    category: "Science",
-    shortDescription: "For engineering, medicine, and research.",
-    fullDescription: "Ideal for Engineering and Medical Aspirants.",
-    benefitType: "Degree Paths",
-    coverImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1200",
+    category: "Commerce",
+    shortDescription: "The foundation for Corporate Business, Accounting, and Finance.",
+    fullDescription: "Commerce is ideal for students who want to understand money, business operations, and the economy.\n\n📚 **Key Subjects:** Accountancy, Business Studies, Economics, Math/Informatics Practices.\n🚀 **Future Careers:** Chartered Accountant (CA), Investment Banker, HR Manager, Entrepreneur.\n💡 **Decision Tip:** Choose this if you like managing finances, leading teams, or planning to start your own business.",
+    coverImage: "https://images.unsplash.com/photo-1454165833767-027ffea9e77b?q=80&w=1200",
     status: "published",
+    featured: true,
     displayOrder: 2,
     targetClass: "10"
   },
   {
-    title: "Commerce Stream – Business and Finance",
+    title: "Arts / Humanities",
     sectionType: "Streams",
-    category: "Commerce",
-    shortDescription: "For finance, management, and professional roles.",
-    fullDescription: "Leads to CA, CS, and Banking careers.",
-    coverImage: "https://images.unsplash.com/photo-1454165833767-027ffea9e77b?q=80&w=1200",
+    category: "Arts",
+    shortDescription: "Explore society, law, media, psychology, and public service.",
+    fullDescription: "Arts focuses on human society, culture, and creative thinking.\n\n📚 **Key Subjects:** History, Political Science, Psychology, Sociology, Literature.\n🚀 **Future Careers:** Lawyer, Journalist, Psychologist, Civil Servant (IAS/IPS), Teacher.\n💡 **Decision Tip:** Choose this if you love reading, have strong communication skills, and want to understand human behavior or society.",
+    coverImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1200",
     status: "published",
     displayOrder: 3,
     targetClass: "10"
   },
   {
-    title: "Arts / Humanities – Society and Law",
-    sectionType: "Streams",
-    category: "Arts",
-    shortDescription: "For students interested in society, law, and media.",
-    fullDescription: "History, Political Science, Psychology. Excellent for Law and UPSC.",
-    coverImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1200",
-    status: "published",
-    displayOrder: 4,
-    targetClass: "10"
-  },
-  {
-    title: "Diploma / Polytechnic – Technical Focus",
+    title: "Diploma / Polytechnic (After 10th)",
     sectionType: "Streams",
     category: "Diploma",
-    shortDescription: "Early technical specialization and industry-ready skills.",
-    fullDescription: "Practical engineering training (3 years).",
+    shortDescription: "Early technical specialization and industry-ready practical skills.",
+    fullDescription: "Diplomas provide fast-tracked, 3-year practical engineering training directly after Class 10.\n\n📚 **Key Focus:** Practical workshops, applied engineering basics.\n🚀 **Future Careers:** Junior Engineer, Technical Supervisor, direct entry to 2nd-year B.Tech (Lateral Entry).\n💡 **Decision Tip:** Choose this if you want to start earning sooner or prefer practical learning over heavy theory.",
     coverImage: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1200",
     status: "published",
-    displayOrder: 5,
-    targetClass: "10"
-  },
-  {
-    title: "Career Mapping by Stream",
-    sectionType: "Careers",
-    category: "Planning",
-    shortDescription: "Connect your stream selection to future professional options.",
-    fullDescription: "Detailed mapping of subjects to jobs.",
-    coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1200",
-    status: "published",
-    displayOrder: 6,
+    displayOrder: 4,
     targetClass: "10"
   },
   {
@@ -92,7 +71,7 @@ const class10SeedData = [
     externalLink: "https://scholarships.gov.in/",
     coverImage: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?q=80&w=1200",
     status: "published",
-    displayOrder: 7,
+    displayOrder: 5,
     targetClass: "10"
   },
   {
@@ -104,7 +83,7 @@ const class10SeedData = [
     fullDescription: "Tuition and maintenance support.",
     coverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200",
     status: "published",
-    displayOrder: 8,
+    displayOrder: 6,
     targetClass: "10"
   },
   {
@@ -115,7 +94,7 @@ const class10SeedData = [
     fullDescription: "Support till Class 12.",
     coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200",
     status: "published",
-    displayOrder: 9,
+    displayOrder: 7,
     targetClass: "10"
   },
   {
@@ -127,40 +106,7 @@ const class10SeedData = [
     externalLink: "https://www.tndce.tn.gov.in/",
     coverImage: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1200",
     status: "published",
-    displayOrder: 10,
-    targetClass: "10"
-  },
-  {
-    title: "How to Apply for Scholarships (Process)",
-    sectionType: "Scholarships",
-    category: "Process",
-    shortDescription: "A clear guide to apply through NSP and other portals.",
-    fullDescription: "Steps for successful application.",
-    coverImage: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=1200",
-    status: "published",
-    displayOrder: 11,
-    targetClass: "10"
-  },
-  {
-    title: "Scholarship Checklist & Tips",
-    sectionType: "Scholarships",
-    category: "Tips",
-    shortDescription: "Avoid common mistakes during application.",
-    fullDescription: "Important pointers for students.",
-    coverImage: "https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=1200",
-    status: "published",
-    displayOrder: 12,
-    targetClass: "10"
-  },
-  {
-    title: "Entrance Exams & Opportunities After 10th",
-    sectionType: "Entrance Exams",
-    category: "Scholarship Exam",
-    shortDescription: "Explore talent exams and job opportunities.",
-    fullDescription: "Overview of all major pathways.",
-    coverImage: "https://images.unsplash.com/photo-1588072432836-e10032774350?q=80&w=1200",
-    status: "published",
-    displayOrder: 13,
+    displayOrder: 8,
     targetClass: "10"
   },
   {
@@ -168,10 +114,10 @@ const class10SeedData = [
     sectionType: "Entrance Exams",
     category: "Scholarship Exam",
     shortDescription: "Premier national scholarship exam by NCERT.",
-    fullDescription: "Stages and benefits of NTSE.",
+    fullDescription: "A two-stage exam identifying talented students. Qualifiers receive monthly scholarships up to Ph.D. level.",
     coverImage: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=1200",
     status: "published",
-    displayOrder: 14,
+    displayOrder: 9,
     targetClass: "10"
   },
   {
@@ -180,10 +126,10 @@ const class10SeedData = [
     category: "Scholarship Exam",
     subCategoryLabel: "TN Rural",
     shortDescription: "Targeted support for rural students in TN.",
-    fullDescription: "Selected students receive ₹1,000/year.",
+    fullDescription: "Selected students receive ₹1,000/year to support their higher secondary education.",
     coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200",
     status: "published",
-    displayOrder: 15,
+    displayOrder: 10,
     targetClass: "10"
   },
   {
@@ -191,10 +137,10 @@ const class10SeedData = [
     sectionType: "Entrance Exams",
     category: "Skill Exams",
     shortDescription: "Certifications for Drawing, Sewing, Music, etc.",
-    fullDescription: "Grading for employment.",
+    fullDescription: "These certifications act as grading benchmarks and provide excellent early employment credentials.",
     coverImage: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1200",
     status: "published",
-    displayOrder: 16,
+    displayOrder: 11,
     targetClass: "10"
   },
   {
@@ -202,10 +148,10 @@ const class10SeedData = [
     sectionType: "Entrance Exams",
     category: "Government Job",
     shortDescription: "Join uniform services via TNUSRB.",
-    fullDescription: "Minimum 10th pass recruitment.",
+    fullDescription: "With a minimum 10th pass qualification, you can apply for state police recruitment.",
     coverImage: "https://images.unsplash.com/photo-1592188657297-c6473602410a?q=80&w=1200",
     status: "published",
-    displayOrder: 17,
+    displayOrder: 12,
     targetClass: "10"
   },
   {
@@ -213,10 +159,10 @@ const class10SeedData = [
     sectionType: "Entrance Exams",
     category: "Defence Career",
     shortDescription: "Join the Army directly as a soldier.",
-    fullDescription: "10th pass soldier entry.",
+    fullDescription: "10th pass soldier entry offers early independence, pride, and strong financial security.",
     coverImage: "https://images.unsplash.com/photo-1621453229864-7729f270b224?q=80&w=1200",
     status: "published",
-    displayOrder: 18,
+    displayOrder: 13,
     targetClass: "10"
   },
   {
@@ -224,46 +170,10 @@ const class10SeedData = [
     sectionType: "Entrance Exams",
     category: "Government Job",
     shortDescription: "Entry-level jobs in India's largest networks.",
-    fullDescription: "Direct recruitment via marks/exam.",
+    fullDescription: "Direct recruitment based on 10th marks or simple entrance exams for various foundational roles.",
     coverImage: "https://images.unsplash.com/photo-1566933293069-b55c7f326dd4?q=80&w=1200",
     status: "published",
-    displayOrder: 19,
-    targetClass: "10"
-  },
-  {
-    title: "Civil Services Foundation",
-    sectionType: "Entrance Exams",
-    category: "Future Goals",
-    shortDescription: "Start building the foundation for IAS/IPS.",
-    fullDescription: "Reading habits and awareness guide.",
-    coverImage: "https://images.unsplash.com/photo-1544654803-b69140b285a1?q=80&w=1200",
-    status: "published",
-    displayOrder: 20,
-    targetClass: "10"
-  },
-  {
-    title: "Official Resources & Portals",
-    sectionType: "Resources",
-    category: "Directory",
-    shortDescription: "Trusted links for students.",
-    fullDescription: "TN Govt and Central Govt portal hubs.",
-    coverImage: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200",
-    status: "published",
-    displayOrder: 21,
-    targetClass: "10"
-  },
-  {
-    title: "Decision Dashboard - Class 10 FAQ",
-    sectionType: "FAQs",
-    category: "Advice",
-    shortDescription: "Quick answers to dilemmas.",
-    fullDescription: "Expert answers for common student doubts.",
-    faqs: [
-      { question: "Which stream?", answer: "Interest > Marks." }
-    ],
-    coverImage: "https://images.unsplash.com/photo-1533073356961-7255013d2c5e?q=80&w=1200",
-    status: "published",
-    displayOrder: 22,
+    displayOrder: 14,
     targetClass: "10"
   }
 ];

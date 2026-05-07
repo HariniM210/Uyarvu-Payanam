@@ -15,9 +15,16 @@ const createTransporter = () => {
   });
 };
 
+const Settings = require("../models/Settings");
+
 // ── Register ───────────────────────────────────────────────────────────────────
 const register = async (req, res) => {
   try {
+    const settings = await Settings.findOne();
+    if (settings && settings.studentRegistration === false) {
+      return res.status(403).json({ message: "Student registration is currently disabled by administrator." });
+    }
+
     const { name, email, password, classLevel, district } = req.body;
 
     if (!name || !email || !password) {
@@ -43,7 +50,15 @@ const register = async (req, res) => {
     });
 
     await user.save();
-    res.status(201).json({ message: "Registration successful" });
+    res.status(201).json({ 
+        message: "Registration successful",
+        user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            onboardingCompleted: user.onboardingCompleted
+        }
+    });
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "Server error" });
@@ -87,7 +102,8 @@ const login = async (req, res) => {
         classLevel: user.classLevel,
         district: user.district,
         role: user.role,
-        status: user.status
+        status: user.status,
+        onboardingCompleted: user.onboardingCompleted
       },
       student: {
         _id: user._id,
@@ -96,6 +112,7 @@ const login = async (req, res) => {
         email: user.email,
         classLevel: user.classLevel,
         district: user.district,
+        onboardingCompleted: user.onboardingCompleted
       }
     });
 

@@ -244,3 +244,43 @@ export function FilterSelect({ children, value, onChange }) {
     return <select value={value} onChange={onChange} style={{ background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:12, padding:'10px 16px', fontSize:14, cursor:'pointer', outline:'none', fontFamily:'Outfit' }}>{children}</select>
 }
 export function ActivityDot({ color }) { return <div style={{ width:10, height:10, borderRadius:'50%', background:color, flexShrink:0 }} /> }
+
+/* ── SAlert ── */
+export function SAlert({ type = 'info', children, onClose, style }) {
+  const map = {
+    success: { bg: '#f0fdf4', border: '#86efac', text: '#15803d' },
+    error:   { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' },
+    warning: { bg: '#fffbeb', border: '#fcd34d', text: '#d97706' },
+    info:    { bg: 'rgba(59,130,246,0.1)', border: '#93c5fd', text: '#2563eb' },
+  }
+  const s = map[type] || map.info
+  return (
+    <div style={{
+      background: s.bg, border: `1px solid ${s.border}`, color: s.text,
+      borderRadius: 12, padding: '12px 16px', fontSize: 14, fontWeight: 600,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, ...style
+    }}>
+      <span>{children}</span>
+      {onClose && <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'inherit', fontSize:18 }}>✕</button>}
+    </div>
+  )
+}
+
+/* ── SInput & SSelect ── */
+export function SInput({ label, ...props }) {
+  return (
+    <FormGroup label={label}>
+      <FormInput {...props} />
+    </FormGroup>
+  )
+}
+
+export function SSelect({ label, children, ...props }) {
+  return (
+    <FormGroup label={label}>
+      <FormInput as="select" {...props}>
+        {children}
+      </FormInput>
+    </FormGroup>
+  )
+}
