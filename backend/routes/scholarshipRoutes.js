@@ -7,9 +7,6 @@ const {
   getAllScholarships,
   applyForScholarship, 
   addScholarship, 
-
-  getAllScholarships,
-
   importScholarshipsCSV,
   importScholarshipsFromLocalCSV,
   uploadScholarshipsCSV, 

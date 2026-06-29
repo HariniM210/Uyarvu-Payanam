@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-
-import { FiSearch, FiFilter, FiCalendar, FiDollarSign, FiAward, FiExternalLink, FiUploadCloud, FiCheckCircle } from 'react-icons/fi';
-import { scholarshipService } from '../../services';
-import { adminService } from '../../../services/adminService';
-
 import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiFilter, FiCalendar, FiDollarSign, FiAward, FiExternalLink, FiUploadCloud, FiCheckCircle, FiBookmark } from 'react-icons/fi';
 import { scholarshipService } from '../../services';
+import { adminService } from '../../../services/adminService';
 import { userActionService } from '../../../services/userActionService';
 import { useStudentAuth } from '../../context/StudentAuthContext';
 import { SLoader, SBadge } from '../../components/ui';
@@ -136,11 +132,6 @@ export default function ScholarshipsPage() {
 
   const categories = ['All', ...new Set(scholarships.map(s => s.category || 'General'))];
 
-  const categories = ['All', ...new Set(scholarships
-    .map(s => s.category || 'General')
-    .filter(cat => !['Government', 'State Schemes'].includes(cat))
-  )];
-
   const grades = ['All', '5', '8', '10', '12', 'Graduate'];
   
   const filteredScholarships = scholarships.filter(s => {
@@ -255,10 +246,6 @@ export default function ScholarshipsPage() {
               flexDirection: 'column',
               gap: 16,
               transition: 'all 0.2s',
-
-              boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-            }}>
-
               boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
               position: 'relative'
             }}>

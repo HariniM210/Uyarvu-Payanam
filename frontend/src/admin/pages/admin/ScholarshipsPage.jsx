@@ -207,18 +207,13 @@ export default function ScholarshipsPage() {
                 <TD style={{ fontWeight: 800, color: 'var(--text)', fontSize:15 }}>
                   {(s.scholarshipName || '').toUpperCase()}
                 </TD>
-                 <TD>
-                   <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-
+                  <TD>
+                    <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
                       {(s.targetClass || s.grades || []).map(c => (
-
-                      {(s.targetClass || []).map(c => (
-
                         <SBadge key={c} color="blue">{formatGrade(c)}</SBadge>
                       ))}
-
-                   </div>
-                 </TD>
+                    </div>
+                  </TD>
                 <TD>{s.provider || 'N/A'}</TD>
                 <TD style={{ fontWeight: 600, color: 'var(--primary)' }}>{s.benefit || 'N/A'}</TD>
                 <TD>
