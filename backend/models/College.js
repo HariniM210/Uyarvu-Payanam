@@ -64,6 +64,21 @@ const collegeSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    collegeType: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    universityAffiliation: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    hostel: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     coursesOffered: [
       {
         type: mongoose.Schema.Types.ObjectId,

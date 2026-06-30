@@ -86,6 +86,14 @@ const courseSchema = new mongoose.Schema(
     sourceUrl: {
       type: String,
       default: "",
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    source: {
+      type: String,
+      default: "",
     }
   },
   {

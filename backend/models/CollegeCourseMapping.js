@@ -32,6 +32,54 @@ const collegeCourseMappingSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    collegeName: {
+      type: String,
+      trim: true,
+    },
+    courseName: {
+      type: String,
+      trim: true,
+    },
+    degree: {
+      type: String,
+      trim: true,
+    },
+    courseLevel: {
+      type: String,
+      trim: true,
+    },
+    specialization: {
+      type: String,
+      trim: true,
+    },
+    duration: {
+      type: String,
+      trim: true,
+    },
+    eligibility: {
+      type: String,
+      trim: true,
+    },
+    admissionMode: {
+      type: String,
+      trim: true,
+    },
+    hostel: {
+      type: String,
+      trim: true,
+    },
+    collegeType: {
+      type: String,
+      trim: true,
+    },
+    universityAffiliation: {
+      type: String,
+      trim: true,
+    },
+    stream: {
+      type: String,
+      trim: true,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",

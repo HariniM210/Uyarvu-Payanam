@@ -36,8 +36,7 @@ export default function CollegeCourseMappingPage() {
 
   useEffect(() => {
     fetchInitialData()
-    setManualWebsite('')
-  }, [selectedCollege])
+  }, [])
 
   const fetchInitialData = async () => {
     try {
@@ -55,7 +54,14 @@ export default function CollegeCourseMappingPage() {
   const filteredColleges = selectedStream 
     ? colleges.filter(c => {
         if (selectedStream === 'Arts & Science') return c.stream === 'Arts & Science' || c.stream === 'Arts' || c.stream === 'Science';
-        if (selectedStream === 'Diploma') return c.stream === 'Diploma' || c.stream === 'Polytechnic' || c.stream === 'ITI';
+        if (selectedStream === 'Diploma') {
+          return c.stream === 'Diploma' || c.stream === 'Polytechnic' || c.stream === 'ITI' ||
+            (c.streamsOffered && c.streamsOffered.some(s => /diploma|polytechnic|iti/i.test(s)));
+        }
+        if (selectedStream === 'Polytechnic') {
+          return c.stream === 'Polytechnic' ||
+            (c.streamsOffered && c.streamsOffered.some(s => /polytechnic|diploma in engineering/i.test(s)));
+        }
         return c.stream === selectedStream || (c.streamsOffered && c.streamsOffered.includes(selectedStream));
       })
     : colleges
@@ -66,8 +72,9 @@ export default function CollegeCourseMappingPage() {
   )
 
   const handleCollegeChange = async (id) => {
-    setSelectedCollege(id)
-    if (!id) {
+    const collegeId = id ? String(id) : ''
+    setSelectedCollege(collegeId)
+    if (!collegeId) {
       setSelectedCourses([])
       setSuggestedCourses([])
       setCollegeDetails(null)
@@ -76,15 +83,15 @@ export default function CollegeCourseMappingPage() {
 
     try {
       setActionLoading(true)
-      const res = await axiosInstance.get(`/college-courses/suggested/${id}`)
+      const res = await axiosInstance.get(`/college-courses/suggested/${collegeId}`)
       const { data, college } = res.data
       
-      setSuggestedCourses(data)
-      setCollegeDetails(college)
-      setManualWebsite(college.website || '')
+      setSuggestedCourses(data || [])
+      setCollegeDetails(college || null)
+      setManualWebsite(college?.website || '')
       
       // Auto-check anything that is an ACTUAL mapping or from a high-conf source
-      const initialCheckedIds = data
+      const initialCheckedIds = (data || [])
         .filter(c => c.checked)
         .map(c => c._id)
       
@@ -283,8 +290,9 @@ export default function CollegeCourseMappingPage() {
                       type="text"
                       placeholder="Type college name (e.g. CEG)..."
                       value={collegeSearch}
-                      onChange={e => setCollegeSearch(e.target.value)}
+                      onChange={e => { setCollegeSearch(e.target.value); setShowCollegeDropdown(true); }}
                       onFocus={() => setShowCollegeDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowCollegeDropdown(false), 200)}
                       style={{ width: '100%', padding: '14px 18px', borderRadius: 12, border: '2px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14, fontWeight: 600 }}
                     />
                     {actionLoading && (
@@ -294,7 +302,7 @@ export default function CollegeCourseMappingPage() {
                     )}
                   </div>
 
-                  {showCollegeDropdown && collegeSearch.trim() && (
+                  {showCollegeDropdown && (
                     <div style={{ 
                       position: 'absolute', top: '110%', left: 0, right: 0, 
                       background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.15)', 
@@ -306,10 +314,11 @@ export default function CollegeCourseMappingPage() {
                         filteredCollegesBySearch.map(c => (
                           <div 
                             key={c._id} 
-                            onClick={() => {
-                              handleCollegeChange(c._id);
-                              setCollegeSearch(c.collegeName);
-                              setShowCollegeDropdown(false);
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              handleCollegeChange(c._id)
+                              setCollegeSearch(c.collegeName)
+                              setShowCollegeDropdown(false)
                             }}
                             style={{ 
                               padding: '12px 16px', cursor: 'pointer', transition: '0.15s',
@@ -437,7 +446,7 @@ export default function CollegeCourseMappingPage() {
                     </div>
                   ) : (
                     finalSuggestedFiltered.map(c => {
-                      const isSelected = selectedCourses.includes(c._id);
+                      const isSelected = selectedCourses.some(sc => String(sc) === String(c._id));
                       return (
                         <label key={c._id} 
                           style={{ 

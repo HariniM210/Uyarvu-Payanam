@@ -395,7 +395,9 @@ exports.getSuggestedMappings = async (req, res) => {
 
     // 1. Get Actual Mappings from dedicated table
     const actualMappings = await CollegeCourseMapping.find({ collegeId }).lean();
-    const mappedCourseIds = actualMappings.map(m => m.courseId.toString());
+    const mappedCourseIds = actualMappings
+      .filter(m => m.courseId)
+      .map(m => m.courseId.toString());
 
     // 2. Fallback logic: identify likely course categories
     const stream = (college.stream || "").toLowerCase();
@@ -434,7 +436,7 @@ exports.getSuggestedMappings = async (req, res) => {
     // 5. Build response
     const result = coursesToConsider.map(course => {
       const courseIdStr = course._id.toString();
-      const actualMapping = actualMappings.find(m => m.courseId.toString() === courseIdStr);
+      const actualMapping = actualMappings.find(m => m.courseId && m.courseId.toString() === courseIdStr);
       const isMappedInColl = (college.coursesOffered || []).map(id=>id.toString()).includes(courseIdStr);
       const isMapped = !!actualMapping || isMappedInColl;
       const inCutoff = cutoffCourseIds.includes(courseIdStr);

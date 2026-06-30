@@ -72,9 +72,11 @@ exports.getAllColleges = async (req, res) => {
       filter.coursesOffered = courseId;
     }
 
-    // Filter by stream
+    const andConditions = [];
+
+    // Filter by stream (primary stream or streamsOffered)
     if (stream && stream !== "All") {
-      filter.stream = stream;
+      andConditions.push({ $or: [{ stream }, { streamsOffered: stream }] });
     }
 
     // Filter by district
@@ -84,15 +86,21 @@ exports.getAllColleges = async (req, res) => {
 
     // Search by college name or location
     if (search) {
-      filter.$or = [
-        { collegeName: { $regex: search, $options: "i" } },
-        { location: { $regex: search, $options: "i" } },
-        { district: { $regex: search, $options: "i" } },
-      ];
+      andConditions.push({
+        $or: [
+          { collegeName: { $regex: search, $options: "i" } },
+          { location: { $regex: search, $options: "i" } },
+          { district: { $regex: search, $options: "i" } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      filter.$and = andConditions;
     }
 
     const colleges = await College.find(filter)
-      .select("collegeName stream category type district location state feesPerYear rank accreditation website collegeCode fetchStatus totalCoursesFound createdAt")
+      .select("collegeName stream streamsOffered category type district location state feesPerYear rank accreditation website collegeCode fetchStatus totalCoursesFound createdAt")
       .sort({ createdAt: -1 })
       .lean();
 
