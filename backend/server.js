@@ -6,7 +6,14 @@ const { Server } = require("socket.io");
 const connectDB = require("./config/db");
 
 dotenv.config();
-connectDB();
+connectDB().then(() => {
+  try {
+    const { importDiplomaExcel } = require("./utils/diplomaImporter");
+    importDiplomaExcel(false).catch(err => console.error("Error in auto diploma import:", err));
+  } catch (err) {
+    console.error("Failed to require/run diploma importer on startup:", err);
+  }
+});
 
 const app = express();
 const server = http.createServer(app);

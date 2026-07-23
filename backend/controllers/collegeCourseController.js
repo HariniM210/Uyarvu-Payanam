@@ -560,3 +560,34 @@ exports.deduplicateMappings = async (req, res) => {
     res.status(500).json({ success: false, message: "Cleanup failed", error: error.message });
   }
 };
+
+// @desc    Import/Sync Diploma Course Offered mappings from Excel file
+// @route   POST /api/college-courses/import-diploma
+// @access  Admin
+exports.importDiplomaRoute = async (req, res) => {
+  try {
+    const { importDiplomaExcel } = require("../utils/diplomaImporter");
+    const result = await importDiplomaExcel(true); // Force run from API trigger
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Diploma Course Offered Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Diploma synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import diploma mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger diploma mapping import.",
+      error: error.message
+    });
+  }
+};
+
