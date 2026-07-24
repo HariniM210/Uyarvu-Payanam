@@ -17,16 +17,19 @@ export default function ScholarshipDetailPage() {
   
   const [scholarship, setScholarship] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    console.log("Frontend: Scholarship ID from route params:", id)
     fetchScholarship()
   }, [id])
 
   const fetchScholarship = async () => {
     try {
       setLoading(true)
+      setError(null)
       const res = await scholarshipService.getById(id)
       setScholarship(res.data || res)
       
@@ -37,6 +40,11 @@ export default function ScholarshipDetailPage() {
       }
     } catch (err) {
       console.error('Failed to fetch scholarship:', err)
+      if (err.response?.status === 404) {
+        setError('Scholarship not found')
+      } else {
+        setError(err.response?.data?.message || err.message || 'Failed to load scholarship details')
+      }
     } finally {
       setLoading(false)
     }
@@ -61,6 +69,7 @@ export default function ScholarshipDetailPage() {
   }
 
   if (loading) return <SLoader fullScreen />
+  if (error) return <SEmpty title={error} />
   if (!scholarship) return <SEmpty title="Scholarship not found" />
 
   return (

@@ -430,6 +430,7 @@ exports.importScholarshipsFromLocalCSV = async (req, res) => {
 // @route   GET /api/scholarships/:id
 exports.getScholarshipById = async (req, res) => {
   try {
+    console.log("Backend: getScholarshipById received request for ID:", req.params.id);
     const scholarship = await Scholarship.findById(req.params.id);
     if (!scholarship) {
       return res.status(404).json({ success: false, message: "Scholarship not found" });

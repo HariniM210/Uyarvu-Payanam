@@ -9,22 +9,15 @@ import {
 } from 'react-icons/fi'
 
 const PUBLIC_NAV_LINKS = [
-
-  { to: '/home',    label: 'Home',     end: true },
-  { to: '/class5',  label: 'Class 5',  end: false },
-  { to: '/class8',  label: 'Class 8',  end: false },
-  { to: '/class10', label: 'Class 10', end: false },
-  { to: '/class12', label: 'Class 12', end: false },
-  { to: '/courses', label: 'Courses',  end: false },
-  { to: '/scholarships', label: 'Scholarships', end: false },
-
   { to: '/student/home',    label: 'Home',     end: true },
   { to: '/student/class5',  label: 'Class 5',  end: false },
   { to: '/student/class8',  label: 'Class 8',  end: false },
   { to: '/student/class10', label: 'Class 10', end: false },
   { to: '/student/class12', label: 'Class 12', end: false },
-
+  { to: '/student/courses', label: 'Courses',  end: false },
+  { to: '/student/scholarships', label: 'Scholarships', end: false },
 ]
+
 
 export default function StudentNavbar() {
   const { isAuthenticated, student, logout } = useStudentAuth()
