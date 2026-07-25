@@ -86,6 +86,7 @@ app.use("/api/scholarships", require("./routes/scholarshipRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/admin/notifications", require("./routes/adminNotificationRoutes"));
 app.use("/api/students", require("./routes/studentRoutes"));
+app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/class-content", require("./routes/classContentRoutes"));
 app.use("/api/cutoffs", require("./routes/cutoffRoutes"));

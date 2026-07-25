@@ -43,10 +43,10 @@ export default function CourseDetailPage() {
   const fetchDetails = useCallback(async () => {
     try {
       setLoading(true)
-      const cRes = await courseService.getCourseById(slug)
+      const cRes = await courseService.getStudentCourseDetails(slug)
       if (!cRes.success) return
 
-      const courseData = cRes.data
+      const courseData = cRes.course
       setCourse(courseData)
 
       const isCourseEngineering =
@@ -54,11 +54,7 @@ export default function CourseDetailPage() {
         courseData.category?.toLowerCase().includes('it') ||
         courseData.category?.toLowerCase().includes('computer')
 
-      // Fetch colleges explicitly mapped to this course ID from actual data/imports
-      const expRes = await adminService.getColleges({ courseId: courseData._id })
-      const explicitlyMapped = expRes.data || []
-      
-      setColleges(explicitlyMapped.slice(0, 50))
+      setColleges(cRes.offeringColleges || [])
 
       if (isCourseEngineering) {
         // Engineering: fetch TNEA cutoffs filtered by courseId
@@ -191,6 +187,59 @@ export default function CourseDetailPage() {
                 <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--s-text2)' }}>
                   {course.overview || course.futureScope || 'Comprehensive career-focused program with industry-aligned curriculum.'}
                 </p>
+              </SCard>
+
+              <SCard style={{ padding: 32 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Colleges Offering This Course</span>
+                  <span style={{ fontSize: 14, color: 'var(--s-text3)', fontWeight: 700 }}>
+                    {colleges.length} {colleges.length === 1 ? 'college' : 'colleges'} found
+                  </span>
+                </h2>
+                {colleges.length === 0 ? (
+                  <p style={{ color: 'var(--s-text3)', fontSize: 15, margin: 0 }}>
+                    No colleges are currently mapped for this course.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    {colleges.map((clg, idx) => (
+                      <div key={clg._id} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingBottom: idx === colleges.length - 1 ? 0 : 20,
+                        borderBottom: idx === colleges.length - 1 ? 'none' : '1px solid var(--s-border)',
+                        flexWrap: 'wrap',
+                        gap: 16
+                      }}>
+                        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--s-bg)', fontSize: 22, display: 'grid', placeItems: 'center', flexShrink: 0 }}>🏫</div>
+                          <div>
+                            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 4px', color: 'var(--s-text)' }}>
+                              {clg.collegeName}
+                            </h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-primary)', background: '#e0f2fe', padding: '2px 8px', borderRadius: 6 }}>
+                                {clg.collegeType || 'Government'}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--s-text3)', fontSize: 13, fontWeight: 700 }}>
+                                <FiMapPin size={12} /> {clg.district}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <SBtn
+                          variant="outline"
+                          size="sm"
+                          style={{ borderRadius: 10, padding: '8px 16px', fontWeight: 700 }}
+                          onClick={() => navigate(`/student/colleges/${clg._id}`)}
+                        >
+                          View College
+                        </SBtn>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </SCard>
 
               {((course.skillsRequired?.length > 0) || (course.subjectsCovered?.length > 0)) && (

@@ -44,8 +44,8 @@ export default function CoursesCategoryPage({ categoryType, title }) {
     return () => clearTimeout(t)
   }, [fetchCourses])
 
-  const handleViewDetails = (courseId) => {
-    navigate(`/student/courses/${courseId}`)
+  const handleViewDetails = (course) => {
+    navigate(`/student/course/${course.slug || course._id}`)
   }
 
   return (
@@ -178,7 +178,7 @@ export default function CoursesCategoryPage({ categoryType, title }) {
                   <SBtn
                     variant="accent"
                     size="md"
-                    onClick={() => handleViewDetails(c._id)}
+                    onClick={() => handleViewDetails(c)}
                     style={{ padding: '10px 18px' }}
                   >
                     View Details

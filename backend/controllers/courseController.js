@@ -1,4 +1,7 @@
 const Course = require("../models/Course");
+const College = require("../models/College");
+const CollegeCourseMapping = require("../models/CollegeCourseMapping");
+const mongoose = require("mongoose");
 const { allSourceCourses, SOURCE_URL, SOURCE_NAME } = require("../data/sourceCoursesAfter12th");
 
 // ─── Normalize helper for duplicate checking ──────────────────────
@@ -370,6 +373,82 @@ exports.importFromSource = async (req, res) => {
       success: false,
       message: "Failed to import from source",
       error: error.message,
+    });
+  }
+};
+
+// @desc    Get student course details with offering colleges
+// @route   GET /api/student/courses/:courseId
+// @access  Public
+exports.getStudentCourseDetails = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // Resolve courseId by ID or Slug
+    const isId = mongoose.Types.ObjectId.isValid(courseId);
+    const query = isId ? { _id: courseId } : { slug: courseId };
+
+    // Find active course
+    const course = await Course.findOne({ ...query, status: "active" });
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found or inactive",
+      });
+    }
+
+    // Find all verified and active mappings for this course
+    const mappings = await CollegeCourseMapping.find({
+      courseId: course._id,
+      isVerified: true,
+      isActive: true
+    }).populate({
+      path: "collegeId",
+      select: "collegeName district collegeType type state accreditation stream placementPercentage feesPerYear rank website"
+    });
+
+    // Extract unique colleges from mappings
+    const offeringCollegesMap = new Map();
+    for (const mapping of mappings) {
+      if (mapping.collegeId) {
+        const college = mapping.collegeId;
+        const cIdStr = college._id.toString();
+
+        if (!offeringCollegesMap.has(cIdStr)) {
+          offeringCollegesMap.set(cIdStr, {
+            _id: college._id,
+            collegeName: college.collegeName,
+            district: college.district,
+            collegeType: college.collegeType || college.type || "Government",
+            state: college.state || "",
+            accreditation: college.accreditation || "",
+            stream: college.stream || "",
+            placementPercentage: college.placementPercentage || 0,
+            feesPerYear: college.feesPerYear || 0,
+            rank: college.rank || "",
+            website: college.website || ""
+          });
+        }
+      }
+    }
+
+    const offeringColleges = Array.from(offeringCollegesMap.values());
+
+    // Sort colleges alphabetically by name
+    offeringColleges.sort((a, b) => a.collegeName.localeCompare(b.collegeName));
+
+    res.status(200).json({
+      success: true,
+      course,
+      collegeCount: offeringColleges.length,
+      offeringColleges
+    });
+  } catch (error) {
+    console.error("❌ Error fetching student course details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch student course details",
+      error: error.message
     });
   }
 };

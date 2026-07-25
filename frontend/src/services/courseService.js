@@ -31,9 +31,9 @@ export const courseService = {
     return response.data
   },
 
-  // Alias used by LandingPage
-  getAll: async () => {
-    const response = await axiosInstance.get('/courses')
+  // Alias used by LandingPage and student course browser
+  getAll: async (params = {}) => {
+    const response = await axiosInstance.get('/courses', { params })
     return response.data
   },
 
@@ -58,6 +58,12 @@ export const courseService = {
   // Explorer API (Used by Student Class 12 page)
   getExplorerData: async (params = {}) => {
     const response = await axiosInstance.get('/students/class12/exploration', { params })
+    return response.data
+  },
+
+  // Get student course details with offering colleges
+  getStudentCourseDetails: async (courseId) => {
+    const response = await axiosInstance.get(`/student/courses/${courseId}`)
     return response.data
   }
 }

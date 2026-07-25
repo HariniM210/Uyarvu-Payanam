@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { FiArrowLeft, FiClock, FiFilter, FiSearch, FiTarget, FiArrowRight, FiInfo } from 'react-icons/fi'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { FiArrowLeft, FiClock, FiFilter, FiSearch, FiTarget, FiArrowRight, FiInfo, FiMapPin } from 'react-icons/fi'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { courseService } from '../../services'
 import { SBadge, SBtn, SEmpty, SInput, SLoader, SSelect } from '../../components/ui'
@@ -13,7 +13,36 @@ import {
 } from './courseCatalog'
 
 function CourseCard({ course, accent }) {
+  const navigate = useNavigate()
   const [showDetails, setShowDetails] = useState(false)
+  const [colleges, setColleges] = useState([])
+  const [collegesLoading, setCollegesLoading] = useState(false)
+  const [collegesFetched, setCollegesFetched] = useState(false)
+
+  const courseId = course.slug || course._id
+
+  useEffect(() => {
+    setColleges([])
+    setCollegesFetched(false)
+  }, [courseId])
+
+  useEffect(() => {
+    if (!showDetails || collegesFetched || !courseId) return
+
+    setCollegesLoading(true)
+    courseService.getStudentCourseDetails(courseId)
+      .then((res) => {
+        if (res.success) {
+          setColleges(res.offeringColleges || [])
+        }
+        setCollegesFetched(true)
+      })
+      .catch((err) => {
+        console.error('Error fetching offering colleges:', err)
+        setCollegesFetched(true)
+      })
+      .finally(() => setCollegesLoading(false))
+  }, [showDetails, courseId, collegesFetched])
 
   return (
     <div
@@ -87,6 +116,79 @@ function CourseCard({ course, accent }) {
             <div style={{ fontSize: 13.5, color: '#334155', lineHeight: 1.6 }}>
               {course.futureScope}
             </div>
+          </div>
+
+          <div style={{ paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
+            <div style={{
+              fontSize: 11, fontWeight: 800, color: 'var(--s-text2)', marginBottom: 12,
+              textTransform: 'uppercase', letterSpacing: '0.04em',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+            }}>
+              <span>Colleges Offering This Course{colleges.length > 0 ? ` (${colleges.length})` : ''}</span>
+            </div>
+
+            {collegesLoading ? (
+              <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>Loading colleges...</div>
+            ) : colleges.length === 0 ? (
+              <div style={{ fontSize: 13.5, color: 'var(--s-text3)', lineHeight: 1.6 }}>
+                No colleges are currently mapped for this course.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {colleges.map((clg, idx) => (
+                  <div
+                    key={clg._id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                      paddingBottom: idx === colleges.length - 1 ? 0 : 16,
+                      borderBottom: idx === colleges.length - 1 ? 'none' : '1px solid #f1f5f9',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10, background: '#f8fafc',
+                        fontSize: 18, display: 'grid', placeItems: 'center', flexShrink: 0,
+                      }}>
+                        🏫
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 4, lineHeight: 1.4 }}>
+                          {clg.collegeName}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 700, color: 'var(--s-primary)',
+                            background: '#e0f2fe', padding: '2px 8px', borderRadius: 6,
+                          }}>
+                            {clg.collegeType || 'Government College'}
+                          </span>
+                          {clg.district && (
+                            <span style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              color: 'var(--s-text3)', fontSize: 12, fontWeight: 600,
+                            }}>
+                              <FiMapPin size={11} /> {clg.district}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <SBtn
+                      variant="outline"
+                      size="sm"
+                      style={{ borderRadius: 10, padding: '6px 14px', fontWeight: 700, flexShrink: 0 }}
+                      onClick={() => navigate(`/student/colleges/${clg._id}`)}
+                    >
+                      View College
+                    </SBtn>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
