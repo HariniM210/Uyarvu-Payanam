@@ -4,7 +4,7 @@ const path = require('path');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const { importDiplomaExcel } = require('../utils/diplomaImporter');
+const { importDiplomaCSV } = require('../utils/diplomaImporter');
 
 async function main() {
   try {
@@ -13,7 +13,7 @@ async function main() {
     await mongoose.connect(mongoUri);
     console.log('Connected. Starting import...');
 
-    const result = await importDiplomaExcel(true);
+    const result = await importDiplomaCSV(true);
     console.log('Import finished. Result:', JSON.stringify(result, null, 2));
 
   } catch (err) {

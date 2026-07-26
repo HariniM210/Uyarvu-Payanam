@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const XLSX = require('xlsx');
 const College = require('../models/College');
 const Course = require('../models/Course');
 const CollegeCourseMapping = require('../models/CollegeCourseMapping');
@@ -18,114 +19,32 @@ const normalizeCollegeName = (name) => {
 const normalizeCourseName = (name) => {
   if (!name) return '';
   return name.toString().toLowerCase()
-    .replace(/^(part-time\s+)?diploma\s+in\s+/i, '')
-    .replace(/\s*\(polytechnic\)/i, '')
-    .replace(/\s*\(diploma\)/i, '')
+    .replace(/^(part-time\s+)?(b\.?a\.?|b\.?sc\.?|b\.?com\.?|b\.?ba\.?|b\.?ca\.?|b\.?mm\.?|b\.?voc\.?)\s+/i, '')
+    .replace(/\s*\(.*?\)/g, '')
     .replace(/[^a-z0-9]/g, '')
     .trim();
 };
 
-// ── Custom CSV line parser (handles backslash-escaped commas + quoted fields) ──
-
-function parseCSVLine(line) {
-  const fields = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-
-    if (inQuotes) {
-      if (char === '"') {
-        if (i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        current += char;
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-      } else if (char === ',') {
-        fields.push(current.trim());
-        current = '';
-      } else if (char === '\\' && i + 1 < line.length && line[i + 1] === ',') {
-        current += ',';
-        i++;
-      } else {
-        current += char;
-      }
-    }
-  }
-
-  fields.push(current.trim());
-  return fields;
-}
-
-function parseCSVContent(content) {
-  const lines = content.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-
-  const results = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const fields = parseCSVLine(line);
-    let sno, collegeCode, collegeName, category, district, coursesOffered;
-
-    if (fields.length >= 7) {
-      sno = fields[0];
-      collegeCode = fields[1];
-      collegeName = fields[2];
-      category = fields[4];
-      district = fields[5];
-      coursesOffered = fields[6];
-    } else if (fields.length === 6) {
-      sno = fields[0];
-      collegeCode = fields[1];
-      collegeName = fields[2];
-      category = fields[3];
-      district = fields[4];
-      coursesOffered = fields[5];
-    } else {
-      continue;
-    }
-
-    if (!collegeName) continue;
-
-    results.push({
-      sno,
-      collegeCode: String(collegeCode || '').trim(),
-      collegeName: collegeName.trim(),
-      category: String(category || '').trim(),
-      district: String(district || '').trim(),
-      coursesOffered: String(coursesOffered || '').trim()
-    });
-  }
-
-  return results;
-}
+const STREAM = 'Arts & Science';
+const COURSE_CATEGORY = 'Arts & Science';
+const COURSE_LEVEL = 'undergraduate';
+const SOURCE_FILE = 'tn-arts and science.xlsx';
 
 // ── Main importer ──────────────────────────────────────────────────
 
-const importDiplomaCSV = async (forceSync = false) => {
+const importArtsScienceExcel = async (forceSync = false) => {
   const startTime = Date.now();
-  console.log('[Polytechnic CSV Import] Starting Diploma/Polytechnic College-Course Mapping import from college.csv ...');
+  console.log(`[${STREAM} Import] Starting Arts & Science College-Course Mapping import...`);
 
-  const csvPath = path.join(__dirname, '../uploads/college.csv');
-  if (!fs.existsSync(csvPath)) {
-    console.error(`[Polytechnic CSV Import] CSV file not found at: ${csvPath}`);
-    return { success: false, error: `CSV file not found at: ${csvPath}` };
+  const excelPath = path.join(__dirname, '../uploads/tn-arts and science.xlsx');
+  if (!fs.existsSync(excelPath)) {
+    console.error(`[${STREAM} Import] Excel file not found at: ${excelPath}`);
+    return { success: false, error: `Excel file not found at: ${excelPath}` };
   }
 
   // 1. File state tracking
-  const stateFilePath = path.join(__dirname, '../uploads/.college_csv_state.json');
-  const fileStats = fs.statSync(csvPath);
+  const stateFilePath = path.join(__dirname, '../uploads/.arts_science_excel_state.json');
+  const fileStats = fs.statSync(excelPath);
   const currentMtime = fileStats.mtimeMs;
   const currentSize = fileStats.size;
 
@@ -133,23 +52,62 @@ const importDiplomaCSV = async (forceSync = false) => {
     try {
       const savedState = JSON.parse(fs.readFileSync(stateFilePath, 'utf8'));
       if (savedState.mtimeMs === currentMtime && savedState.size === currentSize) {
-        console.log('[Polytechnic CSV Import] CSV file unchanged. Skipping database synchronization.');
-        return { success: true, skipped: true, message: 'CSV file unchanged. Database synchronization skipped.' };
+        console.log(`[${STREAM} Import] Excel file unchanged. Skipping database synchronization.`);
+        return { success: true, skipped: true, message: 'Excel file unchanged. Database synchronization skipped.' };
       }
     } catch (err) {
-      console.warn('[Polytechnic CSV Import] Failed to read state file. Forcing run:', err.message);
+      console.warn(`[${STREAM} Import] Failed to read state file. Forcing run:`, err.message);
     }
   }
 
-  // 2. Read and parse CSV
-  let content = fs.readFileSync(csvPath, 'utf8');
-  if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+  // 2. Read and parse Excel
+  const workbook = XLSX.readFile(excelPath);
+  const rows = [];
 
-  const rows = parseCSVContent(content);
-  console.log(`[Polytechnic CSV Import] Parsed ${rows.length} college rows from CSV.`);
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    const sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    // Find header row (S.No, College Name, Location, Course Offered)
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(5, sheetData.length); i++) {
+      const row = sheetData[i];
+      if (Array.isArray(row) && row.some(h => String(h || '').toLowerCase().includes('college name'))) {
+        headerIdx = i;
+        break;
+      }
+    }
+    if (headerIdx === -1) continue;
+
+    // Determine college type from sheet name
+    const isPrivate = sheetName.toLowerCase().includes('private');
+    const collegeType = isPrivate ? 'Private' : 'Government';
+
+    for (let i = headerIdx + 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      if (!row || row.length < 3) continue;
+
+      const sno = row[0];
+      const collegeName = String(row[1] || '').trim();
+      const location = String(row[2] || '').trim();
+      const coursesRaw = String(row[3] || '').trim();
+
+      if (!collegeName || isNaN(sno)) continue;
+
+      rows.push({
+        sno,
+        collegeName,
+        location,
+        coursesRaw,
+        collegeType
+      });
+    }
+  }
+
+  console.log(`[${STREAM} Import] Parsed ${rows.length} college rows from Excel.`);
 
   const report = {
-    totalCollegesInCSV: rows.length,
+    totalCollegesInExcel: rows.length,
     matchedColleges: 0,
     insertedColleges: 0,
     updatedColleges: 0,
@@ -157,49 +115,42 @@ const importDiplomaCSV = async (forceSync = false) => {
     duplicateMappingsSkipped: 0,
     obsoleteMappingsRemoved: 0,
     coursesCreated: 0,
-    missingCourses: new Set(),
     timeTakenMs: 0
   };
 
   try {
     // 3. Cache all existing DB data
-    const [allColleges, allCourses, existingMappings] = await Promise.all([
+    const [allColleges, allCourses] = await Promise.all([
       College.find({}),
-      Course.find({}),
-      CollegeCourseMapping.find({ stream: 'Polytechnic' })
+      Course.find({})
     ]);
 
     const collegeMapByName = new Map();
     const collegeMapByNormName = new Map();
-    const collegeMapByCode = new Map();
 
     allColleges.forEach(c => {
       const name = c.collegeName.trim();
       collegeMapByName.set(name.toLowerCase(), c);
       collegeMapByNormName.set(normalizeCollegeName(name), c);
-      if (c.collegeCode) {
-        collegeMapByCode.set(String(c.collegeCode).trim(), c);
-      }
     });
 
     const courseMapByNormName = new Map();
-    allCourses.forEach(c => {
+    allCourses.filter(c => c.category === COURSE_CATEGORY).forEach(c => {
       const norm = normalizeCourseName(c.courseName);
       if (norm) {
         const existing = courseMapByNormName.get(norm);
-        if (!existing || (c.level === 'diploma' && existing.level !== 'diploma')) {
+        if (!existing) {
           courseMapByNormName.set(norm, c);
         }
       }
     });
 
-    // Also index by full lower-case name for exact matching
     const courseMapByFullName = new Map();
-    allCourses.forEach(c => {
+    allCourses.filter(c => c.category === COURSE_CATEGORY).forEach(c => {
       const fullKey = c.courseName.toLowerCase().trim();
       if (fullKey) {
         const existing = courseMapByFullName.get(fullKey);
-        if (!existing || (c.level === 'diploma' && existing.level !== 'diploma')) {
+        if (!existing) {
           courseMapByFullName.set(fullKey, c);
         }
       }
@@ -209,24 +160,18 @@ const importDiplomaCSV = async (forceSync = false) => {
     const mappingBulkOps = [];
     const collegesToInsert = [];
 
-    // Track which colleges and courses are in the CSV (for obsolete mapping removal)
     const csvCollegeIds = new Set();
-    const csvCollegeCourseMap = new Map(); // collegeId -> Set of courseIds
+    const csvCollegeCourseMap = new Map();
 
-    const batchId = `POLYTECHNIC-CSV-${Date.now()}`;
+    const batchId = `ARTS-SCIENCE-EXCEL-${Date.now()}`;
 
-    // 4. Process each CSV row
+    // 4. Process each Excel row
     for (const row of rows) {
-      const excelName = row.collegeName;
-      const excelCode = row.collegeCode;
-      const excelCoursesRaw = row.coursesOffered;
-      const excelDistrict = row.district;
+      const { collegeName: excelName, location: excelLocation, coursesRaw: excelCoursesRaw, collegeType: excelType } = row;
 
       // ── Match / Create College ──
       let college = null;
-      if (excelCode && collegeMapByCode.has(excelCode)) {
-        college = collegeMapByCode.get(excelCode);
-      } else if (collegeMapByName.has(excelName.toLowerCase())) {
+      if (collegeMapByName.has(excelName.toLowerCase())) {
         college = collegeMapByName.get(excelName.toLowerCase());
       } else {
         const norm = normalizeCollegeName(excelName);
@@ -242,19 +187,18 @@ const importDiplomaCSV = async (forceSync = false) => {
         college = {
           _id: newCollegeId,
           collegeName: excelName,
-          collegeCode: excelCode,
-          stream: 'Polytechnic',
-          streamsOffered: ['Polytechnic', 'Diploma'],
+          collegeCode: '',
+          stream: STREAM,
+          streamsOffered: [STREAM],
           coursesOffered: [],
-          district: excelDistrict,
+          district: excelLocation,
+          location: excelLocation,
           state: 'Tamil Nadu',
-          category: row.category || '',
+          collegeType: excelType,
+          category: STREAM
         };
         collegeMapByName.set(excelName.toLowerCase(), college);
         collegeMapByNormName.set(normalizeCollegeName(excelName), college);
-        if (excelCode) {
-          collegeMapByCode.set(excelCode, college);
-        }
         collegesToInsert.push(college);
         report.insertedColleges++;
       } else {
@@ -271,12 +215,13 @@ const importDiplomaCSV = async (forceSync = false) => {
       // Update college info for existing colleges
       if (!isNewCollege) {
         const updates = {};
-        if (excelCode && college.collegeCode !== excelCode) updates.collegeCode = excelCode;
-        if (excelDistrict && college.district !== excelDistrict) updates.district = excelDistrict;
-        if (row.category && college.category !== row.category) updates.category = row.category;
+        if (excelLocation && college.district !== excelLocation) updates.district = excelLocation;
+        if (excelLocation && college.location !== excelLocation) updates.location = excelLocation;
+        if (excelType && college.collegeType !== excelType) updates.collegeType = excelType;
+        if (college.stream !== STREAM) updates.stream = STREAM;
 
-        if (!college.streamsOffered || !college.streamsOffered.includes('Diploma')) {
-          updates.streamsOffered = [...new Set([...(college.streamsOffered || []), 'Diploma'])];
+        if (!college.streamsOffered || !college.streamsOffered.includes(STREAM)) {
+          updates.streamsOffered = [...new Set([...(college.streamsOffered || []), STREAM])];
         }
 
         if (Object.keys(updates).length > 0) {
@@ -312,38 +257,39 @@ const importDiplomaCSV = async (forceSync = false) => {
         }
 
         if (!matchedCourse) {
-          // Use upsert to prevent duplicates — match by category + case-insensitive name
+          // Use upsert to prevent duplicates
           const courseSlug = rawCourseName
             .toLowerCase()
             .split(' ')
             .join('-')
             .replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substr(2, 5);
 
-          const courseNorm = normalizeCourseName(rawCourseName);
           const upsertResult = await Course.findOneAndUpdate(
-            { category: 'Polytechnic', courseName: { $regex: new RegExp(`^${rawCourseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+            { category: COURSE_CATEGORY, courseName: { $regex: new RegExp(`^${rawCourseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
             {
               $setOnInsert: {
                 courseName: rawCourseName,
                 slug: courseSlug,
-                level: 'diploma',
-                category: 'Polytechnic',
+                level: COURSE_LEVEL,
+                category: COURSE_CATEGORY,
                 duration: '3 Years',
-                eligibility: '10th Pass',
-                shortDescription: `${rawCourseName} – diploma programme.`,
+                eligibility: '12th Pass',
+                shortDescription: `${rawCourseName} – undergraduate programme.`,
                 isImported: true,
                 status: 'active'
               }
             },
-            { upsert: true, returnDocument: 'after', rawResult: true }
+            { upsert: true, returnDocument: 'after' }
           );
 
-          const upsertedCourse = upsertResult.value;
-          matchedCourse = upsertedCourse;
-          courseMapByFullName.set(fullKey, upsertedCourse);
-          courseMapByNormName.set(courseNorm, upsertedCourse);
+          matchedCourse = upsertResult;
+          courseMapByFullName.set(fullKey, upsertResult);
+          courseMapByNormName.set(normalizeCourseName(rawCourseName), upsertResult);
 
-          if (upsertResult.lastErrorDocument && upsertResult.lastErrorDocument.upserted) {
+          // If the course was just created (new document), it won't have createdAt matching the bulk-created ones
+          if (!report._seenCourseIds) report._seenCourseIds = new Set();
+          if (!report._seenCourseIds.has(upsertResult._id.toString())) {
+            report._seenCourseIds.add(upsertResult._id.toString());
             report.coursesCreated++;
           }
         }
@@ -362,9 +308,9 @@ const importDiplomaCSV = async (forceSync = false) => {
                 courseId: matchedCourse._id,
                 collegeName: college.collegeName || excelName,
                 courseName: matchedCourse.courseName,
-                stream: 'Polytechnic',
+                stream: STREAM,
                 source: 'Import',
-                sourceFileName: 'college.csv',
+                sourceFileName: SOURCE_FILE,
                 importBatchId: batchId,
                 isVerified: true,
                 isActive: true
@@ -380,22 +326,20 @@ const importDiplomaCSV = async (forceSync = false) => {
       // Update College.coursesOffered for new colleges
       if (isNewCollege) {
         college.coursesOffered = courseIdsForCollege.map(id => id.toString());
-        college.streamsOffered = ['Polytechnic', 'Diploma'];
       }
     }
 
-    // 5. Remove obsolete mappings for colleges in the CSV
-    console.log('[Polytechnic CSV Import] Removing obsolete mappings...');
+    // 5. Remove obsolete mappings for colleges in the Excel
+    console.log(`[${STREAM} Import] Removing obsolete mappings...`);
     const deleteFilter = {
       collegeId: { $in: Array.from(csvCollegeIds).map(id => new mongoose.Types.ObjectId(id)) },
-      stream: 'Polytechnic'
+      stream: STREAM
     };
 
-    // Get all existing mappings for these colleges
-    const existingMappingsForCSV = await CollegeCourseMapping.find(deleteFilter);
+    const existingMappingsForExcel = await CollegeCourseMapping.find(deleteFilter);
 
     const obsoleteMappingIds = [];
-    for (const mapping of existingMappingsForCSV) {
+    for (const mapping of existingMappingsForExcel) {
       const cId = mapping.collegeId.toString();
       const coId = mapping.courseId.toString();
       const allowedCourses = csvCollegeCourseMap.get(cId);
@@ -407,7 +351,7 @@ const importDiplomaCSV = async (forceSync = false) => {
     if (obsoleteMappingIds.length > 0) {
       await CollegeCourseMapping.deleteMany({ _id: { $in: obsoleteMappingIds } });
       report.obsoleteMappingsRemoved = obsoleteMappingIds.length;
-      console.log(`[Polytechnic CSV Import] Removed ${obsoleteMappingIds.length} obsolete mappings.`);
+      console.log(`[${STREAM} Import] Removed ${obsoleteMappingIds.length} obsolete mappings.`);
     }
 
     // 6. Execute DB writes
@@ -421,8 +365,8 @@ const importDiplomaCSV = async (forceSync = false) => {
       await CollegeCourseMapping.bulkWrite(mappingBulkOps);
     }
 
-    // 7. Sync College.coursesOffered for ALL colleges in the CSV
-    console.log('[Polytechnic CSV Import] Syncing College.coursesOffered...');
+    // 7. Sync College.coursesOffered for ALL colleges in the Excel
+    console.log(`[${STREAM} Import] Syncing College.coursesOffered...`);
     const collegeCoursesOfferedOps = [];
     for (const [collegeIdStr, courseIds] of csvCollegeCourseMap) {
       const uniqueCourseIds = Array.from(courseIds).map(id => new mongoose.Types.ObjectId(id));
@@ -445,10 +389,9 @@ const importDiplomaCSV = async (forceSync = false) => {
     );
 
     report.timeTakenMs = Date.now() - startTime;
-    report.missingCourses = Array.from(report.missingCourses).sort();
 
-    console.log(`[Polytechnic CSV Import] Sync complete in ${report.timeTakenMs}ms:`);
-    console.log(`  Total rows in CSV: ${report.totalCollegesInCSV}`);
+    console.log(`[${STREAM} Import] Sync complete in ${report.timeTakenMs}ms:`);
+    console.log(`  Total rows in Excel: ${report.totalCollegesInExcel}`);
     console.log(`  Matched colleges: ${report.matchedColleges}`);
     console.log(`  Inserted colleges: ${report.insertedColleges}`);
     console.log(`  Updated colleges: ${report.updatedColleges}`);
@@ -459,9 +402,9 @@ const importDiplomaCSV = async (forceSync = false) => {
     return { success: true, stats: report };
 
   } catch (err) {
-    console.error('[Polytechnic CSV Import] Import failed due to error:', err);
+    console.error(`[${STREAM} Import] Import failed due to error:`, err);
     return { success: false, error: err.message };
   }
 };
 
-module.exports = { importDiplomaCSV };
+module.exports = { importArtsScienceExcel };

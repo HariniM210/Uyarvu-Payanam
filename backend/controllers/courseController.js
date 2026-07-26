@@ -62,10 +62,29 @@ exports.getAllCourses = async (req, res) => {
 
     const courses = await Course.find(filter).sort({ courseName: 1 });
 
+    // Deduplicate by normalized course name within same category
+    // (safety net against any remaining duplicate course records)
+    const seen = new Set();
+    const unique = [];
+    for (const course of courses) {
+      const normKey = (course.courseName || '')
+        .toLowerCase()
+        .replace(/^(part-time\s+)?diploma\s+in\s+/i, '')
+        .replace(/\s*\(polytechnic\)/i, '')
+        .replace(/\s*\(diploma\)/i, '')
+        .replace(/[^a-z0-9]/g, '')
+        .trim();
+      const dedupeKey = `${normKey}|${course.category}`;
+      if (!seen.has(dedupeKey)) {
+        seen.add(dedupeKey);
+        unique.push(course);
+      }
+    }
+
     res.status(200).json({
       success: true,
-      count: courses.length,
-      data: courses,
+      count: unique.length,
+      data: unique,
     });
   } catch (error) {
     console.error('❌ Error fetching courses:', error);

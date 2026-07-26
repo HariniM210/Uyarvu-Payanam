@@ -8,10 +8,16 @@ const connectDB = require("./config/db");
 dotenv.config();
 connectDB().then(() => {
   try {
-    const { importDiplomaExcel } = require("./utils/diplomaImporter");
-    importDiplomaExcel(false).catch(err => console.error("Error in auto diploma import:", err));
+    const { importDiplomaCSV } = require("./utils/diplomaImporter");
+    importDiplomaCSV(false).catch(err => console.error("Error in auto diploma import:", err));
   } catch (err) {
     console.error("Failed to require/run diploma importer on startup:", err);
+  }
+  try {
+    const { importArtsScienceExcel } = require("./utils/artsScienceImporter");
+    importArtsScienceExcel(false).catch(err => console.error("Error in auto Arts & Science import:", err));
+  } catch (err) {
+    console.error("Failed to require/run Arts & Science importer on startup:", err);
   }
 });
 
