@@ -416,9 +416,34 @@ exports.getStudentCourseDetails = async (req, res) => {
       });
     }
 
-    // Find all verified and active mappings for this course
+    // Find all verified and active mappings for this course.
+    // Also include mappings for variant course names (e.g. "B.E. Computer Science
+    // And Engineering" maps to the same concept as "Computer Science and Engineering").
+    // Load all active courses in this category, normalize names, find all matching variants.
+    const allCatCourses = await Course.find({
+      category: course.category,
+      status: 'active'
+    }).lean();
+
+    const normalizeCourseName = (name) =>
+      (name || '')
+        .replace(/^b\.?e\.?\s*/i, '')
+        .replace(/^b\.?tech\.?\s*/i, '')
+        .replace(/^m\.?e\.?\s*/i, '')
+        .replace(/^m\.?tech\.?\s*/i, '')
+        .replace(/\s*\(.*?\)\s*/g, '')
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+
+    const targetNorm = normalizeCourseName(course.courseName);
+    const variantCourseIds = allCatCourses
+      .filter(c => normalizeCourseName(c.courseName) === targetNorm)
+      .map(c => c._id);
+
     const mappings = await CollegeCourseMapping.find({
-      courseId: course._id,
+      courseId: { $in: variantCourseIds },
       isVerified: true,
       isActive: true
     }).populate({

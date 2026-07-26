@@ -19,6 +19,12 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to require/run Arts & Science importer on startup:", err);
   }
+  try {
+    const { importMedicalExcel } = require("./utils/medicalImporter");
+    importMedicalExcel(false).catch(err => console.error("Error in auto Medical import:", err));
+  } catch (err) {
+    console.error("Failed to require/run Medical importer on startup:", err);
+  }
 });
 
 const app = express();

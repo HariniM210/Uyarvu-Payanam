@@ -621,3 +621,33 @@ exports.importArtsScienceRoute = async (req, res) => {
   }
 };
 
+// @desc    Trigger Medical College-Course Mapping import
+// @route   POST /api/college-courses/import-medical
+// @access  Admin
+exports.importMedicalRoute = async (req, res) => {
+  try {
+    const { importMedicalExcel } = require("../utils/medicalImporter");
+    const result = await importMedicalExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Medical College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Medical synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Medical mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Medical mapping import.",
+      error: error.message
+    });
+  }
+};
+
