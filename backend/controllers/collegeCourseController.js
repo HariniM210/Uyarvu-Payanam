@@ -651,3 +651,63 @@ exports.importMedicalRoute = async (req, res) => {
   }
 };
 
+// @desc    Trigger Siddha Medical College-Course Mapping import
+// @route   POST /api/college-courses/import-siddha
+// @access  Admin
+exports.importSiddhaRoute = async (req, res) => {
+  try {
+    const { importSiddhaExcel } = require("../utils/siddhaImporter");
+    const result = await importSiddhaExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Siddha Medical College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Siddha synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Siddha mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Siddha mapping import.",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Trigger Ayurveda Medical College-Course Mapping import
+// @route   POST /api/college-courses/import-ayurveda
+// @access  Admin
+exports.importAyurvedaRoute = async (req, res) => {
+  try {
+    const { importAyurvedaExcel } = require("../utils/ayurvedaImporter");
+    const result = await importAyurvedaExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Ayurveda Medical College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Ayurveda synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Ayurveda mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Ayurveda mapping import.",
+      error: error.message
+    });
+  }
+};
+
