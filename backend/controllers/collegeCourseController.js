@@ -566,8 +566,8 @@ exports.deduplicateMappings = async (req, res) => {
 // @access  Admin
 exports.importDiplomaRoute = async (req, res) => {
   try {
-    const { importDiplomaExcel } = require("../utils/diplomaImporter");
-    const result = await importDiplomaExcel(true); // Force run from API trigger
+    const { importDiplomaCSV } = require("../utils/diplomaImporter");
+    const result = await importDiplomaCSV(true); // Force run from API trigger
     if (result.success) {
       return res.status(200).json({
         success: true,
@@ -586,6 +586,126 @@ exports.importDiplomaRoute = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to trigger diploma mapping import.",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Import Arts & Science colleges and courses from Excel
+// @route   POST /api/college-courses/import-arts-science
+// @access  Admin
+exports.importArtsScienceRoute = async (req, res) => {
+  try {
+    const { importArtsScienceExcel } = require("../utils/artsScienceImporter");
+    const result = await importArtsScienceExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Arts & Science College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Arts & Science synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Arts & Science mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Arts & Science mapping import.",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Trigger Medical College-Course Mapping import
+// @route   POST /api/college-courses/import-medical
+// @access  Admin
+exports.importMedicalRoute = async (req, res) => {
+  try {
+    const { importMedicalExcel } = require("../utils/medicalImporter");
+    const result = await importMedicalExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Medical College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Medical synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Medical mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Medical mapping import.",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Trigger Siddha Medical College-Course Mapping import
+// @route   POST /api/college-courses/import-siddha
+// @access  Admin
+exports.importSiddhaRoute = async (req, res) => {
+  try {
+    const { importSiddhaExcel } = require("../utils/siddhaImporter");
+    const result = await importSiddhaExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Siddha Medical College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Siddha synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Siddha mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Siddha mapping import.",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Trigger Ayurveda Medical College-Course Mapping import
+// @route   POST /api/college-courses/import-ayurveda
+// @access  Admin
+exports.importAyurvedaRoute = async (req, res) => {
+  try {
+    const { importAyurvedaExcel } = require("../utils/ayurvedaImporter");
+    const result = await importAyurvedaExcel(true);
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Ayurveda Medical College-Course Mapping synchronization complete.",
+        stats: result.stats
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Ayurveda synchronization failed.",
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Import Ayurveda mapping route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to trigger Ayurveda mapping import.",
       error: error.message
     });
   }

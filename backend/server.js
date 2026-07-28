@@ -9,20 +9,59 @@ const path = require("path");
 dotenv.config();
 connectDB().then(() => {
   try {
-    const { importDiplomaExcel } = require("./utils/diplomaImporter");
-    importDiplomaExcel(false).catch(err => console.error("Error in auto diploma import:", err));
+    const { importDiplomaCSV } = require("./utils/diplomaImporter");
+    importDiplomaCSV(false).catch(err => console.error("Error in auto diploma import:", err));
   } catch (err) {
     console.error("Failed to require/run diploma importer on startup:", err);
+  }
+  try {
+    const { importArtsScienceExcel } = require("./utils/artsScienceImporter");
+    importArtsScienceExcel(false).catch(err => console.error("Error in auto Arts & Science import:", err));
+  } catch (err) {
+    console.error("Failed to require/run Arts & Science importer on startup:", err);
+  }
+  try {
+    const { importMedicalExcel } = require("./utils/medicalImporter");
+    importMedicalExcel(false).catch(err => console.error("Error in auto Medical import:", err));
+  } catch (err) {
+    console.error("Failed to require/run Medical importer on startup:", err);
+  }
+  try {
+    const { importSiddhaExcel } = require("./utils/siddhaImporter");
+    importSiddhaExcel(false).catch(err => console.error("Error in auto Siddha import:", err));
+  } catch (err) {
+    console.error("Failed to require/run Siddha importer on startup:", err);
+  }
+  try {
+    const { importAyurvedaExcel } = require("./utils/ayurvedaImporter");
+    importAyurvedaExcel(false).catch(err => console.error("Error in auto Ayurveda import:", err));
+  } catch (err) {
+    console.error("Failed to require/run Ayurveda importer on startup:", err);
   }
 });
 
 const app = express();
 const server = http.createServer(app);
 
-// â”€â”€ Socket.io setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CORS Origins ───────────────────────────────────────────────────
+const devOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const productionOrigin = process.env.FRONTEND_URL || "";
+const allowedOrigins = process.env.NODE_ENV === "production" && productionOrigin
+  ? [productionOrigin]
+  : devOrigins;
+
+const corsOriginValidator = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(origin)) {
+    callback(null, true);
+  } else {
+    callback(new Error("Not allowed by CORS"));
+  }
+};
+
+// ─── Socket.io setup ────────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: corsOriginValidator,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
@@ -68,12 +107,10 @@ io.on("connection", (socket) => {
 });
 
 // â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: corsOriginValidator,
+  credentials: true,
+}));
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -88,6 +125,7 @@ app.use("/api/scholarships", require("./routes/scholarshipRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/admin/notifications", require("./routes/adminNotificationRoutes"));
 app.use("/api/students", require("./routes/studentRoutes"));
+app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/class-content", require("./routes/classContentRoutes"));
 app.use("/api/cutoffs", require("./routes/cutoffRoutes"));

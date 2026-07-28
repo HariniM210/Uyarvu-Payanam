@@ -30,6 +30,7 @@ export const courseService = {
   getAll:        (params) => studentApi.get('/courses', { params }).then(r => r.data),
   getByCategory: (cat)    => studentApi.get('/courses', { params: { category: cat } }).then(r => r.data),
   getByLevel:    (level)  => studentApi.get('/courses', { params: { level } }).then(r => r.data),
+  getStudentCourseDetails: (courseId) => studentApi.get(`/student/courses/${courseId}`).then(r => r.data),
 }
 
 export const examService = {
