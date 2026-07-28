@@ -31,6 +31,8 @@ import ScholarshipDetailPage from './pages/scholarships/ScholarshipDetailPage'
 import OnboardingPage from './pages/onboarding/OnboardingPage'
 import RecommendationResultPage from './pages/onboarding/RecommendationResultPage'
 import MaintenanceGuard from './components/common/MaintenanceGuard'
+import Class5CommunicationPage from './pages/careers/Class5CommunicationPage'
+import Class5PassportPage from './pages/careers/Class5PassportPage'
 import './student.css'
 
 export default function StudentRoutes() {
@@ -54,6 +56,16 @@ export default function StudentRoutes() {
           {/* Explicit class routes */}
           <Route path="class5" element={<ClassLevelPage level="5" />} />
           <Route path="class5/content/:slug" element={<ContentDetailPage />} />
+          <Route path="class5/skills" element={<Navigate to="/student/class5?section=Skills" replace />} />
+          <Route 
+            path="class5/skills/communicationskills" 
+            element={
+              <StudentProtectedRoute>
+                <Class5CommunicationPage />
+              </StudentProtectedRoute>
+            } 
+          />
+          <Route path="class5/skills/communicationskills/passport/:studentId" element={<Class5PassportPage />} />
           <Route path="class8" element={<ClassLevelPage level="8" />} />
           <Route path="class8/content/:slug" element={<ContentDetailPage />} />
           <Route path="class10" element={<ClassLevelPage level="10" />} />

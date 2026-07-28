@@ -20,6 +20,7 @@ import s from './DashboardPage.module.css'
 import { mentorRequestService } from '../../services/mentorRequestService'
 import MentorRequestModal from '../../components/mentor/MentorRequestModal'
 import onboardingService from '../../../services/onboardingService'
+import class5CommunicationService from '../../../services/class5CommunicationService'
 
 /* â”€â”€ Sidebar navigation config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const SIDEBAR_NAV = [
@@ -105,6 +106,17 @@ export default function DashboardPage() {
   const location = useLocation()
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isClass5 = student?.classLevel === '5' || student?.classLevel === '5th' || student?.classLevel === 'Class 5';
+  const [commProgress, setCommProgress] = useState(null);
+
+  useEffect(() => {
+    if (!student?._id || !isClass5) return;
+    class5CommunicationService.getProgress().then(res => {
+      if (res.success) {
+        setCommProgress(res.data);
+      }
+    }).catch(err => console.error("Error fetching comm progress:", err));
+  }, [student?._id, isClass5]);
 
   /* ── Data state ────────────────────────────────────────────── */
   const [notifications, setNotifications] = useState([])
@@ -467,6 +479,62 @@ export default function DashboardPage() {
                           </button>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </SCard>
+              </div>
+            )}
+
+            {isClass5 && commProgress && (
+              <div className="s-anim-up s-d2" style={{ marginBottom: 32 }}>
+                <SSectionHeader
+                  title="🚀 My Skill Journey"
+                  subtitle="Track your real-time communication skills and achievements"
+                  action={() => navigate('/student/class5/skills/communicationskills')}
+                  actionLabel="Go to Interactive Lab"
+                />
+                <SCard style={{ padding: 32, borderRadius: 24, background: '#fff', border: '1px solid #f1f5f9', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32 }} className="s-grid-1col">
+                    <div>
+                      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
+                        <div style={{ padding: '16px 20px', background: '#eff6ff', borderRadius: 18, border: '1px solid #bfdbfe', flex: 1, minWidth: 140 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Communication Level</span>
+                          <strong style={{ fontSize: 20, color: '#1e3a8a' }}>Level {commProgress.progress?.level || 1}</strong>
+                        </div>
+                        <div style={{ padding: '16px 20px', background: '#f0fdf4', borderRadius: 18, border: '1px solid #bbf7d0', flex: 1, minWidth: 140 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Total XP Earned</span>
+                          <strong style={{ fontSize: 20, color: '#14532d' }}>{commProgress.progress?.xp || 0} XP</strong>
+                        </div>
+                        <div style={{ padding: '16px 20px', background: '#fff7ed', borderRadius: 18, border: '1px solid #ffedd5', flex: 1, minWidth: 140 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Current Streak</span>
+                          <strong style={{ fontSize: 20, color: '#7c2d12' }}>{commProgress.progress?.streak || 0} Days 🔥</strong>
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: 20 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 12 }}>Unlocked Badges</span>
+                        {commProgress.badges?.length === 0 ? (
+                          <div style={{ fontSize: 13, color: '#94a3b8' }}>No badges unlocked yet. Start the journey!</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {commProgress.badges?.map(b => (
+                              <span key={b} style={{ padding: '6px 12px', background: '#f5f3ff', color: '#6d28d9', borderRadius: 10, fontSize: 12, fontWeight: 800, border: '1px solid #ddd6fe' }}>
+                                🌟 {b}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#f8fafc', padding: 24, borderRadius: 20, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <h4 style={{ fontSize: 15, fontWeight: 800, marginBottom: 8 }}>Ready to improve your skills?</h4>
+                      <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5, marginBottom: 20 }}>
+                        Jump back into the Communication Lab to complete games, record speaking tasks, and build your passport.
+                      </p>
+                      <SBtn variant="primary" onClick={() => navigate('/student/class5/skills/communicationskills')} style={{ justifyContent: 'center' }}>
+                        Open Communication Lab
+                      </SBtn>
                     </div>
                   </div>
                 </SCard>

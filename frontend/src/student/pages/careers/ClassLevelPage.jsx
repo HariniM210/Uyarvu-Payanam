@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   FiArrowLeft, FiArrowRight, FiHeart, FiFlag, FiTarget, FiStar,
   FiAward, FiActivity, FiVideo, FiBriefcase, FiInfo,
@@ -144,6 +144,7 @@ const ExamCardDetails = ({ exam }) => {
 export default function ClassLevelPage(props) {
   const params = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const level = props.level || params.level || ""
   const cleanLevel = level.toString().replace('class', '')
   const sections = CLASS_SECTIONS[cleanLevel] || CLASS_SECTIONS.default;
@@ -173,9 +174,15 @@ export default function ClassLevelPage(props) {
   }, [cleanLevel, isAuthenticated])
 
   useEffect(() => {
-    setActiveSec('Basics');
+    const searchParams = new URLSearchParams(location.search);
+    const sec = searchParams.get('section');
+    if (sec && sections.some(s => s.id === sec)) {
+      setActiveSec(sec);
+    } else {
+      setActiveSec('Basics');
+    }
     setActiveSubTab('All');
-  }, [cleanLevel]);
+  }, [cleanLevel, location.search]);
 
   useEffect(() => {
     if (!['Careers', 'Colleges', 'Streams'].includes(activeSec)) return;
@@ -435,7 +442,11 @@ export default function ClassLevelPage(props) {
       if (item.applicationLink) window.open(item.applicationLink, '_blank');
       else alert("No direct application link provided for this item.");
     } else {
-      navigate(`/student/career-path/class-${cleanLevel}/${item.slug}`);
+      if (cleanLevel === '5' && item.title === 'Communication Skills') {
+        navigate('/student/class5/skills/communicationskills');
+      } else {
+        navigate(`/student/career-path/class-${cleanLevel}/${item.slug}`);
+      }
     }
   }
 

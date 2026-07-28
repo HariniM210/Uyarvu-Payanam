@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import class5CommunicationService from '../../../services/class5CommunicationService'
 import { authService } from '../../services'
 import { SCard, SBtn, SInput, SSelect, SAlert, SBadge } from '../../components/ui'
 import { FiUser, FiMail, FiPhone, FiMapPin, FiBookOpen, FiEdit2, FiSave, FiX } from 'react-icons/fi'
@@ -10,6 +12,19 @@ const INTERESTS = ['Engineering','Medical','Arts & Science','Government Services
 
 export default function ProfilePage() {
   const { student, updateStudent } = useStudentAuth()
+  const navigate = useNavigate()
+
+  const isClass5 = student?.classLevel === '5' || student?.classLevel === '5th' || student?.classLevel === 'Class 5';
+  const [commProgress, setCommProgress] = useState(null);
+
+  useEffect(() => {
+    if (!student?._id || !isClass5) return;
+    class5CommunicationService.getProgress().then(res => {
+      if (res.success) {
+        setCommProgress(res.data);
+      }
+    }).catch(err => console.error("Error fetching comm progress in profile:", err));
+  }, [student?._id, isClass5]);
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
@@ -146,6 +161,49 @@ export default function ProfilePage() {
           </div>
         )}
       </SCard>
+
+      {isClass5 && commProgress && (
+        <SCard className="s-anim-up s-d2" style={{ padding: '28px', marginTop: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 700, fontSize: 15, color: 'var(--s-text)', margin: 0 }}>
+              🛡️ Communication Passport
+            </h3>
+            <SBtn variant="outline" size="sm" onClick={() => navigate(`/student/class5/skills/communicationskills/passport/${student._id || student.id}`)}>
+              View Shareable Passport ↗
+            </SBtn>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }} className="s-grid-1col">
+            <div style={{ padding: '12px 14px', background: 'var(--s-bg2)', borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Level</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>Level {commProgress.progress?.level || 1}</div>
+            </div>
+            <div style={{ padding: '12px 14px', background: 'var(--s-bg2)', borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Total XP</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>{commProgress.progress?.xp || 0} XP</div>
+            </div>
+            <div style={{ padding: '12px 14px', background: 'var(--s-bg2)', borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Streak</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>{commProgress.progress?.streak || 0} Days 🔥</div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 8 }}>Earned Badges</span>
+            {commProgress.badges?.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--s-text3)' }}>No badges unlocked yet. Start playing steps to earn!</div>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {commProgress.badges?.map(b => (
+                  <span key={b} style={{ padding: '4px 10px', background: 'var(--s-bg2)', color: 'var(--s-primary)', borderRadius: 8, fontSize: 12, fontWeight: 700, border: '1px solid var(--s-border)' }}>
+                    🌟 {b}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </SCard>
+      )}
 
       <SCard className="s-anim-up s-d2" style={{ padding: '18px 22px', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div>
